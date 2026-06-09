@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocoFácil - Sua Agenda de Foco Simplificado</title>
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#a855f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FocoFácil">
+    <link rel="manifest" href="manifest.json">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Canvas de Confete para Comemorações -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="app-container">
+        <!-- CABEÇALHO -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo-area">
+                    <div class="logo-icon">
+                        <i data-lucide="sparkles"></i>
+                    </div>
+                    <h1>Foco<span>Fácil</span></h1>
+                </div>
+                <p class="current-date" id="current-date">Carregando data...</p>
+            </div>
+            
+            <div class="header-right">
+                <!-- Barra de Progresso Geral -->
+                <div class="day-progress-container">
+                    <div class="progress-labels">
+                        <span class="progress-title">Conclusão do Dia</span>
+                        <span class="progress-percentage" id="day-progress-percent">0%</span>
+                    </div>
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar-fill" id="day-progress-fill"></div>
+                    </div>
+                </div>
+                <!-- Botão de Instalação PWA -->
+                <button class="icon-btn btn-settings btn-install-pwa" id="btn-install-app" title="Instalar Aplicativo" style="display: none;">
+                    <i data-lucide="download"></i>
+                    <span class="btn-text">Instalar App</span>
+                </button>
+                <!-- Botão de Configurações / Limpar Dados -->
+                <button class="icon-btn btn-settings" id="btn-reset-day" title="Reiniciar Dia">
+                    <i data-lucide="rotate-ccw"></i>
+                    <span class="btn-text">Reiniciar Dia</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTAINER PRINCIPAL -->
+        <main class="main-content">
+            <!-- COLUNA ESQUERDA: LINHA DO TEMPO (DEMANDAS POR HORA) -->
+            <section class="panel timeline-panel" id="panel-timeline">
+                <div class="panel-header">
+                    <div class="panel-title-area">
+                        <div class="panel-icon timeline-icon">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <h2>Demandas do Dia</h2>
+                    </div>
+                    <button class="btn btn-primary" id="btn-add-task-trigger">
+                        <i data-lucide="plus"></i>
+                        <span>Adicionar Demanda</span>
+                    </button>
+                </div>
+
+                <!-- SELETOR DE DATA / CALENDÁRIO SEMANAL -->
+                <div class="calendar-section">
+                    <div class="calendar-strip" id="calendar-strip">
+                        <!-- Gerado dinamicamente via JS -->
+                    </div>
+                    <div class="date-picker-wrapper">
+                        <button class="icon-btn btn-calendar-picker" id="btn-calendar-picker" title="Escolher Outra Data">
+                            <i data-lucide="calendar"></i>
+                        </button>
+                        <input type="date" id="native-date-picker">
+                    </div>
+                </div>
+
+                <div class="timeline-navigation">
+                    <button class="tab-btn active" id="tab-all-hours">Dia Todo</button>
+                    <button class="tab-btn" id="tab-remaining-hours">Restante do Dia</button>
+                    <button class="tab-btn" id="tab-completed-hours">Concluídas</button>
+                </div>
+
+                <!-- Lista de Horas -->
+                <div class="timeline-container" id="timeline-container">
+                    <!-- Gerado dinamicamente via JS -->
+                </div>
+            </section>
+
+            <!-- COLUNA DIREITA: REMÉDIOS E ÁGUA -->
+            <div class="side-column">
+                
+                <!-- BLOCO SINCRONIZAÇÃO NUVEM -->
+                <section class="panel sync-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-area">
+                            <div class="panel-icon sync-icon">
+                                <i data-lucide="cloud"></i>
+                            </div>
+                            <h2>Sincronização Nuvem</h2>
+                        </div>
+                        <span class="sync-status-badge badge-local" id="sync-status-badge">Apenas Local</span>
+                    </div>
+                    <div class="sync-body">
+                        <div class="sync-code-area">
+                            <input type="password" id="sync-code-input" placeholder="Digite seu código ou clique ao lado" autocomplete="off">
+                            <button class="icon-btn btn-show-code" id="btn-toggle-sync-code" title="Mostrar/Ocultar Código">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </div>
+                        <div class="sync-actions-row">
+                            <button class="btn btn-secondary-sm" id="btn-generate-sync-code">Gerar</button>
+                            <button class="btn btn-primary" id="btn-connect-sync" style="padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); font-weight:600; box-shadow:none;">Conectar</button>
+                        </div>
+                        <div class="sync-instructions" id="sync-instructions">
+                            Insira um código único para acessar e salvar seus dados em outros dispositivos.
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- BLOCo MEDICAMENTOS -->
+                <section class="panel meds-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-area">
+                            <div class="panel-icon meds-icon">
+                                <i data-lucide="pill"></i>
+                            </div>
+                            <h2>Meus Remédios</h2>
+                        </div>
+                        <button class="btn btn-secondary-sm" id="btn-add-med-trigger" title="Adicionar Remédio">
+                            <i data-lucide="plus"></i>
+                            <span>Adicionar</span>
+                        </button>
+                    </div>
+
+                    <div class="meds-container" id="meds-container">
+                        <!-- Gerado dinamicamente via JS -->
+                    </div>
+                </section>
+
+                <!-- BLOCO INGESTÃO DE ÁGUA -->
+                <section class="panel water-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-area">
+                            <div class="panel-icon water-icon">
+                                <i data-lucide="droplet"></i>
+                            </div>
+                            <h2>Lembrete de Água</h2>
+                        </div>
+                        <div class="water-goal-display" id="water-goal-display">
+                            0 / 2000 ml
+                        </div>
+                    </div>
+
+                    <div class="water-body">
+                        <!-- Copo / Garrafa visual -->
+                        <div class="water-visual-container">
+                            <div class="water-glass">
+                                <div class="water-level" id="water-level-fill"></div>
+                                <div class="water-bubbles"></div>
+                            </div>
+                            <div class="water-percent-badge" id="water-percent-badge">0%</div>
+                        </div>
+
+                        <!-- Botões Rápidos -->
+                        <div class="water-controls">
+                            <button class="btn-water" data-amount="200">
+                                <div class="water-btn-icon"><i data-lucide="cup-soda"></i></div>
+                                <span>+200 ml</span>
+                                <small>Copo pequeno</small>
+                            </button>
+                            <button class="btn-water" data-amount="350">
+                                <div class="water-btn-icon"><i data-lucide="glass-water"></i></div>
+                                <span>+350 ml</span>
+                                <small>Copo grande</small>
+                            </button>
+                            <button class="btn-water" data-amount="500">
+                                <div class="water-btn-icon"><i data-lucide="beer"></i></div>
+                                <span>+500 ml</span>
+                                <small>Garrafa</small>
+                            </button>
+                        </div>
+                        
+                        <div class="water-footer-actions">
+                            <button class="btn-text-only" id="btn-custom-water">
+                                <i data-lucide="plus"></i> Personalizado
+                            </button>
+                            <button class="btn-text-only text-danger" id="btn-reset-water">
+                                <i data-lucide="trash-2"></i> Zerar
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BLOCO BRAIN DUMP (DESCARREGAR IDEIAS) -->
+                <section class="panel braindump-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-area">
+                            <div class="panel-icon braindump-icon">
+                                <i data-lucide="brain-circuit"></i>
+                            </div>
+                            <h2>Brain Dump <small>Tire da cabeça rápido!</small></h2>
+                        </div>
+                    </div>
+                    
+                    <div class="braindump-body">
+                        <div class="braindump-input-area">
+                            <input type="text" id="braindump-input" placeholder="Teve uma ideia ou lembrou de algo? Digite aqui...">
+                            <button class="btn-add-note" id="btn-add-note" title="Adicionar Nota">
+                                <i data-lucide="arrow-right"></i>
+                            </button>
+                        </div>
+                        <ul class="notes-list" id="notes-list">
+                            <!-- Gerado dinamicamente via JS -->
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL DE ADICIONAR TAREFA (DEMANDA) -->
+    <div class="modal-backdrop" id="modal-task">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i data-lucide="plus-circle"></i> Nova Demanda</h3>
+                <button class="btn-close-modal" id="btn-close-task-modal">&times;</button>
+            </div>
+            <form id="form-add-task">
+                <div class="form-group">
+                    <label for="task-title">O que você precisa fazer?</label>
+                    <input type="text" id="task-title" required placeholder="Ex: Estudar matemática, Fazer almoço..." autocomplete="off">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-hour">Horário</label>
+                        <select id="task-hour" required>
+                            <!-- JS vai preencher com as 24h -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-category">Categoria</label>
+                        <select id="task-category">
+                            <option value="routine">Rotina</option>
+                            <option value="work">Trabalho</option>
+                            <option value="study">Estudos</option>
+                            <option value="health">Saúde</option>
+                            <option value="leisure">Lazer / Hobby</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="task-desc">Detalhes ou Passos (Opcional)</label>
+                    <textarea id="task-desc" placeholder="Divida em pequenos passos se ajudar! Ex: 1. Abrir livro, 2. Resolver ex 1..." rows="2"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-task">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE ADICIONAR MEDICAMENTO -->
+    <div class="modal-backdrop" id="modal-med">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i data-lucide="plus-circle"></i> Cadastrar Medicamento</h3>
+                <button class="btn-close-modal" id="btn-close-med-modal">&times;</button>
+            </div>
+            <form id="form-add-med">
+                <div class="form-group">
+                    <label for="med-name">Nome do Remédio</label>
+                    <input type="text" id="med-name" required placeholder="Ex: Ritalina, Concerta, Vitamina D..." autocomplete="off">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="med-dosage">Dosagem</label>
+                        <input type="text" id="med-dosage" placeholder="Ex: 10mg, 1 comprimido, 5 gotas" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="med-hour">Horário sugerido</label>
+                        <input type="time" id="med-hour" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="med-notes">Observações (Opcional)</label>
+                    <input type="text" id="med-notes" placeholder="Ex: Tomar após o café, estômago cheio..." autocomplete="off">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-med">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script principal -->
+    <script src="app.js"></script>
+</body>
+</html>
