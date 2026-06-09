@@ -2,6 +2,33 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// Carrega variáveis de ambiente do arquivo .env se existir (desenvolvimento local)
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    try {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        envContent.split(/\r?\n/).forEach(line => {
+            // Remove espaços e ignora comentários
+            const trimmedLine = line.trim();
+            if (trimmedLine && !trimmedLine.startsWith('#')) {
+                const match = trimmedLine.match(/^([^=]+)=(.*)$/);
+                if (match) {
+                    const key = match[1].trim();
+                    let value = match[2].trim();
+                    // Remove aspas simples/duplas do valor
+                    if (value.startsWith('"') && value.endsWith('"') || value.startsWith("'") && value.endsWith("'")) {
+                        value = value.slice(1, -1);
+                    }
+                    process.env[key] = value;
+                }
+            }
+        });
+        console.log("Variáveis de ambiente do arquivo .env carregadas com sucesso.");
+    } catch (e) {
+        console.warn("Aviso ao carregar arquivo .env:", e.message);
+    }
+}
+
 const PORT = 8085;
 
 const MIME_TYPES = {

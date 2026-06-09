@@ -1,4 +1,4 @@
-// API Serverless para sincronização via Vercel KV (Upstash Redis)
+// API Serverless para sincronização via Supabase (PostgreSQL REST API)
 module.exports = async (req, res) => {
     // Configura Headers de CORS para desenvolvimento local
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -15,17 +15,27 @@ module.exports = async (req, res) => {
         return;
     }
 
-    const kvUrl = process.env.KV_REST_API_URL;
-    const kvToken = process.env.KV_REST_API_TOKEN;
+    let supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
 
-    // Se o banco de dados KV não estiver vinculado na Vercel
-    if (!kvUrl || !kvToken) {
+    // Se o Supabase não estiver configurado
+    if (!supabaseUrl || !supabaseKey) {
         return res.status(200).json({
             success: false,
-            error: "KV_DATABASE_NOT_CONFIGURED",
-            message: "Por favor, vincule um banco de dados Vercel KV no painel do seu projeto Vercel para ativar a sincronização."
+            error: "SUPABASE_NOT_CONFIGURED",
+            message: "Por favor, configure as variáveis de ambiente SUPABASE_URL e SUPABASE_KEY no painel da Vercel (ou no arquivo .env local) para ativar a sincronização."
         });
     }
+
+    // Normaliza URL do Supabase para garantir formato REST focofacil_sync
+    supabaseUrl = supabaseUrl.trim();
+    if (!supabaseUrl.endsWith('/')) {
+        supabaseUrl += '/';
+    }
+    if (!supabaseUrl.includes('/rest/v1/')) {
+        supabaseUrl += 'rest/v1/';
+    }
+    const endpoint = `${supabaseUrl}focofacil_sync`;
 
     try {
         if (req.method === 'GET') {
@@ -35,22 +45,29 @@ module.exports = async (req, res) => {
             }
 
             const cleanCode = code.trim().toLowerCase();
-            const response = await fetch(kvUrl, {
-                method: 'POST',
+            const response = await fetch(`${endpoint}?code=eq.${encodeURIComponent(cleanCode)}&select=state`, {
+                method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${kvToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(['GET', `agenda_${cleanCode}`])
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`
+                }
             });
+
+            if (response.status === 404) {
+                return res.status(200).json({
+                    success: false,
+                    error: "TABLE_NOT_FOUND",
+                    message: "A tabela public.focofacil_sync não foi encontrada no Supabase. Por favor, execute o script SQL de configuração no painel do Supabase."
+                });
+            }
 
             if (!response.ok) {
                 const errText = await response.text();
-                throw new Error(`Erro Upstash Redis: ${errText}`);
+                throw new Error(`Erro Supabase: ${errText}`);
             }
 
-            const resData = await response.json();
-            const payload = resData.result ? JSON.parse(resData.result) : null;
+            const rows = await response.json();
+            const payload = (rows && rows.length > 0) ? rows[0].state : null;
 
             return res.status(200).json({
                 success: true,
@@ -66,18 +83,32 @@ module.exports = async (req, res) => {
             }
 
             const cleanCode = code.trim().toLowerCase();
-            const response = await fetch(kvUrl, {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${kvToken}`,
-                    'Content-Type': 'application/json'
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'resolution=merge-duplicates'
                 },
-                body: JSON.stringify(['SET', `agenda_${cleanCode}`, JSON.stringify(clientState)])
+                body: JSON.stringify({
+                    code: cleanCode,
+                    state: clientState,
+                    updated_at: new Date().toISOString()
+                })
             });
+
+            if (response.status === 404) {
+                return res.status(200).json({
+                    success: false,
+                    error: "TABLE_NOT_FOUND",
+                    message: "A tabela public.focofacil_sync não foi encontrada no Supabase. Por favor, execute o script SQL de configuração no painel do Supabase."
+                });
+            }
 
             if (!response.ok) {
                 const errText = await response.text();
-                throw new Error(`Erro Upstash Redis: ${errText}`);
+                throw new Error(`Erro Supabase: ${errText}`);
             }
 
             return res.status(200).json({

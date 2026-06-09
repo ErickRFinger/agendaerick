@@ -1370,8 +1370,8 @@ async function pullFromCloud() {
             }
             updateSyncStatusBadge("connected");
         } else {
-            // Se o KV não estiver configurado na Vercel
-            if (resData.error === "KV_DATABASE_NOT_CONFIGURED") {
+            // Se o Supabase não estiver configurado ou a tabela estiver ausente
+            if (resData.error === "SUPABASE_NOT_CONFIGURED" || resData.error === "TABLE_NOT_FOUND") {
                 updateSyncStatusBadge("error");
                 if (instructions) {
                     instructions.innerHTML = `<span style="color:var(--color-danger)">${resData.message}</span>`;
@@ -1417,7 +1417,7 @@ async function pushToCloud() {
                 instructions.textContent = "Sincronizado! Seus dados estão salvos na nuvem.";
             }
         } else {
-            if (resData.error === "KV_DATABASE_NOT_CONFIGURED") {
+            if (resData.error === "SUPABASE_NOT_CONFIGURED" || resData.error === "TABLE_NOT_FOUND") {
                 updateSyncStatusBadge("error");
                 if (instructions) {
                     instructions.innerHTML = `<span style="color:var(--color-danger)">${resData.message}</span>`;
