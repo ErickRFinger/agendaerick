@@ -64,15 +64,10 @@ document.addEventListener("DOMContentLoaded", () => {
     setupConfettiCanvas();
     setupEventListeners();
 
-    // Inicializa a UI de Sincronização se houver código salvo
-    syncCode = localStorage.getItem("FOCOFACIL_SYNC_CODE") || "";
-    const syncInput = document.getElementById("sync-code-input");
-    if (syncInput && syncCode) {
-        syncInput.value = syncCode;
-        pullFromCloud(); // Busca dados atualizados da nuvem
-    } else {
-        updateSyncStatusBadge("local");
-    }
+    // Sincronização automática e silenciosa baseada no Supabase
+    syncCode = "default";
+    pullFromCloud(); // Busca dados atualizados da nuvem
+
 
     renderAll();
     lucide.createIcons();
