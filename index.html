@@ -33,6 +33,9 @@
                         <i data-lucide="sparkles"></i>
                     </div>
                     <h1>Foco<span>Fácil</span></h1>
+                    <div class="discreet-sync-indicator" id="discreet-sync" title="Conectando à nuvem...">
+                        <i data-lucide="refresh-cw" class="spin-animation"></i>
+                    </div>
                 </div>
                 <p class="current-date" id="current-date">Carregando data...</p>
             </div>
@@ -53,9 +56,13 @@
                     <i data-lucide="download"></i>
                     <span class="btn-text">Instalar App</span>
                 </button>
-                <!-- Botão de Configurações / Limpar Dados -->
+                <!-- Botão de Configurações Gerais -->
+                <button class="icon-btn btn-settings" id="btn-settings-trigger" title="Configurações e Notificações">
+                    <i data-lucide="settings"></i>
+                </button>
+                <!-- Botão de Limpar Dados -->
                 <button class="icon-btn btn-settings" id="btn-reset-day" title="Reiniciar Dia">
-                    <i data-lucide="rotate-ccw"></i>
+                    <i data-lucide="refresh-ccw"></i>
                     <span class="btn-text">Reiniciar Dia</span>
                 </button>
             </div>
@@ -150,31 +157,91 @@
                             <div class="water-percent-badge" id="water-percent-badge">0%</div>
                         </div>
 
-                        <!-- Botões Rápidos -->
-                        <div class="water-controls">
-                            <button class="btn-water" data-amount="200">
-                                <div class="water-btn-icon"><i data-lucide="cup-soda"></i></div>
-                                <span>+200 ml</span>
-                                <small>Copo pequeno</small>
+                        <!-- Botões Rápidos e Ações -->
+                        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px;">
+                            <div class="water-controls" style="flex-grow: 0;">
+                                <button class="btn-water" data-amount="200">
+                                    <div class="water-btn-icon"><i data-lucide="cup-soda"></i></div>
+                                    <span>+200 ml</span>
+                                    <small>Copo pequeno</small>
+                                </button>
+                                <button class="btn-water" data-amount="350">
+                                    <div class="water-btn-icon"><i data-lucide="glass-water"></i></div>
+                                    <span>+350 ml</span>
+                                    <small>Copo grande</small>
+                                </button>
+                                <button class="btn-water" data-amount="500">
+                                    <div class="water-btn-icon"><i data-lucide="beer"></i></div>
+                                    <span>+500 ml</span>
+                                    <small>Garrafa</small>
+                                </button>
+                                <button class="btn-water" data-amount="700">
+                                    <div class="water-btn-icon"><i data-lucide="droplets"></i></div>
+                                    <span>+700 ml</span>
+                                    <small>Garrafa grande</small>
+                                </button>
+                            </div>
+                            
+                            <div class="water-footer-actions" style="display: flex; justify-content: space-between; width: 100%; padding: 0 4px;">
+                                <button class="btn-text-only" id="btn-custom-water">
+                                    <i data-lucide="plus"></i> Personalizado
+                                </button>
+                                <button class="btn-text-only text-danger" id="btn-reset-water">
+                                    <i data-lucide="trash-2"></i> Zerar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BLOCO OUTROS LÍQUIDOS -->
+                <section class="panel other-liquids-panel">
+                    <div class="panel-header">
+                        <div class="panel-title-area">
+                            <div class="panel-icon other-liquids-icon">
+                                <i data-lucide="cup-soda"></i>
+                            </div>
+                            <h2>Outros Líquidos</h2>
+                        </div>
+                        <div class="other-liquids-total-display" id="other-liquids-total-display">
+                            Total: 0 ml
+                        </div>
+                    </div>
+
+                    <div class="other-liquids-body">
+                        <!-- Botões de Log Rápido -->
+                        <div class="quick-drink-grid">
+                            <button class="btn-quick-drink" data-type="coffee" data-amount="150" data-name="Café">
+                                <i data-lucide="coffee"></i>
+                                <span>+150ml Café</span>
                             </button>
-                            <button class="btn-water" data-amount="350">
-                                <div class="water-btn-icon"><i data-lucide="glass-water"></i></div>
-                                <span>+350 ml</span>
-                                <small>Copo grande</small>
+                            <button class="btn-quick-drink" data-type="soda" data-amount="350" data-name="Refrigerante">
+                                <i data-lucide="cup-soda"></i>
+                                <span>+350ml Refri</span>
                             </button>
-                            <button class="btn-water" data-amount="500">
-                                <div class="water-btn-icon"><i data-lucide="beer"></i></div>
-                                <span>+500 ml</span>
-                                <small>Garrafa</small>
+                            <button class="btn-quick-drink" data-type="juice" data-amount="250" data-name="Suco">
+                                <i data-lucide="glass-water"></i>
+                                <span>+250ml Suco</span>
+                            </button>
+                            <button class="btn-quick-drink" data-type="tea" data-amount="200" data-name="Chá">
+                                <i data-lucide="coffee"></i>
+                                <span>+200ml Chá</span>
                             </button>
                         </div>
-                        
-                        <div class="water-footer-actions">
-                            <button class="btn-text-only" id="btn-custom-water">
-                                <i data-lucide="plus"></i> Personalizado
+
+                        <!-- Lista dos líquidos consumidos hoje -->
+                        <div class="drink-logs-container">
+                            <ul class="drink-logs-list" id="drink-logs-list">
+                                <!-- Gerado dinamicamente via JS -->
+                            </ul>
+                        </div>
+
+                        <div class="other-liquids-footer-actions">
+                            <button class="btn-text-only" id="btn-add-liquid-trigger">
+                                <i data-lucide="plus"></i> Registrar Outro
                             </button>
-                            <button class="btn-text-only text-danger" id="btn-reset-water">
-                                <i data-lucide="trash-2"></i> Zerar
+                            <button class="btn-text-only text-danger" id="btn-reset-liquids">
+                                <i data-lucide="trash-2"></i> Zerar Todos
                             </button>
                         </div>
                     </div>
@@ -286,6 +353,99 @@
                     <button type="submit" class="btn btn-primary">Cadastrar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE ADICIONAR OUTROS LÍQUIDOS -->
+    <div class="modal-backdrop" id="modal-liquid">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i data-lucide="plus-circle"></i> Registrar Bebida</h3>
+                <button class="btn-close-modal" id="btn-close-liquid-modal">&times;</button>
+            </div>
+            <form id="form-add-liquid">
+                <div class="form-group">
+                    <label for="liquid-type">Tipo de Bebida</label>
+                    <select id="liquid-type" required>
+                        <option value="coffee">☕ Café</option>
+                        <option value="soda">🥤 Refrigerante</option>
+                        <option value="juice">🍹 Suco</option>
+                        <option value="tea">🍵 Chá</option>
+                        <option value="energy">⚡ Energético</option>
+                        <option value="alcohol">🍺 Bebida Alcoólica</option>
+                        <option value="other">🥛 Outro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="liquid-name">Nome / Descrição (Opcional)</label>
+                    <input type="text" id="liquid-name" placeholder="Ex: Coca-cola Zero, Café Expresso..." autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="liquid-amount">Quantidade (ml)</label>
+                    <input type="number" id="liquid-amount" required min="1" max="5000" placeholder="Ex: 250" autocomplete="off">
+                </div>
+
+                <div class="form-row" style="margin-bottom: 16px; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                    <button type="button" class="btn btn-secondary-sm preset-amount-btn" data-preset="150">150ml</button>
+                    <button type="button" class="btn btn-secondary-sm preset-amount-btn" data-preset="250">250ml</button>
+                    <button type="button" class="btn btn-secondary-sm preset-amount-btn" data-preset="350">350ml</button>
+                    <button type="button" class="btn btn-secondary-sm preset-amount-btn" data-preset="500">500ml</button>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-liquid">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÕES / NOTIFICAÇÕES -->
+    <div class="modal-backdrop" id="modal-settings">
+        <div class="modal-card" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i data-lucide="settings"></i> Configurações</h3>
+                <button class="btn-close-modal" id="btn-close-settings-modal">&times;</button>
+            </div>
+            <div class="settings-body" style="padding-top: 16px;">
+                <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div class="setting-info" style="display: flex; flex-direction: column;">
+                        <span class="setting-title" style="font-weight: 600; font-size: 14px;">Notificações Push</span>
+                        <span class="setting-desc" style="font-size: 12px; color: var(--text-muted);">Avisos de água e demandas</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-notifications">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div id="notification-details" style="display: none; margin-top: 16px; background: rgba(255,255,255,0.02); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div class="form-group">
+                        <label for="water-interval">Lembrete de Água (Horas)</label>
+                        <select id="water-interval">
+                            <option value="1">A cada 1 hora</option>
+                            <option value="2">A cada 2 horas</option>
+                            <option value="3" selected>A cada 3 horas</option>
+                            <option value="4">A cada 4 horas</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label for="task-warning">Aviso de Demanda (Minutos antes)</label>
+                        <select id="task-warning">
+                            <option value="5">5 min antes</option>
+                            <option value="10">10 min antes</option>
+                            <option value="15" selected>15 min antes</option>
+                            <option value="30">30 min antes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 24px;">
+                    <button type="button" class="btn btn-primary" id="btn-save-settings" style="width: 100%;">Salvar Configurações</button>
+                </div>
+            </div>
         </div>
     </div>
 

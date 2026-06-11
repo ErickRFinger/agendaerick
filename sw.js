@@ -1,4 +1,4 @@
-const CACHE_NAME = 'focofacil-cache-v2';
+const CACHE_NAME = 'focofacil-cache-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -61,6 +61,28 @@ self.addEventListener('fetch', (e) => {
         return cachedResponse;
       }
       return fetch(e.request);
+    })
+  );
+});
+
+// Ação ao clicar na notificação
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  // Verifica se o app já está aberto. Se sim, foca nele. Se não, abre nova aba.
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Procura uma aba já aberta
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url.includes('/') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Se não achar, abre uma nova janela/aba
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
     })
   );
 });

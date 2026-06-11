@@ -31,6 +31,7 @@ let deferredPrompt = null;
 let syncCode = "";
 let syncStatus = "local"; // 'local', 'syncing', 'connected', 'error'
 let syncDebounceTimer = null;
+let lastSyncErrorMessage = "";
 
 // Dados Padrão para Primeira Inicialização
 const defaultState = {
@@ -49,6 +50,14 @@ const defaultState = {
         { id: "n1", text: "Dica: Se uma tarefa parecer gigante, quebre-a em 3 passos minúsculos." },
         { id: "n2", text: "Ter água sempre na mesa ajuda a lembrar de beber!" }
     ],
+    otherLiquids: [],
+    settings: {
+        notificationsEnabled: false,
+        waterInterval: 3,
+        taskWarning: 15
+    },
+    lastWaterTimestamp: 0,
+    notifiedTasks: [],
     lastUpdatedDate: "",
     lastSavedTimestamp: 0
 };
@@ -94,6 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Monitora a hora atual a cada minuto para atualizar os destaques
     setInterval(() => {
         updateCurrentHourHighlight();
+        checkNotifications();
     }, 60000);
 });
 
@@ -133,6 +143,7 @@ function initializeDefaultState() {
     // Associa tarefas iniciais ao dia de hoje
     state.tasks.forEach(t => t.date = today);
     state.lastUpdatedDate = today;
+    if (!state.otherLiquids) state.otherLiquids = [];
     saveState();
 }
 
@@ -142,6 +153,10 @@ function fillMissingStateFields() {
     if (!state.waterHistory) state.waterHistory = {};
     if (!state.waterGoal) state.waterGoal = 2000;
     if (!state.notes) state.notes = [];
+    if (!state.otherLiquids) state.otherLiquids = [];
+    if (!state.settings) state.settings = { notificationsEnabled: false, waterInterval: 3, taskWarning: 15 };
+    if (!state.lastWaterTimestamp) state.lastWaterTimestamp = 0;
+    if (!state.notifiedTasks) state.notifiedTasks = [];
     if (!state.lastSavedTimestamp) state.lastSavedTimestamp = 0;
 }
 
@@ -399,6 +414,7 @@ function renderAll() {
     renderMeds();
     renderWater();
     renderBrainDump();
+    renderOtherLiquids();
     updateGeneralProgress();
     lucide.createIcons();
 }
@@ -790,6 +806,73 @@ function renderBrainDump() {
 }
 
 /* ==========================================================================
+   SEÇÃO: OUTROS LÍQUIDOS
+   ========================================================================== */
+function renderOtherLiquids() {
+    const list = document.getElementById("drink-logs-list");
+    const totalEl = document.getElementById("other-liquids-total-display");
+    if (!list || !totalEl) return;
+    
+    list.innerHTML = "";
+    
+    if (!state.otherLiquids) state.otherLiquids = [];
+    const logsForDay = state.otherLiquids.filter(l => l.date === selectedDate);
+    
+    const total = logsForDay.reduce((sum, item) => sum + item.amount, 0);
+    totalEl.textContent = `Total: ${total} ml`;
+    
+    if (logsForDay.length === 0) {
+        list.innerHTML = `
+            <li style="color: var(--text-dimmed); font-size: 12px; text-align: center; padding: 20px;">
+                Nenhuma outra bebida registrada hoje.
+            </li>
+        `;
+        return;
+    }
+    
+    // Mostra do mais antigo para o mais novo
+    logsForDay.forEach(log => {
+        const li = document.createElement("li");
+        li.className = "drink-item";
+        li.dataset.id = log.id;
+        
+        let iconName = "cup-soda";
+        if (log.type === "coffee") iconName = "coffee";
+        else if (log.type === "juice") iconName = "glass-water";
+        else if (log.type === "tea") iconName = "coffee";
+        else if (log.type === "energy") iconName = "zap";
+        else if (log.type === "alcohol") iconName = "beer";
+        else if (log.type === "other") iconName = "droplets";
+        
+        li.innerHTML = `
+            <div class="drink-item-info">
+                <div class="drink-item-icon">
+                    <i data-lucide="${iconName}"></i>
+                </div>
+                <div class="drink-item-text">
+                    <span class="drink-item-name">${escapeHtml(log.name)}</span>
+                    <span class="drink-item-details">${log.amount} ml</span>
+                </div>
+            </div>
+            <button class="btn-delete-drink" onclick="deleteLiquid('${log.id}')" title="Excluir Registro">
+                <i data-lucide="trash-2"></i>
+            </button>
+        `;
+        list.appendChild(li);
+    });
+}
+
+window.deleteLiquid = function(id) {
+    playClickSound();
+    if (confirm("Tem certeza que deseja excluir esta bebida?")) {
+        state.otherLiquids = state.otherLiquids.filter(l => l.id !== id);
+        saveState();
+        renderOtherLiquids();
+        lucide.createIcons();
+    }
+};
+
+/* ==========================================================================
    AÇÕES DO USUÁRIO & MANIPULAÇÃO DE ESTADO
    ========================================================================== */
 
@@ -965,6 +1048,7 @@ function addWater(amount, event) {
     
     const newAmount = current + amount;
     state.waterHistory[selectedDate] = newAmount;
+    state.lastWaterTimestamp = Date.now();
     saveState();
     
     const newGoalReached = newAmount >= goal;
@@ -983,6 +1067,52 @@ function addWater(amount, event) {
     
     renderWater();
 }
+
+// --- Outros Líquidos ---
+function quickAddLiquid(type, amount, name, event) {
+    if (!state.otherLiquids) state.otherLiquids = [];
+    
+    const newLiquid = {
+        id: "ol_" + Date.now(),
+        date: selectedDate,
+        type,
+        name,
+        amount: parseInt(amount)
+    };
+    
+    state.otherLiquids.push(newLiquid);
+    state.lastWaterTimestamp = Date.now();
+    saveState();
+    
+    playWaterSound();
+    if (event) {
+        triggerConfetti(event.clientX, event.clientY);
+    } else {
+        triggerConfetti(window.innerWidth / 2, window.innerHeight / 2);
+    }
+    
+    renderOtherLiquids();
+    lucide.createIcons();
+}
+
+window.openAddLiquidModal = function() {
+    playClickSound();
+    const modalHeader = document.querySelector("#modal-liquid .modal-header h3");
+    if (modalHeader) {
+        modalHeader.innerHTML = `<i data-lucide="plus-circle"></i> Registrar Bebida`;
+    }
+    
+    document.getElementById("modal-liquid").classList.add("active");
+    document.getElementById("liquid-name").value = "";
+    document.getElementById("liquid-amount").value = "";
+    document.getElementById("liquid-amount").focus();
+    lucide.createIcons();
+};
+
+window.closeAddLiquidModal = function() {
+    document.getElementById("modal-liquid").classList.remove("active");
+    document.getElementById("form-add-liquid").reset();
+};
 
 // --- Brain Dump (Notas) ---
 function addNote() {
@@ -1161,6 +1291,140 @@ function setupEventListeners() {
         }
     });
 
+    // --- Botões de Outros Líquidos ---
+    document.querySelectorAll(".btn-quick-drink").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const type = btn.dataset.type;
+            const amount = btn.dataset.amount;
+            const name = btn.dataset.name;
+            quickAddLiquid(type, amount, name, e);
+        });
+    });
+
+    const btnAddLiquidTrigger = document.getElementById("btn-add-liquid-trigger");
+    if (btnAddLiquidTrigger) {
+        btnAddLiquidTrigger.addEventListener("click", () => openAddLiquidModal());
+    }
+
+    const btnCloseLiquidModal = document.getElementById("btn-close-liquid-modal");
+    if (btnCloseLiquidModal) {
+        btnCloseLiquidModal.addEventListener("click", closeAddLiquidModal);
+    }
+
+    const btnCancelLiquid = document.getElementById("btn-cancel-liquid");
+    if (btnCancelLiquid) {
+        btnCancelLiquid.addEventListener("click", closeAddLiquidModal);
+    }
+
+    const formAddLiquid = document.getElementById("form-add-liquid");
+    if (formAddLiquid) {
+        formAddLiquid.addEventListener("submit", (e) => {
+            e.preventDefault();
+            
+            const type = document.getElementById("liquid-type").value;
+            let name = document.getElementById("liquid-name").value.trim();
+            const amount = document.getElementById("liquid-amount").value;
+            
+            if (!amount) return;
+            
+            if (!name) {
+                const selectEl = document.getElementById("liquid-type");
+                name = selectEl.options[selectEl.selectedIndex].text.replace(/^[^\s]+\s/, ""); // Remove o emoji inicial
+            }
+            
+            quickAddLiquid(type, amount, name, null);
+            closeAddLiquidModal();
+        });
+    }
+
+    document.querySelectorAll(".preset-amount-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            playClickSound();
+            document.getElementById("liquid-amount").value = btn.dataset.preset;
+        });
+    });
+
+    const btnResetLiquids = document.getElementById("btn-reset-liquids");
+    if (btnResetLiquids) {
+        btnResetLiquids.addEventListener("click", () => {
+            playClickSound();
+            if (confirm("Deseja realmente zerar todos os outros líquidos bebidos neste dia?")) {
+                if (state.otherLiquids) {
+                    state.otherLiquids = state.otherLiquids.filter(l => l.date !== selectedDate);
+                    saveState();
+                    renderOtherLiquids();
+                    lucide.createIcons();
+                }
+            }
+        });
+    }
+
+    // --- Configurações & Notificações ---
+    const btnSettings = document.getElementById("btn-settings-trigger");
+    if (btnSettings) {
+        btnSettings.addEventListener("click", () => {
+            playClickSound();
+            document.getElementById("modal-settings").classList.add("active");
+            
+            // Popula os dados atuais
+            if (!state.settings) state.settings = { notificationsEnabled: false, waterInterval: 3, taskWarning: 15 };
+            
+            document.getElementById("toggle-notifications").checked = state.settings.notificationsEnabled;
+            document.getElementById("water-interval").value = state.settings.waterInterval;
+            document.getElementById("task-warning").value = state.settings.taskWarning;
+            
+            document.getElementById("notification-details").style.display = state.settings.notificationsEnabled ? "block" : "none";
+        });
+    }
+
+    document.getElementById("toggle-notifications").addEventListener("change", (e) => {
+        document.getElementById("notification-details").style.display = e.target.checked ? "block" : "none";
+        if (e.target.checked) {
+            // Solicita permissão de notificação
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission !== "granted") {
+                        e.target.checked = false;
+                        document.getElementById("notification-details").style.display = "none";
+                        alert("Você precisa permitir as notificações no navegador para ativar este recurso.");
+                    }
+                });
+            } else {
+                alert("Seu navegador não suporta notificações web.");
+                e.target.checked = false;
+                document.getElementById("notification-details").style.display = "none";
+            }
+        }
+    });
+
+    const btnCloseSettingsModal = document.getElementById("btn-close-settings-modal");
+    if (btnCloseSettingsModal) {
+        btnCloseSettingsModal.addEventListener("click", () => {
+            document.getElementById("modal-settings").classList.remove("active");
+        });
+    }
+
+    const btnSaveSettings = document.getElementById("btn-save-settings");
+    if (btnSaveSettings) {
+        btnSaveSettings.addEventListener("click", () => {
+            playClickSound();
+            if (!state.settings) state.settings = {};
+            
+            state.settings.notificationsEnabled = document.getElementById("toggle-notifications").checked;
+            state.settings.waterInterval = parseInt(document.getElementById("water-interval").value);
+            state.settings.taskWarning = parseInt(document.getElementById("task-warning").value);
+            
+            // Se ativou as notificações e não bebeu água ainda hoje, começa a contar a partir de agora
+            if (state.settings.notificationsEnabled && (!state.lastWaterTimestamp || state.lastWaterTimestamp === 0)) {
+                state.lastWaterTimestamp = Date.now();
+            }
+            
+            saveState();
+            document.getElementById("modal-settings").classList.remove("active");
+            playSuccessSound();
+        });
+    }
+
     // --- Seletor de Data Nativo (Input oculto) ---
     const nativePicker = document.getElementById("native-date-picker");
     nativePicker.addEventListener("input", (e) => {
@@ -1198,6 +1462,9 @@ function setupEventListeners() {
             });
             
             state.waterHistory[selectedDate] = 0;
+            if (state.otherLiquids) {
+                state.otherLiquids = state.otherLiquids.filter(l => l.date !== selectedDate);
+            }
             
             saveState();
             renderAll();
@@ -1295,33 +1562,50 @@ function registerServiceWorker() {
     }
 }
 
-function updateSyncStatusBadge(status) {
+function updateSyncStatusBadge(status, customErrorMsg = "") {
     syncStatus = status;
-    const badge = document.getElementById("sync-status-badge");
-    if (!badge) return;
+    if (customErrorMsg) {
+        lastSyncErrorMessage = customErrorMsg;
+    }
     
-    badge.className = "sync-status-badge";
+    const indicator = document.getElementById("discreet-sync");
+    if (!indicator) return;
+    
+    indicator.className = "discreet-sync-indicator";
     
     if (status === "local") {
-        badge.classList.add("badge-local");
-        badge.textContent = "Apenas Local";
+        indicator.classList.add("status-local");
+        indicator.innerHTML = `<i data-lucide="cloud-off"></i>`;
+        indicator.title = "Sincronização desativada (Apenas Local)";
     } else if (status === "syncing") {
-        badge.classList.add("badge-syncing");
-        badge.textContent = "Sincronizando...";
+        indicator.classList.add("status-syncing");
+        indicator.innerHTML = `<i data-lucide="refresh-cw" class="spin-animation"></i>`;
+        indicator.title = "Sincronizando dados com a nuvem...";
     } else if (status === "connected") {
-        badge.classList.add("badge-connected");
-        badge.textContent = "Nuvem Ativa";
+        indicator.classList.add("status-connected");
+        indicator.innerHTML = `<i data-lucide="cloud"></i>`;
+        indicator.title = "Sincronizado com o Supabase!";
     } else if (status === "error") {
-        badge.classList.add("badge-error");
-        badge.textContent = "Erro Nuvem";
+        indicator.classList.add("status-error");
+        indicator.innerHTML = `<i data-lucide="cloud-lightning"></i>`;
+        indicator.title = "Erro na sincronização! Clique para ver detalhes.";
+    }
+    lucide.createIcons();
+
+    // Adiciona evento de clique para mostrar o erro discretamente
+    if (!indicator.dataset.hasListener) {
+        indicator.dataset.hasListener = "true";
+        indicator.addEventListener("click", () => {
+            if (syncStatus === "error") {
+                alert("Erro de Sincronização:\n\n" + (lastSyncErrorMessage || "Verifique a rede ou a configuração das chaves do Supabase."));
+            }
+        });
     }
 }
 
 async function pullFromCloud() {
     if (!syncCode) return;
     updateSyncStatusBadge("syncing");
-    
-    const instructions = document.getElementById("sync-instructions");
     
     try {
         const response = await fetch(`/api/sync?code=${encodeURIComponent(syncCode)}`);
@@ -1342,53 +1626,32 @@ async function pullFromCloud() {
                     state = cloudState;
                     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
                     renderAll();
-                    if (instructions) {
-                        instructions.textContent = "Dados baixados da nuvem. Seu app está atualizado!";
-                    }
                 } else if (localTS > cloudTS) {
                     // Estado local é mais recente, envia para a nuvem
                     pushToCloud();
-                    if (instructions) {
-                        instructions.textContent = "Dados locais são mais recentes. Enviando para a nuvem...";
-                    }
-                } else {
-                    if (instructions) {
-                        instructions.textContent = "Dados já estão em sincronia com a nuvem!";
-                    }
                 }
             } else {
                 // Nuvem vazia para este código, envia o estado local atual
                 pushToCloud();
-                if (instructions) {
-                    instructions.textContent = "Nova conta de sincronização criada. Enviando dados locais...";
-                }
             }
             updateSyncStatusBadge("connected");
         } else {
             // Se o Supabase não estiver configurado ou a tabela estiver ausente
             if (resData.error === "SUPABASE_NOT_CONFIGURED" || resData.error === "TABLE_NOT_FOUND") {
-                updateSyncStatusBadge("error");
-                if (instructions) {
-                    instructions.innerHTML = `<span style="color:var(--color-danger)">${resData.message}</span>`;
-                }
+                updateSyncStatusBadge("error", resData.message);
             } else {
                 throw new Error(resData.error || "Erro desconhecido da API");
             }
         }
     } catch (e) {
         console.error("Falha ao puxar dados da nuvem:", e);
-        updateSyncStatusBadge("error");
-        if (instructions) {
-            instructions.textContent = "Erro ao conectar com a nuvem. Operando localmente.";
-        }
+        updateSyncStatusBadge("error", e.message);
     }
 }
 
 async function pushToCloud() {
     if (!syncCode) return;
     updateSyncStatusBadge("syncing");
-    
-    const instructions = document.getElementById("sync-instructions");
     
     try {
         const response = await fetch('/api/sync', {
@@ -1408,25 +1671,16 @@ async function pushToCloud() {
         
         if (resData.success) {
             updateSyncStatusBadge("connected");
-            if (instructions) {
-                instructions.textContent = "Sincronizado! Seus dados estão salvos na nuvem.";
-            }
         } else {
             if (resData.error === "SUPABASE_NOT_CONFIGURED" || resData.error === "TABLE_NOT_FOUND") {
-                updateSyncStatusBadge("error");
-                if (instructions) {
-                    instructions.innerHTML = `<span style="color:var(--color-danger)">${resData.message}</span>`;
-                }
+                updateSyncStatusBadge("error", resData.message);
             } else {
                 throw new Error(resData.error || "Erro desconhecido da API");
             }
         }
     } catch (e) {
         console.error("Erro ao enviar dados para a nuvem:", e);
-        updateSyncStatusBadge("error");
-        if (instructions) {
-            instructions.textContent = "Erro ao enviar dados para a nuvem. Salvando offline.";
-        }
+        updateSyncStatusBadge("error", e.message);
     }
 }
 
@@ -1440,4 +1694,74 @@ function escapeHtml(unsafe) {
          .replace(/>/g, "&gt;")
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#039;");
+}
+
+/* ==========================================================================
+   NOTIFICAÇÕES PUSH (PWA)
+   ========================================================================== */
+window.checkNotifications = function() {
+    if (!state.settings || !state.settings.notificationsEnabled) return;
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    const now = Date.now();
+    const todayStr = getTodayDateString();
+    
+    // 1. Verifica Água
+    if (state.lastWaterTimestamp > 0) {
+        const msPassed = now - state.lastWaterTimestamp;
+        const intervalMs = state.settings.waterInterval * 60 * 60 * 1000;
+        
+        if (msPassed >= intervalMs) {
+            sendPushNotification("Hora de se hidratar! 💧", {
+                body: `Já faz ${state.settings.waterInterval} hora(s) desde o seu último copo d'água.`,
+                icon: '/favicon.png',
+                tag: 'water-reminder',
+                vibrate: [200, 100, 200]
+            });
+            // Atualiza o timestamp para reiniciar o contador (evitar spam)
+            state.lastWaterTimestamp = now;
+            saveState();
+        }
+    }
+
+    // 2. Verifica Tarefas (Apenas para o dia de hoje)
+    if (!state.notifiedTasks) state.notifiedTasks = [];
+    const tasksToday = state.tasks.filter(t => t.date === todayStr && !t.completed);
+    
+    const currentHourMin = new Date().getHours() * 60 + new Date().getMinutes();
+    
+    tasksToday.forEach(task => {
+        if (!task.hour) return;
+        
+        const [h, m] = task.hour.split(':').map(Number);
+        if (isNaN(h) || isNaN(m)) return;
+        
+        const taskMinutes = h * 60 + m;
+        const diffMinutes = taskMinutes - currentHourMin;
+        
+        // Se faltam exatos (ou menos que) o aviso estipulado, e ainda não notificamos
+        if (diffMinutes > 0 && diffMinutes <= state.settings.taskWarning) {
+            const taskIdWithDate = `${task.id}_${todayStr}`;
+            if (!state.notifiedTasks.includes(taskIdWithDate)) {
+                sendPushNotification(`Demanda Próxima: ${task.title} ⏳`, {
+                    body: `Faltam cerca de ${diffMinutes} minuto(s) para o horário desta demanda.`,
+                    icon: '/favicon.png',
+                    tag: `task-${task.id}`,
+                    vibrate: [100, 50, 100, 50, 200]
+                });
+                state.notifiedTasks.push(taskIdWithDate);
+                saveState();
+            }
+        }
+    });
+};
+
+function sendPushNotification(title, options) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, options);
+        });
+    } else {
+        new Notification(title, options);
+    }
 }

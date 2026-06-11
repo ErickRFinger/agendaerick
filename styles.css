@@ -1428,6 +1428,162 @@ textarea {
 }
 
 /* ==========================================================================
+   PAINEL OUTROS LÍQUIDOS (BEBIDAS)
+   ========================================================================== */
+.other-liquids-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.quick-drink-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+}
+
+.btn-quick-drink {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.btn-quick-drink:hover {
+    background: rgba(168, 85, 247, 0.08);
+    border-color: var(--border-color-focus);
+    transform: translateY(-2px);
+}
+
+.btn-quick-drink i {
+    width: 16px;
+    height: 16px;
+    color: var(--color-primary);
+}
+
+.drink-logs-container {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-md);
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.drink-logs-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.drink-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    animation: slideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drink-item-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.drink-item-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(168, 85, 247, 0.1);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drink-item-icon i {
+    width: 14px;
+    height: 14px;
+}
+
+.drink-item-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.drink-item-name {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.drink-item-details {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.btn-delete-drink {
+    background: none;
+    border: none;
+    color: var(--text-dimmed);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    transition: var(--transition-fast);
+}
+
+.btn-delete-drink:hover {
+    color: var(--color-danger);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.other-liquids-total-display {
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: rgba(168, 85, 247, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.other-liquids-icon {
+    background: rgba(168, 85, 247, 0.12);
+    color: var(--color-primary);
+}
+
+.other-liquids-footer-actions {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+/* Modal preset buttons */
+.preset-amount-btn {
+    padding: 6px 0;
+    text-align: center;
+}
+
+/* ==========================================================================
    ANIMAÇÕES E EFEITOS
    ========================================================================== */
 @keyframes slideIn {
@@ -1664,4 +1820,108 @@ textarea {
     50% {
         box-shadow: 0 0 20px rgba(168, 85, 247, 0.5), 0 0 10px rgba(14, 165, 233, 0.3);
     }
+}
+
+/* Indicador Discreto de Sincronização no Cabeçalho */
+.discreet-sync-indicator {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    margin-left: 8px;
+}
+
+.discreet-sync-indicator i {
+    width: 14px;
+    height: 14px;
+}
+
+.discreet-sync-indicator.status-local {
+    color: var(--text-dimmed);
+}
+
+.discreet-sync-indicator.status-syncing {
+    color: var(--color-warning);
+}
+
+.discreet-sync-indicator.status-connected {
+    color: var(--color-success);
+    border-color: rgba(16, 185, 129, 0.25);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.discreet-sync-indicator.status-error {
+    color: var(--color-danger);
+    border-color: rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.05);
+    animation: errorPulse 2s infinite ease-in-out;
+}
+
+/* Animação de Rotação */
+.spin-animation {
+    animation: spin 1.5s infinite linear;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes errorPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+}
+
+/* ==========================================================================
+   CONFIGURAÇÕES (TOGGLE SWITCH)
+   ========================================================================== */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .3s;
+    border-radius: 24px;
+    border: 1px solid var(--border-color);
+}
+
+.toggle-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: var(--text-dimmed);
+    transition: .3s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .slider {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(20px);
+    background-color: var(--text-on-primary);
 }
