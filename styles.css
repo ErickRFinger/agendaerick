@@ -2637,3 +2637,55 @@ textarea {
     font-size: 9px;
     color: var(--text-muted);
 }
+
+/* Estilos adicionais para as métricas ricas dos Servidores Vigi */
+.vigi-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-top: 8px;
+    margin-bottom: 2px;
+}
+
+.vigi-sec-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--color-primary);
+}
+
+.vigi-sec-val {
+    margin-left: auto;
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.vigi-badges-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.vigi-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.vigi-badge-val {
+    font-family: monospace;
+    font-weight: 700;
+}

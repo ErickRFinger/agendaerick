@@ -2074,6 +2074,38 @@ function switchMainTab(tab) {
     lucide.createIcons();
 }
 
+function getTempColor(temp) {
+    if (temp <= 0) return "var(--text-muted)";
+    if (temp >= 80) return "#ef4444";
+    if (temp >= 70) return "#f59e0b";
+    if (temp >= 55) return "#eab308";
+    return "#10b981";
+}
+
+function renderCpuThreads(threads, serverId) {
+    let cellsHtml = "";
+    if (threads && threads.length > 0) {
+        threads.forEach((val, idx) => {
+            let bg = 'rgba(16, 185, 129, 0.05)';
+            let border = 'rgba(16, 185, 129, 0.15)';
+            if (val >= 90) {
+                bg = 'rgba(239, 68, 68, 0.15)';
+                border = 'rgba(239, 68, 68, 0.3)';
+            } else if (val >= 70) {
+                bg = 'rgba(245, 158, 11, 0.15)';
+                border = 'rgba(245, 158, 11, 0.3)';
+            }
+            cellsHtml += `
+                <div class="vigi-thread-cell" style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 2px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 32px;" title="Thread T${idx + 1}: ${val.toFixed(0)}%">
+                    <span style="font-size: 8px; color: var(--text-dimmed); font-weight: 700; display:block; line-height:1;">T${idx + 1}</span>
+                    <span style="font-size: 10px; font-weight: 700; color: var(--color-primary); font-family: monospace; display:block; line-height:1; margin-top:2px;">${val.toFixed(0)}%</span>
+                </div>
+            `;
+        });
+    }
+    return `<div class="vigi-threads-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px; margin-top: 6px;">${cellsHtml}</div>`;
+}
+
 async function loadServersFromSupabase() {
     try {
         const response = await fetch("https://hnfhrjgzeivzrcpumkyk.supabase.co/rest/v1/vigi_machines?select=*", {
@@ -2092,10 +2124,28 @@ async function loadServersFromSupabase() {
             return;
         }
         
-        rows.sort((a,b) => a.machine_id.localeCompare(b.machine_id));
+        const serversList = rows
+            .filter(r => r.machine_id !== 'erickpcloja')
+            .map(r => {
+                let displayName = r.machine_id.toUpperCase();
+                let sortOrder = 99;
+                if (r.machine_id === 'pcerickintel') {
+                    displayName = 'PC PRINCIPAL';
+                    sortOrder = 1;
+                } else if (r.machine_id === 'pcerickamd') {
+                    displayName = 'PC SECUNDÁRIO';
+                    sortOrder = 2;
+                } else if (r.machine_id === 'desktop-1v21v3f') {
+                    displayName = 'SERVIDOR';
+                    sortOrder = 3;
+                }
+                return { ...r, displayName, sortOrder };
+            });
+            
+        serversList.sort((a, b) => a.sortOrder - b.sortOrder);
         
         let html = "";
-        rows.forEach(row => {
+        serversList.forEach(row => {
             const data = row.hardware_data || {};
             const isOnline = (Date.now() - new Date(row.updated_at).getTime()) < 45000;
             const statusClass = isOnline ? "status-online" : "status-offline";
@@ -2105,6 +2155,22 @@ async function loadServersFromSupabase() {
             const ramUsage = data.ramUsage || 0;
             const cpuTemp = data.cpuTemp || 0;
             const gpuTemp = data.gpuTemp || 0;
+            
+            // GPU stats
+            const gpuLoad = data.gpuLoad || 0;
+            const gpuName = data.gpuName || "N/A";
+            const gpuRam = data.gpuRam || "N/A";
+            const gpuVramUsedGB = data.gpuVramUsedGB || 0;
+            const vramText = gpuVramUsedGB > 0 ? `${parseFloat(gpuVramUsedGB).toFixed(1)} GB / ${gpuRam}` : "0 GB / N/A";
+            
+            // Network rates
+            const rxSpeed = ((data.rxSec || 0) / 1024 / 1024).toFixed(1) + " MB/s";
+            const txSpeed = ((data.txSec || 0) / 1024 / 1024).toFixed(1) + " MB/s";
+            
+            // CPU Details
+            const cpuFreq = data.cpuFreqMHz ? `${data.cpuFreqMHz} MHz` : "--";
+            const cpuPower = data.cpuPower ? `${parseInt(data.cpuPower)}W` : "0W";
+            const vcoreVal = data.vcore ? `${data.vcore.toFixed(3)}V` : "--";
             
             let disksHtml = "";
             if (data.disks && data.disks.length > 0) {
@@ -2139,42 +2205,96 @@ async function loadServersFromSupabase() {
                     <div class="vigi-card-header">
                         <div class="vigi-card-title">
                             <span class="vigi-status-dot"></span>
-                            <h3>${row.machine_id.toUpperCase()}</h3>
+                            <h3>${row.displayName}</h3>
                         </div>
                         <span class="vigi-status-badge">${statusLabel}</span>
                     </div>
                     
                     <div class="vigi-card-body">
-                        <div class="vigi-spec-text">${data.cpuModel || "Processador Desconhecido"}</div>
-                        <div class="vigi-spec-text" style="color:var(--text-dimmed);font-size:0.75rem;margin-bottom:8px;">IP: ${row.ip || "N/A"}</div>
-                        
-                        <div class="vigi-metric-row">
-                            <div class="vigi-metric-label"><span>CPU</span><span>${cpuUsage}%</span></div>
-                            <div class="vigi-progress"><div class="vigi-progress-fill" style="width: ${cpuUsage}%;"></div></div>
+                        <!-- PROCESSADOR SECTION -->
+                        <div class="vigi-section-header">
+                            <i data-lucide="cpu" class="vigi-sec-icon"></i>
+                            <span style="flex-grow:1; margin-left:4px;">Processador (CPU)</span>
+                            <span class="vigi-sec-val">${cpuUsage}%</span>
                         </div>
+                        <div class="vigi-spec-text" style="color:var(--text-muted); font-size:11px; margin-bottom:4px;">${data.cpuModel || "Processador Desconhecido"}</div>
                         
-                        <div class="vigi-metric-row" style="margin-top: 6px;">
-                            <div class="vigi-metric-label"><span>Memória RAM</span><span>${ramUsage}% (${data.ramUsedGB || 0}GB / ${data.ramTotalGB || 0}GB)</span></div>
-                            <div class="vigi-progress"><div class="vigi-progress-fill" style="width: ${ramUsage}%;"></div></div>
-                        </div>
+                        <div class="vigi-progress" style="margin-bottom:6px;"><div class="vigi-progress-fill" style="width: ${cpuUsage}%;"></div></div>
                         
-                        <div class="vigi-sensor-grid">
-                            <div class="vigi-sensor-box">
-                                <span class="vigi-sensor-lbl">TEMP CPU</span>
-                                <span class="vigi-sensor-val">${cpuTemp > 0 ? cpuTemp + "°C" : "N/A"}</span>
+                        <!-- CPU Badges -->
+                        <div class="vigi-badges-row">
+                            <div class="vigi-badge" title="Temperatura CPU">
+                                <i data-lucide="thermometer" style="color: ${getTempColor(cpuTemp)}; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: ${getTempColor(cpuTemp)};">${cpuTemp > 0 ? cpuTemp + "°C" : "N/A"}</span>
                             </div>
-                            <div class="vigi-sensor-box">
-                                <span class="vigi-sensor-lbl">TEMP GPU</span>
-                                <span class="vigi-sensor-val">${gpuTemp > 0 ? gpuTemp + "°C" : "N/A"}</span>
+                            <div class="vigi-badge" title="Frequência Clock">
+                                <i data-lucide="gauge" style="color: #a78bfa; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #a78bfa;">${cpuFreq}</span>
                             </div>
+                            <div class="vigi-badge" title="Consumo CPU">
+                                <i data-lucide="zap" style="color: #f59e0b; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #f59e0b;">${cpuPower}</span>
+                            </div>
+                            ${data.vcore ? `
+                            <div class="vigi-badge" title="Tensão Vcore">
+                                <i data-lucide="zap-off" style="color: #60a5fa; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #60a5fa;">${vcoreVal}</span>
+                            </div>` : ''}
                         </div>
                         
+                        <!-- CPU Threads Grid -->
+                        ${data.cpuThreads && data.cpuThreads.length > 0 ? `
+                        <div class="vigi-section-title">Uso por Threads (${data.cpuThreads.length} núcleos)</div>
+                        ${renderCpuThreads(data.cpuThreads, row.machine_id)}
+                        ` : ''}
+
+                        <!-- MEMÓRIA RAM SECTION -->
+                        <div class="vigi-section-header" style="margin-top: 10px;">
+                            <i data-lucide="layers" class="vigi-sec-icon"></i>
+                            <span style="flex-grow:1; margin-left:4px;">Memória RAM</span>
+                            <span class="vigi-sec-val">${ramUsage}%</span>
+                        </div>
+                        <div class="vigi-spec-text" style="color:var(--text-muted); font-size:11px; margin-bottom:4px;">
+                            Uso: ${data.ramUsedGB || 0} GB / ${data.ramTotalGB || 0} GB
+                        </div>
+                        <div class="vigi-progress" style="margin-bottom:6px;"><div class="vigi-progress-fill" style="width: ${ramUsage}%;"></div></div>
+
+                        <!-- PLACA DE VÍDEO (GPU) SECTION -->
+                        ${gpuName !== "N/A" && gpuName !== "Intel(R) HD Graphics" && gpuName !== "Microsoft Basic Display Adapter" ? `
+                        <div class="vigi-section-header" style="margin-top: 10px;">
+                            <i data-lucide="monitor" class="vigi-sec-icon"></i>
+                            <span style="flex-grow:1; margin-left:4px;">Placa de Vídeo (GPU)</span>
+                            <span class="vigi-sec-val">${gpuLoad}%</span>
+                        </div>
+                        <div class="vigi-spec-text" style="color:var(--text-muted); font-size:11px; margin-bottom:4px;">${gpuName}</div>
+                        
+                        <div class="vigi-badges-row">
+                            <div class="vigi-badge" title="Temperatura GPU">
+                                <i data-lucide="thermometer" style="color: ${getTempColor(gpuTemp)}; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: ${getTempColor(gpuTemp)};">${gpuTemp > 0 ? gpuTemp + "°C" : "N/A"}</span>
+                            </div>
+                            <div class="vigi-badge" title="Memória VRAM em uso" style="flex-grow: 1;">
+                                <i data-lucide="hard-drive" style="color: #60a5fa; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #60a5fa;">VRAM: ${vramText}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- REDE SECTION -->
+                        <div class="vigi-section-title">Tráfego de Rede (Velocidade)</div>
+                        <div class="vigi-net-row" style="display:flex; justify-content:space-between; font-size:11px; background:rgba(0,0,0,0.15); padding:6px 10px; border-radius:4px; border:1px solid var(--border-color); margin-top:4px;">
+                            <span style="color:var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="arrow-down" style="width:11px; height:11px; color:#10b981;"></i> Down: <b style="color:var(--text-main); font-family:monospace;">${rxSpeed}</b></span>
+                            <span style="color:var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="arrow-up" style="width:11px; height:11px; color:var(--color-primary);"></i> Up: <b style="color:var(--text-main); font-family:monospace;">${txSpeed}</b></span>
+                        </div>
+
+                        <!-- PARTIÇÕES SECTION -->
                         <div class="vigi-section-title">Partições de Armazenamento</div>
                         <div class="vigi-disks-container">
                             ${disksHtml}
                         </div>
                         
-                        <div class="vigi-section-title">Processos Ativos (CPU)</div>
+                        <!-- PROCESSOS SECTION -->
+                        <div class="vigi-section-title">Processos Ativos (RAM)</div>
                         <div class="vigi-procs-container">
                             ${procHtml}
                         </div>
