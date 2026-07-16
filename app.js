@@ -430,7 +430,6 @@ function renderAll() {
     renderTimeline();
     renderMeds();
     renderWater();
-    renderBrainDump();
     renderOtherLiquids();
     renderKanban();
     updateGeneralProgress();
@@ -1457,13 +1456,6 @@ function setupEventListeners() {
         nativePicker.showPicker(); // Método moderno para disparar o datepicker nativo
     });
 
-    // --- Brain Dump ---
-    document.getElementById("btn-add-note").addEventListener("click", addNote);
-    document.getElementById("braindump-input").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            addNote();
-        }
-    });
 
     // --- Reiniciar Dia ---
     document.getElementById("btn-reset-day").addEventListener("click", () => {

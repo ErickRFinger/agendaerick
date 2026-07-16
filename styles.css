@@ -8,12 +8,12 @@
     --bg-panel: hsla(250, 24%, 12%, 0.85);
     --bg-panel-hover: hsla(250, 24%, 15%, 0.9);
     --border-color: rgba(255, 255, 255, 0.08);
-    --border-color-focus: hsla(265, 85%, 65%, 0.4);
+    --border-color-focus: hsla(38, 92%, 50%, 0.4);
     
     /* Cores de Destaque (Accents) */
-    --color-primary: hsl(265, 85%, 65%);
-    --color-primary-hover: hsl(265, 85%, 58%);
-    --color-primary-glow: hsla(265, 85%, 65%, 0.35);
+    --color-primary: hsl(38, 92%, 50%);
+    --color-primary-hover: hsl(38, 92%, 43%);
+    --color-primary-glow: hsla(38, 92%, 50%, 0.35);
     
     --color-success: hsl(150, 75%, 45%);
     --color-success-glow: hsla(150, 75%, 45%, 0.2);
@@ -67,7 +67,7 @@ body {
     overflow-x: hidden;
     line-height: 1.5;
     background-image: 
-        radial-gradient(circle at 10% 20%, hsla(265, 85%, 65%, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 10% 20%, hsla(38, 92%, 50%, 0.08) 0%, transparent 40%),
         radial-gradient(circle at 90% 80%, hsla(198, 90%, 52%, 0.06) 0%, transparent 40%);
     background-attachment: fixed;
 }
@@ -629,9 +629,9 @@ body {
 
 /* Destaque para a HORA ATUAL (Foco Visual ADHD) */
 .hour-slot.current-hour {
-    background: hsla(265, 85%, 65%, 0.05);
+    background: hsla(38, 92%, 50%, 0.05);
     border: 1px solid var(--border-color-focus);
-    box-shadow: 0 0 16px hsla(265, 85%, 65%, 0.1);
+    box-shadow: 0 0 16px hsla(38, 92%, 50%, 0.1);
 }
 
 .hour-slot.current-hour::after {
@@ -826,7 +826,7 @@ body {
 }
 
 .task-card.cat-routine .category-badge { background: rgba(255, 255, 255, 0.08); color: var(--text-main); }
-.task-card.cat-work .category-badge { background: hsla(265, 85%, 65%, 0.15); color: hsl(265, 85%, 75%); }
+.task-card.cat-work .category-badge { background: hsla(38, 92%, 50%, 0.15); color: hsl(38, 92%, 75%); }
 .task-card.cat-study .category-badge { background: hsla(42, 95%, 55%, 0.15); color: hsl(42, 95%, 70%); }
 .task-card.cat-health .category-badge { background: hsla(150, 75%, 45%, 0.15); color: hsl(150, 75%, 65%); }
 .task-card.cat-leisure .category-badge { background: hsla(198, 90%, 52%, 0.15); color: hsl(198, 90%, 70%); }
@@ -1965,30 +1965,99 @@ textarea {
 }
 
 .kanban-column {
-    background: hsla(250, 24%, 10%, 0.6);
-    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 14px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     max-height: 500px;
-    min-height: 120px;
-    transition: var(--transition-fast);
+    min-height: 140px;
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
 }
 
-.kanban-column.drag-over {
-    border-color: var(--color-primary);
-    background: hsla(250, 24%, 14%, 0.85);
-    box-shadow: 0 0 12px var(--color-primary-glow);
+/* Colunas individuais com tons de cores e divisões melhores */
+.kanban-column[data-column="dia"] {
+    background: linear-gradient(180deg, hsla(42, 95%, 8%, 0.6) 0%, hsla(250, 24%, 6%, 0.3) 100%);
+    border: 1px solid hsla(42, 95%, 55%, 0.2);
+    border-top: 4px solid var(--color-warning);
+}
+.kanban-column[data-column="dia"].drag-over {
+    border-color: var(--color-warning);
+    background: linear-gradient(180deg, hsla(42, 95%, 12%, 0.8) 0%, hsla(250, 24%, 8%, 0.5) 100%);
+    box-shadow: 0 0 20px hsla(42, 95%, 55%, 0.2);
+}
+.kanban-column[data-column="dia"] .kanban-column-header h3 {
+    color: var(--color-warning);
+}
+
+.kanban-column[data-column="semana"] {
+    background: linear-gradient(180deg, hsla(265, 85%, 8%, 0.6) 0%, hsla(250, 24%, 6%, 0.3) 100%);
+    border: 1px solid hsla(265, 85%, 65%, 0.2);
+    border-top: 4px solid hsl(265, 85%, 65%);
+}
+.kanban-column[data-column="semana"].drag-over {
+    border-color: hsl(265, 85%, 65%);
+    background: linear-gradient(180deg, hsla(265, 85%, 12%, 0.8) 0%, hsla(250, 24%, 8%, 0.5) 100%);
+    box-shadow: 0 0 20px hsla(265, 85%, 65%, 0.2);
+}
+.kanban-column[data-column="semana"] .kanban-column-header h3 {
+    color: hsl(265, 85%, 65%);
+}
+
+.kanban-column[data-column="mes"] {
+    background: linear-gradient(180deg, hsla(150, 75%, 6%, 0.6) 0%, hsla(250, 24%, 6%, 0.3) 100%);
+    border: 1px solid hsla(150, 75%, 45%, 0.2);
+    border-top: 4px solid var(--color-success);
+}
+.kanban-column[data-column="mes"].drag-over {
+    border-color: var(--color-success);
+    background: linear-gradient(180deg, hsla(150, 75%, 10%, 0.8) 0%, hsla(250, 24%, 8%, 0.5) 100%);
+    box-shadow: 0 0 20px hsla(150, 75%, 45%, 0.2);
+}
+.kanban-column[data-column="mes"] .kanban-column-header h3 {
+    color: var(--color-success);
+}
+
+.kanban-column[data-column="lembretes"] {
+    background: linear-gradient(180deg, hsla(198, 90%, 6%, 0.6) 0%, hsla(250, 24%, 6%, 0.3) 100%);
+    border: 1px solid hsla(198, 90%, 52%, 0.2);
+    border-top: 4px solid var(--color-water);
+}
+.kanban-column[data-column="lembretes"].drag-over {
+    border-color: var(--color-water);
+    background: linear-gradient(180deg, hsla(198, 90%, 10%, 0.8) 0%, hsla(250, 24%, 8%, 0.5) 100%);
+    box-shadow: 0 0 20px hsla(198, 90%, 52%, 0.2);
+}
+.kanban-column[data-column="lembretes"] .kanban-column-header h3 {
+    color: var(--color-water);
+}
+
+.kanban-column[data-column="concluidas"] {
+    background: linear-gradient(180deg, hsla(250, 8%, 8%, 0.6) 0%, hsla(250, 24%, 5%, 0.3) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 4px solid var(--text-dimmed);
+}
+.kanban-column[data-column="concluidas"].drag-over {
+    border-color: var(--text-muted);
+    background: linear-gradient(180deg, hsla(250, 8%, 12%, 0.8) 0%, hsla(250, 24%, 7%, 0.5) 100%);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+.kanban-column[data-column="concluidas"] .kanban-column-header h3 {
+    color: var(--text-muted);
+}
+.kanban-column[data-column="concluidas"] .kanban-card {
+    opacity: 0.6;
+    text-decoration: line-through;
 }
 
 .kanban-column-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .column-title-left {
@@ -2000,28 +2069,27 @@ textarea {
 .column-title-left i {
     width: 16px;
     height: 16px;
-    color: var(--color-primary);
 }
 
-/* Cores específicas para ícones das colunas */
+/* Ícones das colunas */
 .kanban-column[data-column="dia"] .column-title-left i { color: var(--color-warning); }
-.kanban-column[data-column="semana"] .column-title-left i { color: var(--color-primary); }
+.kanban-column[data-column="semana"] .column-title-left i { color: hsl(265, 85%, 65%); }
 .kanban-column[data-column="mes"] .column-title-left i { color: var(--color-success); }
 .kanban-column[data-column="lembretes"] .column-title-left i { color: var(--color-water); }
 .kanban-column[data-column="concluidas"] .column-title-left i { color: var(--text-dimmed); }
 
 .kanban-column-header h3 {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 800;
     font-family: var(--font-heading);
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 .column-badge {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-muted);
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     padding: 2px 8px;
     border-radius: 20px;
 }
@@ -2031,38 +2099,48 @@ textarea {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     min-height: 40px;
     padding-right: 4px;
 }
 
-/* Card de Nota Kanban */
+/* Card de Nota Kanban com visual premium */
 .kanban-card {
     background: var(--bg-panel);
     border: 1px solid var(--border-color);
+    border-left: 4px solid var(--color-primary);
     border-radius: var(--radius-sm);
-    padding: 10px 12px;
+    padding: 12px 14px;
     cursor: grab;
     position: relative;
-    transition: var(--transition-fast);
+    transition: var(--transition-smooth);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
+
+.kanban-column[data-column="dia"] .kanban-card { border-left-color: var(--color-warning); }
+.kanban-column[data-column="semana"] .kanban-card { border-left-color: hsl(265, 85%, 65%); }
+.kanban-column[data-column="mes"] .kanban-card { border-left-color: var(--color-success); }
+.kanban-column[data-column="lembretes"] .kanban-card { border-left-color: var(--color-water); }
+.kanban-column[data-column="concluidas"] .kanban-card { border-left-color: var(--text-dimmed); }
 
 .kanban-card:active {
     cursor: grabbing;
 }
 
 .kanban-card.dragging {
-    opacity: 0.4;
+    opacity: 0.3;
     border: 1px dashed var(--color-primary);
+    transform: scale(0.98);
 }
 
 .kanban-card:hover {
     border-color: rgba(255, 255, 255, 0.15);
     background: var(--bg-panel-hover);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
 }
 
 .kanban-card-text {
