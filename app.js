@@ -2202,100 +2202,7 @@ async function loadServersFromSupabase() {
                 procHtml = `<div class="vigi-proc-row" style="color:var(--text-dimmed);">Nenhum processo pesado</div>`;
             }
             
-            html += `
-                <div class="vigi-server-card ${statusClass}">
-                    <div class="vigi-card-header">
-                        <div class="vigi-card-title">
-                            <span class="vigi-status-dot"></span>
-                            <h3>${row.displayName}</h3>
-                        </div>
-                        <span class="vigi-status-badge">${statusLabel}</span>
-                    </div>
-                    
-                    <div class="vigi-card-body">
-                        <!-- PROCESSADOR SECTION -->
-                        <div class="vigi-section-header">
-                            <i data-lucide="cpu" class="vigi-sec-icon"></i>
-                            <span style="flex-grow:1; margin-left:4px;">Processador (CPU)</span>
-                            <span class="vigi-sec-val">${cpuUsage}%</span>
-                        </div>
-                        <div class="vigi-spec-text" style="color:var(--text-muted); font-size:11px; margin-bottom:4px;">${data.cpuModel || "Processador Desconhecido"}</div>
-                        
-                        <div class="vigi-progress" style="margin-bottom:6px;"><div class="vigi-progress-fill" style="width: ${cpuUsage}%;"></div></div>
-                        
-                        <!-- CPU Badges -->
-                        <div class="vigi-badges-row">
-                            <div class="vigi-badge" title="Temperatura CPU">
-                                <i data-lucide="thermometer" style="color: ${getTempColor(cpuTemp)}; width:11px; height:11px;"></i>
-                                <span class="vigi-badge-val" style="color: ${getTempColor(cpuTemp)};">${cpuTemp > 0 ? cpuTemp + "°C" : "N/A"}</span>
-                            </div>
-                            <div class="vigi-badge" title="Frequência Clock">
-                                <i data-lucide="gauge" style="color: #a78bfa; width:11px; height:11px;"></i>
-                                <span class="vigi-badge-val" style="color: #a78bfa;">${cpuFreq}</span>
-                            </div>
-                            <div class="vigi-badge" title="Consumo CPU">
-                                <i data-lucide="zap" style="color: #f59e0b; width:11px; height:11px;"></i>
-                                <span class="vigi-badge-val" style="color: #f59e0b;">${cpuPower}</span>
-                            </div>
-                            ${data.vcore ? `
-                            <div class="vigi-badge" title="Tensão Vcore">
-                                <i data-lucide="zap-off" style="color: #60a5fa; width:11px; height:11px;"></i>
-                                <span class="vigi-badge-val" style="color: #60a5fa;">${vcoreVal}</span>
-                            </div>` : ''}
-                        </div>
-                        
-                        <!-- CPU Threads Grid -->
-                        ${data.cpuThreads && data.cpuThreads.length > 0 ? `
-                        <div class="vigi-section-title">Uso por Threads (${data.cpuThreads.length} núcleos)</div>
-                        ${renderCpuThreads(data.cpuThreads, row.machine_id)}
-                        ` : ''}
 
-                        <!-- MEMÓRIA RAM SECTION -->
-                        <div class="vigi-section-header" style="margin-top: 10px;">
-                            <i data-lucide="layers" class="vigi-sec-icon"></i>
-                            <span style="flex-grow:1; margin-left:4px;">Memória RAM</span>
-                            <span class="vigi-sec-val">${ramUsage}%</span>
-                        </div>
-                        <div class="vigi-spec-text" style="color:var(--text-muted); font-size:11px; margin-bottom:4px;">
-                            Uso: ${data.ramUsedGB || 0} GB / ${data.ramTotalGB || 0} GB
-                        </div>
-                        <div class="vigi-progress" style="margin-bottom:6px;"><div class="vigi-progress-fill" style="width: ${ramUsage}%;"></div></div>
-
-                        <!-- PLACA DE VÍDEO (GPU) SECTION -->
-                        ${gpuName !== "N/A" && gpuName !== "Intel(R) HD Graphics" && gpuName !== "Microsoft Basic Display Adapter" ? `
-                        <div class="vigi-section-header" style="margin-top: 10px;">
-                            <i data-lucide="monitor" class="vigi-sec-icon"></i>
-                            <span style="flex-grow:1; margin-left:4px;">Placa de Vídeo (GPU)</span>
-                            <span class="vigi-sec-val">${gpuLoad}%</span>
-                        </div>
-                        <div class="vigi-spec-text" style="color:var(--text-muted); font-size:11px; margin-bottom:4px;">${gpuName}</div>
-                        
-                        <div class="vigi-badges-row">
-                            <div class="vigi-badge" title="Temperatura GPU">
-                                <i data-lucide="thermometer" style="color: ${getTempColor(gpuTemp)}; width:11px; height:11px;"></i>
-                                <span class="vigi-badge-val" style="color: ${getTempColor(gpuTemp)};">${gpuTemp > 0 ? gpuTemp + "°C" : "N/A"}</span>
-                            </div>
-                            <div class="vigi-badge" title="Memória VRAM em uso" style="flex-grow: 1;">
-                                <i data-lucide="hard-drive" style="color: #60a5fa; width:11px; height:11px;"></i>
-                                <span class="vigi-badge-val" style="color: #60a5fa;">VRAM: ${vramText}</span>
-                            </div>
-                        </div>
-                        ` : ''}
-
-                        <!-- REDE SECTION -->
-                        <div class="vigi-section-title">Tráfego de Rede (Velocidade)</div>
-                        <div class="vigi-net-row" style="display:flex; justify-content:space-between; font-size:11px; background:rgba(0,0,0,0.15); padding:6px 10px; border-radius:4px; border:1px solid var(--border-color); margin-top:4px;">
-                            <span style="color:var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="arrow-down" style="width:11px; height:11px; color:#10b981;"></i> Down: <b style="color:var(--text-main); font-family:monospace;">${rxSpeed}</b></span>
-                            <span style="color:var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="arrow-up" style="width:11px; height:11px; color:var(--color-primary);"></i> Up: <b style="color:var(--text-main); font-family:monospace;">${txSpeed}</b></span>
-                        </div>
-
-                        <!-- PARTIÇÕES SECTION -->
-                        <div class="vigi-section-title">Partições de Armazenamento</div>
-                        <div class="vigi-disks-container">
-                            ${disksHtml}
-                        </div>
-                    `;
-                        
             // Botoes e painel de ferramentas e utilidades
             let controlButtons = "";
             if (isOnline) {
@@ -2973,6 +2880,16 @@ function updateVigiOverview(rows) {
         const isOnline = (Date.now() - new Date(row.updated_at).getTime()) < 45000;
         const data = row.hardware_data || {};
         
+        let displayName = row.machine_id ? row.machine_id.toUpperCase() : "MAQUINA";
+        const mId = row.machine_id ? row.machine_id.toLowerCase() : "";
+        if (mId === 'pcerickintel') {
+            displayName = 'PC PRINCIPAL';
+        } else if (mId === 'pcerickamd') {
+            displayName = 'PC SECUNDÁRIO';
+        } else if (mId === 'desktop-1v21v3f') {
+            displayName = 'SERVIDOR';
+        }
+        
         if (isOnline) {
             onlineCount++;
             totalCpu += parseFloat(data.cpuUsage || 0);
@@ -2990,17 +2907,17 @@ function updateVigiOverview(rows) {
             }
             
             // Check Alerts
-            if (data.cpuUsage > 90) activeAlerts.push(`CPU Crítica em ${row.displayName} (${data.cpuUsage}%)`);
-            if (data.ramUsage > 90) activeAlerts.push(`RAM Crítica em ${row.displayName} (${data.ramUsage}%)`);
-            if (data.cpuTemp >= 80) activeAlerts.push(`Superaquecimento em ${row.displayName} (${data.cpuTemp}°C)`);
-            if (data.gpuTemp >= 85) activeAlerts.push(`Superaquecimento GPU em ${row.displayName} (${data.gpuTemp}°C)`);
+            if (data.cpuUsage > 90) activeAlerts.push(`CPU Crítica em ${displayName} (${data.cpuUsage}%)`);
+            if (data.ramUsage > 90) activeAlerts.push(`RAM Crítica em ${displayName} (${data.ramUsage}%)`);
+            if (data.cpuTemp >= 80) activeAlerts.push(`Superaquecimento em ${displayName} (${data.cpuTemp}°C)`);
+            if (data.gpuTemp >= 85) activeAlerts.push(`Superaquecimento GPU em ${displayName} (${data.gpuTemp}°C)`);
             
             if (data.disks && data.disks.length > 0) {
                 data.disks.forEach(d => {
                     totalStorageGB += d.totalGB || 0;
                     totalStorageUsedGB += d.usedGB || 0;
                     const pct = (d.usedGB / d.totalGB) * 100;
-                    if (pct > 90) activeAlerts.push(`Espaço Crítico em ${row.displayName} (Disco ${d.letter}: ${pct.toFixed(0)}%)`);
+                    if (pct > 90) activeAlerts.push(`Espaço Crítico em ${displayName} (Disco ${d.letter}: ${pct.toFixed(0)}%)`);
                 });
             }
             if (data.diskHealth && data.diskHealth.length > 0) {
@@ -3009,11 +2926,11 @@ function updateVigiOverview(rows) {
                     if (d.HealthStatus === 'Healthy') {
                         healthyDisksCount++;
                     }
-                    if (d.HealthStatus !== 'Healthy') activeAlerts.push(`Falha S.M.A.R.T em ${row.displayName} (${d.FriendlyName})`);
+                    if (d.HealthStatus !== 'Healthy') activeAlerts.push(`Falha S.M.A.R.T em ${displayName} (${d.FriendlyName})`);
                 });
             }
         } else {
-            activeAlerts.push(`Servidor ${row.displayName} está OFFLINE`);
+            activeAlerts.push(`Servidor ${displayName} está OFFLINE`);
         }
     });
     
