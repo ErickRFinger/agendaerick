@@ -73,6 +73,7 @@ const defaultState = {
    INICIALIZAÇÃO DA APLICAÇÃO
    ========================================================================== */
 document.addEventListener("DOMContentLoaded", () => {
+    getVigiUrl(); // Inicializa a autodescoberta do servidor em background
     selectedDate = getTodayDateString();
     loadState();
     setupCurrentDateDisplay();
@@ -2423,7 +2424,7 @@ async function loadDirectoryExplorer(pathStr) {
     grid.innerHTML = "";
     breadcrumbs.textContent = pathStr;
     
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const vigiUrl = await getVigiUrl();
     const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
     
     try {
@@ -2521,7 +2522,7 @@ async function handleExplorerUpload(event) {
     const file = event.target.files[0]; 
     if (!file || !currentExplorerPath) return;
     
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const vigiUrl = await getVigiUrl();
     const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
     
     const formData = new FormData();
@@ -2550,11 +2551,11 @@ async function handleExplorerUpload(event) {
     }
 }
 
-function downloadFileExplorer(filePath) {
+async function downloadFileExplorer(filePath) {
     playClickSound();
     showToast(`Iniciando download...`, 'info');
     
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const vigiUrl = await getVigiUrl();
     const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
     
     const url = `${vigiUrl}/api/download?path=${encodeURIComponent(filePath)}&token=${vigiToken}`;
@@ -2623,6 +2624,54 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
+let activeVigiUrl = null;
+async function getVigiUrl() {
+    if (activeVigiUrl) return activeVigiUrl;
+    const isHttps = window.location.protocol === 'https:';
+    const candidateUrls = [];
+    if (isHttps) {
+        candidateUrls.push("https://pc-casa-i5.tail2c511b.ts.net");
+        candidateUrls.push("https://pc-casa-i7.tail2c511b.ts.net");
+        candidateUrls.push("https://pc-casa-r7.tail2c511b.ts.net");
+    } else {
+        const stored = localStorage.getItem("FOCOFACIL_VIGI_URL");
+        if (stored) candidateUrls.push(stored);
+        candidateUrls.push("http://localhost:3030");
+        candidateUrls.push("http://pc-casa-i5.tail2c511b.ts.net:3030");
+        candidateUrls.push("http://pc-casa-i7.tail2c511b.ts.net:3030");
+        candidateUrls.push("http://pc-casa-r7.tail2c511b.ts.net:3030");
+    }
+    
+    // Testa as URLs em paralelo com timeout curto
+    const testPromises = candidateUrls.map(url => {
+        return new Promise((resolve) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1200);
+            
+            fetch(`${url}/api/sync`, { method: 'HEAD', signal: controller.signal })
+                .then(() => {
+                    clearTimeout(timeoutId);
+                    resolve(url);
+                })
+                .catch(() => {
+                    clearTimeout(timeoutId);
+                    resolve(null);
+                });
+        });
+    });
+    
+    const results = await Promise.all(testPromises);
+    const validUrl = results.find(r => r !== null);
+    if (validUrl) {
+        activeVigiUrl = validUrl;
+        console.log(`[VIGI] Servidor Vigi auto-detectado: ${activeVigiUrl}`);
+        return activeVigiUrl;
+    }
+    
+    activeVigiUrl = candidateUrls[0] || "http://localhost:3030";
+    return activeVigiUrl;
+}
+
 function getAuthHeaders() {
     const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
     return {
@@ -2631,8 +2680,8 @@ function getAuthHeaders() {
     };
 }
 
-function sendPowerAction(ip, action) {
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+async function sendPowerAction(ip, action) {
+    const vigiUrl = await getVigiUrl();
     let actionName = action === 'restart' ? 'Reiniciar' : (action === 'shutdown' ? 'Desligar' : 'Suspender');
     if(!confirm(`Tem certeza que deseja ${actionName} o servidor no IP ${ip}?`)) return;
     
@@ -2646,8 +2695,8 @@ function sendPowerAction(ip, action) {
     }).catch(e => showToast('Falha na comunicação.', 'error'));
 }
 
-function wakeServer(serverId) {
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+async function wakeServer(serverId) {
+    const vigiUrl = await getVigiUrl();
     const btn = document.getElementById(`btn-wake-${serverId}`);
     let originalHtml = '';
     if (btn) {
@@ -2682,8 +2731,8 @@ function wakeServer(serverId) {
     });
 }
 
-function controlService(ip, action, service) {
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+async function controlService(ip, action, service) {
+    const vigiUrl = await getVigiUrl();
     if (!confirm(`Deseja realmente ${action === 'start' ? 'INICIAR' : 'PARAR'} o serviço: ${service.toUpperCase()}?`)) return;
     
     showToast(`${action === 'start' ? 'Iniciando' : 'Parando'} ${service}...`, 'info');
@@ -2700,8 +2749,8 @@ function controlService(ip, action, service) {
     .catch(e => showToast('Falha de conexão', 'error'));
 }
 
-function optimizeProcesses(ip, mode = 'performance') {
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+async function optimizeProcesses(ip, mode = 'performance') {
+    const vigiUrl = await getVigiUrl();
     const isPerformance = mode === 'performance';
     const confirmMsg = isPerformance
         ? '⚡ MÁXIMO DESEMPENHO (PC Principal)\n\nIsso vai:\n- Fechar Discord, Spotify, Steam, Epic, launchers e apps em segundo plano\n- Ativar plano de energia Ultimate Performance\n- Aplicar tweaks de CPU/GPU para jogos\n- Manter: Antigravity, Chrome, VSCode, AnyDesk, Tailscale\n\nDeseja continuar?'
@@ -2734,8 +2783,8 @@ function optimizeProcesses(ip, mode = 'performance') {
     .catch(e => showToast('Falha de conexão: ' + e.message, 'error'));
 }
 
-function runSpeedtest(ip, id) {
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+async function runSpeedtest(ip, id) {
+    const vigiUrl = await getVigiUrl();
     const span = document.getElementById(`speed-${id}`);
     if(span) span.innerHTML = '...';
     
@@ -2757,8 +2806,8 @@ function runSpeedtest(ip, id) {
     });
 }
 
-function cleanDisk(ip) {
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+async function cleanDisk(ip) {
+    const vigiUrl = await getVigiUrl();
     if(!confirm("Esvaziar a lixeira e apagar todos os arquivos temporários deste PC? Isso liberará gigabytes de espaço silenciosamente.")) return;
     fetch(`${vigiUrl}/api/clean`, {
         method: 'POST',
@@ -2770,8 +2819,8 @@ function cleanDisk(ip) {
     }).catch(e => showToast('Falha de conexão', 'error'));
 }
 
-function checkWindowsUpdate(ip, id) {
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+async function checkWindowsUpdate(ip, id) {
+    const vigiUrl = await getVigiUrl();
     const btn = document.getElementById(`btn-update-${id}`);
     let originalHtml = '';
     if (btn) {
@@ -2826,8 +2875,8 @@ function closeTerminal() {
     document.getElementById('terminal-input').value = '';
 }
 
-function sendTerminalCommand() {
-    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+async function sendTerminalCommand() {
+    const vigiUrl = await getVigiUrl();
     const input = document.getElementById('terminal-input');
     const cmd = input.value.trim();
     if (!cmd || !currentTerminalIp) return;
