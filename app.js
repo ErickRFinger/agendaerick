@@ -2154,23 +2154,7 @@ async function loadServersFromSupabase() {
             const cpuPower = data.cpuPower ? `${parseInt(data.cpuPower)}W` : "0W";
             const vcoreVal = data.vcore ? `${data.vcore.toFixed(3)}V` : "--";
             
-            let disksHtml = "";
-            if (data.disks && data.disks.length > 0) {
-                data.disks.forEach(d => {
-                    const usagePct = d.totalGB > 0 ? Math.round((d.usedGB / d.totalGB) * 100) : 0;
-                    disksHtml += `
-                        <div class="vigi-disk-item" style="cursor: default;" title="Armazenamento da partição ${d.letter}:">
-                            <span class="vigi-disk-letter"><i data-lucide="hard-drive" style="width:12px;height:12px;margin-right:2px;"></i> ${d.letter}:</span>
-                            <div class="vigi-disk-bar-container">
-                                <div class="vigi-disk-bar-fill" style="width: ${usagePct}%;"></div>
-                            </div>
-                            <span class="vigi-disk-text">${d.usedGB}GB / ${d.totalGB}GB</span>
-                        </div>
-                    `;
-                });
-            } else {
-                disksHtml = `<span style="font-size:0.75rem;color:var(--text-dimmed);">Nenhum disco detectado</span>`;
-            }
+
             
             let procHtml = "";
             if (data.processes && data.processes.length > 0) {
@@ -2354,11 +2338,7 @@ async function loadServersFromSupabase() {
                             <span style="color:var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="arrow-up" style="width:11px; height:11px; color:var(--color-primary);"></i> Up: <b style="color:var(--text-main); font-family:monospace;">${txSpeed}</b></span>
                         </div>
 
-                        <!-- PARTIÇÕES SECTION -->
-                        <div class="vigi-section-title">Partições de Armazenamento</div>
-                        <div class="vigi-disks-container">
-                            ${disksHtml}
-                        </div>
+
                         
                         <!-- PROCESSOS SECTION -->
                         <div class="vigi-section-title">Processos Ativos (RAM)</div>
