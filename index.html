@@ -272,6 +272,143 @@
                 </section>
             </div>
         </main>
+
+        <!-- SEÇÃO DO KANBAN DE ANOTAÇÕES (ESTILO TRELLO) -->
+        <section class="panel kanban-panel" id="panel-kanban">
+            <div class="panel-header">
+                <div class="panel-title-area">
+                    <div class="panel-icon kanban-icon" style="background: linear-gradient(135deg, var(--color-primary), var(--color-water));">
+                        <i data-lucide="kanban-square"></i>
+                    </div>
+                    <h2>Quadro de Anotações Kanban</h2>
+                </div>
+                <div class="kanban-actions">
+                    <span class="text-muted" style="font-size: 13px;">Arraste os cards ou use as setas para organizar suas anotações</span>
+                </div>
+            </div>
+            
+            <div class="kanban-board" id="kanban-board">
+                <!-- Coluna: DIA -->
+                <div class="kanban-column" data-column="dia" ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="dragLeave(event)" ondragenter="dragEnter(event)">
+                    <div class="kanban-column-header">
+                        <div class="column-title-left">
+                            <i data-lucide="sun"></i>
+                            <h3>DIA</h3>
+                        </div>
+                        <span class="column-badge" id="badge-dia">0</span>
+                    </div>
+                    <div class="kanban-column-notes" id="notes-dia"></div>
+                    <div class="kanban-column-footer">
+                        <button class="btn-kanban-add" id="btn-add-trigger-dia" onclick="showInlineInput('dia')">
+                            <i data-lucide="plus"></i> Adicionar anotação
+                        </button>
+                        <div class="inline-add-area" id="add-area-dia" style="display: none;">
+                            <textarea id="input-dia" placeholder="Escreva sua anotação..." rows="2"></textarea>
+                            <div class="inline-add-actions">
+                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('dia')">Adicionar</button>
+                                <button class="btn-close-inline" onclick="hideInlineInput('dia')">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna: SEMANA -->
+                <div class="kanban-column" data-column="semana" ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="dragLeave(event)" ondragenter="dragEnter(event)">
+                    <div class="kanban-column-header">
+                        <div class="column-title-left">
+                            <i data-lucide="calendar-days"></i>
+                            <h3>SEMANA</h3>
+                        </div>
+                        <span class="column-badge" id="badge-semana">0</span>
+                    </div>
+                    <div class="kanban-column-notes" id="notes-semana"></div>
+                    <div class="kanban-column-footer">
+                        <button class="btn-kanban-add" id="btn-add-trigger-semana" onclick="showInlineInput('semana')">
+                            <i data-lucide="plus"></i> Adicionar anotação
+                        </button>
+                        <div class="inline-add-area" id="add-area-semana" style="display: none;">
+                            <textarea id="input-semana" placeholder="Escreva sua anotação..." rows="2"></textarea>
+                            <div class="inline-add-actions">
+                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('semana')">Adicionar</button>
+                                <button class="btn-close-inline" onclick="hideInlineInput('semana')">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna: MES -->
+                <div class="kanban-column" data-column="mes" ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="dragLeave(event)" ondragenter="dragEnter(event)">
+                    <div class="kanban-column-header">
+                        <div class="column-title-left">
+                            <i data-lucide="calendar-range"></i>
+                            <h3>MÊS</h3>
+                        </div>
+                        <span class="column-badge" id="badge-mes">0</span>
+                    </div>
+                    <div class="kanban-column-notes" id="notes-mes"></div>
+                    <div class="kanban-column-footer">
+                        <button class="btn-kanban-add" id="btn-add-trigger-mes" onclick="showInlineInput('mes')">
+                            <i data-lucide="plus"></i> Adicionar anotação
+                        </button>
+                        <div class="inline-add-area" id="add-area-mes" style="display: none;">
+                            <textarea id="input-mes" placeholder="Escreva sua anotação..." rows="2"></textarea>
+                            <div class="inline-add-actions">
+                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('mes')">Adicionar</button>
+                                <button class="btn-close-inline" onclick="hideInlineInput('mes')">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna: LEMBRETES -->
+                <div class="kanban-column" data-column="lembretes" ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="dragLeave(event)" ondragenter="dragEnter(event)">
+                    <div class="kanban-column-header">
+                        <div class="column-title-left">
+                            <i data-lucide="pin"></i>
+                            <h3>LEMBRETES</h3>
+                        </div>
+                        <span class="column-badge" id="badge-lembretes">0</span>
+                    </div>
+                    <div class="kanban-column-notes" id="notes-lembretes"></div>
+                    <div class="kanban-column-footer">
+                        <button class="btn-kanban-add" id="btn-add-trigger-lembretes" onclick="showInlineInput('lembretes')">
+                            <i data-lucide="plus"></i> Adicionar anotação
+                        </button>
+                        <div class="inline-add-area" id="add-area-lembretes" style="display: none;">
+                            <textarea id="input-lembretes" placeholder="Escreva sua anotação..." rows="2"></textarea>
+                            <div class="inline-add-actions">
+                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('lembretes')">Adicionar</button>
+                                <button class="btn-close-inline" onclick="hideInlineInput('lembretes')">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna: CONCLUIDAS -->
+                <div class="kanban-column" data-column="concluidas" ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="dragLeave(event)" ondragenter="dragEnter(event)">
+                    <div class="kanban-column-header">
+                        <div class="column-title-left">
+                            <i data-lucide="check-square"></i>
+                            <h3>CONCLUÍDAS</h3>
+                        </div>
+                        <span class="column-badge" id="badge-concluidas">0</span>
+                    </div>
+                    <div class="kanban-column-notes" id="notes-concluidas"></div>
+                    <div class="kanban-column-footer">
+                        <button class="btn-kanban-add" id="btn-add-trigger-concluidas" onclick="showInlineInput('concluidas')">
+                            <i data-lucide="plus"></i> Adicionar anotação
+                        </button>
+                        <div class="inline-add-area" id="add-area-concluidas" style="display: none;">
+                            <textarea id="input-concluidas" placeholder="Escreva sua anotação..." rows="2"></textarea>
+                            <div class="inline-add-actions">
+                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('concluidas')">Adicionar</button>
+                                <button class="btn-close-inline" onclick="hideInlineInput('concluidas')">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- MODAL DE ADICIONAR TAREFA (DEMANDA) -->

@@ -9,7 +9,8 @@ let state = {
     waterHistory: {}, // Mapeado por data: { "YYYY-MM-DD": ml }
     waterGoal: 2000,
     notes: [],
-    lastUpdatedDate: ""
+    lastUpdatedDate: "",
+    kanbanNotes: []
 };
 
 // Data Ativa no Calendário (Padrão: Hoje)
@@ -59,7 +60,13 @@ const defaultState = {
     lastWaterTimestamp: 0,
     notifiedTasks: [],
     lastUpdatedDate: "",
-    lastSavedTimestamp: 0
+    lastSavedTimestamp: 0,
+    kanbanNotes: [
+        { id: "k1", text: "Organizar as anotações do dia por prioridade.", column: "dia" },
+        { id: "k2", text: "Fazer o planejamento das metas semanais.", column: "semana" },
+        { id: "k3", text: "Revisar assinaturas mensais e finanças.", column: "mes" },
+        { id: "k4", text: "Lembrar de comprar presente de aniversário.", column: "lembretes" }
+    ]
 };
 
 /* ==========================================================================
@@ -74,7 +81,16 @@ document.addEventListener("DOMContentLoaded", () => {
     setupEventListeners();
 
     // Sincronização automática e silenciosa baseada no Supabase
-    syncCode = "default";
+    const savedSyncCode = localStorage.getItem("FOCOFACIL_SYNC_CODE");
+    if (savedSyncCode) {
+        syncCode = savedSyncCode;
+        const syncInput = document.getElementById("sync-code-input");
+        if (syncInput) {
+            syncInput.value = syncCode;
+        }
+    } else {
+        syncCode = "default";
+    }
     pullFromCloud(); // Busca dados atualizados da nuvem
 
 
@@ -158,6 +174,7 @@ function fillMissingStateFields() {
     if (!state.lastWaterTimestamp) state.lastWaterTimestamp = 0;
     if (!state.notifiedTasks) state.notifiedTasks = [];
     if (!state.lastSavedTimestamp) state.lastSavedTimestamp = 0;
+    if (!state.kanbanNotes) state.kanbanNotes = [];
 }
 
 function migrateLegacyData(legacy) {
@@ -415,6 +432,7 @@ function renderAll() {
     renderWater();
     renderBrainDump();
     renderOtherLiquids();
+    renderKanban();
     updateGeneralProgress();
     lucide.createIcons();
 }
@@ -1765,3 +1783,213 @@ function sendPushNotification(title, options) {
         new Notification(title, options);
     }
 }
+
+/* ==========================================================================
+   QUADRO KANBAN DE ANOTAÇÕES (ESTILO TRELLO)
+   ========================================================================== */
+const KANBAN_COLUMNS = ['dia', 'semana', 'mes', 'lembretes', 'concluidas'];
+
+function renderKanban() {
+    if (!state.kanbanNotes) {
+        state.kanbanNotes = [];
+    }
+
+    KANBAN_COLUMNS.forEach(col => {
+        const columnNotes = state.kanbanNotes.filter(note => note.column === col);
+        
+        // Atualiza o contador da coluna
+        const badge = document.getElementById(`badge-${col}`);
+        if (badge) {
+            badge.textContent = columnNotes.length;
+        }
+
+        // Seleciona o container de notas
+        const container = document.getElementById(`notes-${col}`);
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        columnNotes.forEach(note => {
+            const card = document.createElement('div');
+            card.className = 'kanban-card';
+            card.draggable = true;
+            card.dataset.id = note.id;
+            
+            // Eventos do Drag and Drop no próprio Card
+            card.addEventListener('dragstart', drag);
+            card.addEventListener('dragend', (e) => {
+                e.target.classList.remove('dragging');
+            });
+
+            const colIndex = KANBAN_COLUMNS.indexOf(col);
+            const leftBtn = colIndex > 0 ? `<button class="kanban-card-btn move-btn" onclick="moveKanbanNoteMobile('${note.id}', -1)" title="Mover para esquerda"><i data-lucide="chevron-left"></i></button>` : '';
+            const rightBtn = colIndex < 4 ? `<button class="kanban-card-btn move-btn" onclick="moveKanbanNoteMobile('${note.id}', 1)" title="Mover para direita"><i data-lucide="chevron-right"></i></button>` : '';
+
+            card.innerHTML = `
+                <div class="kanban-card-text">${escapeHtml(note.text)}</div>
+                <div class="kanban-card-actions">
+                    <div class="quick-move-area">
+                        ${leftBtn}
+                        ${rightBtn}
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="kanban-card-btn" onclick="editKanbanNote('${note.id}')" title="Editar"><i data-lucide="edit-3"></i></button>
+                        <button class="kanban-card-btn delete-btn" onclick="deleteKanbanNote('${note.id}')" title="Excluir"><i data-lucide="trash-2"></i></button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    });
+}
+
+function showInlineInput(col) {
+    const inputArea = document.getElementById(`add-area-${col}`);
+    const addBtn = document.getElementById(`btn-add-trigger-${col}`);
+    const textarea = document.getElementById(`input-${col}`);
+    
+    if (inputArea && addBtn) {
+        inputArea.style.display = 'block';
+        addBtn.style.display = 'none';
+        if (textarea) {
+            textarea.value = '';
+            textarea.focus();
+        }
+    }
+}
+
+function hideInlineInput(col) {
+    const inputArea = document.getElementById(`add-area-${col}`);
+    const addBtn = document.getElementById(`btn-add-trigger-${col}`);
+    const textarea = document.getElementById(`input-${col}`);
+    
+    if (inputArea && addBtn) {
+        inputArea.style.display = 'none';
+        addBtn.style.display = 'flex';
+        if (textarea) {
+            textarea.value = '';
+        }
+    }
+}
+
+function addKanbanNoteFromInput(col) {
+    const textarea = document.getElementById(`input-${col}`);
+    if (!textarea) return;
+
+    const text = textarea.value.trim();
+    if (!text) return;
+
+    const newNote = {
+        id: 'k_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        text: text,
+        column: col
+    };
+
+    if (!state.kanbanNotes) {
+        state.kanbanNotes = [];
+    }
+
+    state.kanbanNotes.push(newNote);
+    saveState();
+    hideInlineInput(col);
+    renderKanban();
+    lucide.createIcons();
+}
+
+function deleteKanbanNote(id) {
+    if (confirm("Deseja realmente excluir esta anotação do Kanban?")) {
+        state.kanbanNotes = state.kanbanNotes.filter(note => note.id !== id);
+        saveState();
+        renderKanban();
+        lucide.createIcons();
+    }
+}
+
+function editKanbanNote(id) {
+    const note = state.kanbanNotes.find(n => n.id === id);
+    if (!note) return;
+
+    const newText = prompt("Editar Anotação:", note.text);
+    if (newText === null) return; // cancelado
+    
+    const trimmed = newText.trim();
+    if (!trimmed) {
+        deleteKanbanNote(id);
+    } else {
+        note.text = trimmed;
+        saveState();
+        renderKanban();
+        lucide.createIcons();
+    }
+}
+
+function moveKanbanNoteMobile(id, colDiff) {
+    const note = state.kanbanNotes.find(n => n.id === id);
+    if (!note) return;
+
+    const currentIndex = KANBAN_COLUMNS.indexOf(note.column);
+    const targetIndex = currentIndex + colDiff;
+
+    if (targetIndex >= 0 && targetIndex < KANBAN_COLUMNS.length) {
+        note.column = KANBAN_COLUMNS[targetIndex];
+        saveState();
+        renderKanban();
+        lucide.createIcons();
+    }
+}
+
+/* Funções de Drag & Drop Nativas */
+function drag(ev) {
+    ev.dataTransfer.setData("text/plain", ev.target.dataset.id);
+    ev.target.classList.add('dragging');
+}
+
+// Adiciona compatibilidade dragenter/dragleave para destacar borda do container
+function dragEnter(ev) {
+    const col = ev.target.closest('.kanban-column');
+    if (col) {
+        col.classList.add('drag-over');
+    }
+}
+
+function dragLeave(ev) {
+    const col = ev.target.closest('.kanban-column');
+    if (col && !col.contains(ev.relatedTarget)) {
+        col.classList.remove('drag-over');
+    }
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drop(ev) {
+    ev.preventDefault();
+    const col = ev.target.closest('.kanban-column');
+    if (col) {
+        col.classList.remove('drag-over');
+        const targetCol = col.dataset.column;
+        const noteId = ev.dataTransfer.getData("text/plain");
+        
+        const note = state.kanbanNotes.find(n => n.id === noteId);
+        if (note && note.column !== targetCol) {
+            note.column = targetCol;
+            saveState();
+            renderKanban();
+            lucide.createIcons();
+        }
+    }
+}
+
+// Vincula funções ao objeto global window para uso em eventos inline do HTML
+window.showInlineInput = showInlineInput;
+window.hideInlineInput = hideInlineInput;
+window.addKanbanNoteFromInput = addKanbanNoteFromInput;
+window.deleteKanbanNote = deleteKanbanNote;
+window.editKanbanNote = editKanbanNote;
+window.moveKanbanNoteMobile = moveKanbanNoteMobile;
+window.drag = drag;
+window.allowDrop = allowDrop;
+window.dragEnter = dragEnter;
+window.dragLeave = dragLeave;
+window.drop = drop;
