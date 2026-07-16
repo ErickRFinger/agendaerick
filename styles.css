@@ -2689,3 +2689,45 @@ textarea {
     font-family: monospace;
     font-weight: 700;
 }
+
+/* Estilos para controle de servidores Vigi */
+.vigi-tools-row, .vigi-power-row {
+    margin-top: 6px;
+    margin-bottom: 12px;
+}
+
+.vigi-tools-row .btn, .vigi-power-row .btn {
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+.vigi-tools-row .btn:hover, .vigi-power-row .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+/* Estilos para o Resumo Global (Overview) dos Servidores */
+#vigi-overview-dashboard {
+    margin-bottom: 24px !important;
+}
+
+.vigi-overview-card {
+    backdrop-filter: blur(8px);
+    transition: all 0.25s ease-in-out;
+}
+
+.vigi-overview-card:hover {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+#vigi-overview-alerts {
+    border-left: 3px solid #ef4444 !important;
+}
+
+#vigi-alerts-list li {
+    list-style-type: none;
+}

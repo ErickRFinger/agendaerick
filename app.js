@@ -2124,18 +2124,20 @@ async function loadServersFromSupabase() {
             return;
         }
         
+                const allowedIds = ['pcerickintel', 'pcerickamd', 'desktop-1v21v3f'];
         const serversList = rows
-            .filter(r => r.machine_id !== 'erickpcloja')
+            .filter(r => r && r.machine_id && allowedIds.includes(r.machine_id.toLowerCase()))
             .map(r => {
                 let displayName = r.machine_id.toUpperCase();
                 let sortOrder = 99;
-                if (r.machine_id === 'pcerickintel') {
+                const mId = r.machine_id.toLowerCase();
+                if (mId === 'pcerickintel') {
                     displayName = 'PC PRINCIPAL';
                     sortOrder = 1;
-                } else if (r.machine_id === 'pcerickamd') {
+                } else if (mId === 'pcerickamd') {
                     displayName = 'PC SECUNDÁRIO';
                     sortOrder = 2;
-                } else if (r.machine_id === 'desktop-1v21v3f') {
+                } else if (mId === 'desktop-1v21v3f') {
                     displayName = 'SERVIDOR';
                     sortOrder = 3;
                 }
@@ -2292,12 +2294,196 @@ async function loadServersFromSupabase() {
                         <div class="vigi-disks-container">
                             ${disksHtml}
                         </div>
+                    `;
+                        
+            // Botoes e painel de ferramentas e utilidades
+            let controlButtons = "";
+            if (isOnline) {
+                const isMain = row.machine_id === 'pcerickintel'; // i7 e o principal
+                const btnMode = isMain ? 'performance' : 'economy';
+                const btnLabel = isMain ? '⚡ Máx. Desempenho' : '🌿 Economia + WoL';
+                const btnColor = isMain ? 'var(--color-primary)' : '#10b981';
+                
+                controlButtons = `
+                    <div class="vigi-section-title">Controle e Utilidades</div>
+                    <div class="vigi-tools-row" style="display:flex; flex-wrap:wrap; gap:6px;">
+                        <button type="button" class="btn" style="padding: 4px 8px; font-size: 10px; display:flex; align-items:center; gap:3px;" onclick="openTerminal('${row.ip}')">
+                            <i data-lucide="terminal" style="width:10px; height:10px;"></i> Terminal
+                        </button>
+                        <button type="button" class="btn" style="padding: 4px 8px; font-size: 10px; display:flex; align-items:center; gap:3px;" onclick="cleanDisk('${row.ip}')">
+                            <i data-lucide="trash-2" style="width:10px; height:10px;"></i> Limpar Lixo
+                        </button>
+                        <button type="button" class="btn" style="padding: 4px 8px; font-size: 10px; display:flex; align-items:center; gap:3px; background:${btnColor}; border-color:${btnColor}; color:white;" onclick="optimizeProcesses('${row.ip}', '${btnMode}')">
+                            <i data-lucide="sparkles" style="width:10px; height:10px;"></i> ${btnLabel}
+                        </button>
+                        <button type="button" class="btn" style="padding: 4px 8px; font-size: 10px; display:flex; align-items:center; gap:3px;" id="btn-update-${row.machine_id}" onclick="checkWindowsUpdate('${row.ip}', '${row.machine_id}')">
+                            <i data-lucide="refresh-cw" style="width:10px; height:10px;"></i> Updates
+                        </button>
+                        <div style="display:flex; align-items:center; gap:4px;">
+                            <button type="button" class="btn" style="padding: 4px 8px; font-size: 10px; display:flex; align-items:center; gap:3px;" onclick="runSpeedtest('${row.ip}', '${row.machine_id}')">
+                                <i data-lucide="rocket" style="width:10px; height:10px;"></i> Speedtest
+                            </button>
+                            <span id="speed-${row.machine_id}" style="font-family:monospace; font-size:10px; color:var(--text-muted);">--</span>
+                        </div>
+                    </div>
+                    
+                    <div class="vigi-section-title">Controle de Energia</div>
+                    <div class="vigi-power-row" style="display:flex; gap:6px;">
+                        <button type="button" class="btn" style="padding: 4px 10px; font-size: 10px; background:#f59e0b; border-color:#f59e0b; color:white; flex:1;" onclick="sendPowerAction('${row.ip}', 'sleep')">
+                            <i data-lucide="moon" style="width:10px; height:10px; display:inline-block; vertical-align:middle; margin-right:2px;"></i> Suspender
+                        </button>
+                        <button type="button" class="btn" style="padding: 4px 10px; font-size: 10px; background:var(--color-primary); border-color:var(--color-primary); color:white; flex:1;" onclick="sendPowerAction('${row.ip}', 'restart')">
+                            <i data-lucide="rotate-ccw" style="width:10px; height:10px; display:inline-block; vertical-align:middle; margin-right:2px;"></i> Reiniciar
+                        </button>
+                        <button type="button" class="btn btn-danger" style="padding: 4px 10px; font-size: 10px; flex:1;" onclick="sendPowerAction('${row.ip}', 'shutdown')">
+                            <i data-lucide="power" style="width:10px; height:10px; display:inline-block; vertical-align:middle; margin-right:2px;"></i> Desligar
+                        </button>
+                    </div>
+                `;
+            } else {
+                controlButtons = `
+                    <div class="vigi-section-title">Ações</div>
+                    <button type="button" class="btn" id="btn-wake-${row.machine_id}" style="width:100%; padding:6px 12px; font-size:11px; font-weight:700; background:#10b981; border-color:#10b981; color:white; display:flex; align-items:center; justify-content:center; gap:4px;" onclick="wakeServer('${row.machine_id}')">
+                        <i data-lucide="zap" style="width:12px; height:12px;"></i> Ligar PC Remotamente (Wake-on-LAN)
+                    </button>
+                `;
+            }
+
+            let servicesHtml = "";
+            if (data.services) {
+                let servicesGrid = "";
+                Object.keys(data.services).forEach(key => {
+                    const statusVal = data.services[key];
+                    const statusClass = statusVal ? "status-online" : "status-offline";
+                    const statusText = statusVal ? "Ativo" : "Parado";
+                    const btnAction = statusVal ? "stop" : "start";
+                    const btnLabel = statusVal ? "Parar" : "Iniciar";
+                    const btnClass = statusVal ? "btn-danger" : "";
+                    
+                    servicesGrid += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; padding:4px 8px; background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:4px; margin-top:3px;">
+                            <span style="font-weight:600; display:flex; align-items:center; gap:4px;">
+                                <span class="vigi-status-dot ${statusClass}" style="width:6px; height:6px; margin:0;"></span>
+                                ${key.toUpperCase()} (${statusText})
+                            </span>
+                            <button type="button" class="btn ${btnClass}" style="padding:2px 6px; font-size:9px;" onclick="controlService('${row.ip}', '${btnAction}', '${key}')">
+                                ${btnLabel}
+                            </button>
+                        </div>
+                    `;
+                });
+                if (servicesGrid) {
+                    servicesHtml = `
+                        <div class="vigi-section-title">Serviços Críticos</div>
+                        ${servicesGrid}
+                    `;
+                }
+            }
+
+            html += `
+                <div class="vigi-server-card ${statusClass}">
+                    <div class="vigi-card-header">
+                        <div class="vigi-card-title">
+                            <span class="vigi-status-dot"></span>
+                            <h3>${row.displayName}</h3>
+                        </div>
+                        <span class="vigi-status-badge">${statusLabel}</span>
+                    </div>
+                    
+                    <div class="vigi-card-body">
+                        <!-- PROCESSADOR SECTION -->
+                        <div class="vigi-section-header">
+                            <i data-lucide="cpu" class="vigi-sec-icon"></i>
+                            <span style="flex-grow:1; margin-left:4px;">Processador (CPU)</span>
+                            <span class="vigi-sec-val">${cpuUsage}%</span>
+                        </div>
+                        <div class="vigi-spec-text" style="color:var(--text-muted); font-size:11px; margin-bottom:4px;">${data.cpuModel || "Processador Desconhecido"}</div>
+                        
+                        <div class="vigi-progress" style="margin-bottom:6px;"><div class="vigi-progress-fill" style="width: ${cpuUsage}%;"></div></div>
+                        
+                        <!-- CPU Badges -->
+                        <div class="vigi-badges-row">
+                            <div class="vigi-badge" title="Temperatura CPU">
+                                <i data-lucide="thermometer" style="color: ${getTempColor(cpuTemp)}; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: ${getTempColor(cpuTemp)};">${cpuTemp > 0 ? cpuTemp + "°C" : "N/A"}</span>
+                            </div>
+                            <div class="vigi-badge" title="Frequência Clock">
+                                <i data-lucide="gauge" style="color: #a78bfa; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #a78bfa;">${cpuFreq}</span>
+                            </div>
+                            <div class="vigi-badge" title="Consumo CPU">
+                                <i data-lucide="zap" style="color: #f59e0b; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #f59e0b;">${cpuPower}</span>
+                            </div>
+                            ${data.vcore ? `
+                            <div class="vigi-badge" title="Tensão Vcore">
+                                <i data-lucide="zap-off" style="color: #60a5fa; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #60a5fa;">${vcoreVal}</span>
+                            </div>` : ''}
+                        </div>
+                        
+                        <!-- CPU Threads Grid -->
+                        ${data.cpuThreads && data.cpuThreads.length > 0 ? `
+                        <div class="vigi-section-title">Uso por Threads (${data.cpuThreads.length} núcleos)</div>
+                        ${renderCpuThreads(data.cpuThreads, row.machine_id)}
+                        ` : ''}
+
+                        <!-- MEMÓRIA RAM SECTION -->
+                        <div class="vigi-section-header" style="margin-top: 10px;">
+                            <i data-lucide="layers" class="vigi-sec-icon"></i>
+                            <span style="flex-grow:1; margin-left:4px;">Memória RAM</span>
+                            <span class="vigi-sec-val">${ramUsage}%</span>
+                        </div>
+                        <div class="vigi-spec-text" style="color:var(--text-muted); font-size:11px; margin-bottom:4px;">
+                            Uso: ${data.ramUsedGB || 0} GB / ${data.ramTotalGB || 0} GB
+                        </div>
+                        <div class="vigi-progress" style="margin-bottom:6px;"><div class="vigi-progress-fill" style="width: ${ramUsage}%;"></div></div>
+
+                        <!-- PLACA DE VÍDEO (GPU) SECTION -->
+                        ${gpuName !== "N/A" && gpuName !== "Intel(R) HD Graphics" && gpuName !== "Microsoft Basic Display Adapter" ? `
+                        <div class="vigi-section-header" style="margin-top: 10px;">
+                            <i data-lucide="monitor" class="vigi-sec-icon"></i>
+                            <span style="flex-grow:1; margin-left:4px;">Placa de Vídeo (GPU)</span>
+                            <span class="vigi-sec-val">${gpuLoad}%</span>
+                        </div>
+                        <div class="vigi-spec-text" style="color:var(--text-muted); font-size:11px; margin-bottom:4px;">${gpuName}</div>
+                        
+                        <div class="vigi-badges-row">
+                            <div class="vigi-badge" title="Temperatura GPU">
+                                <i data-lucide="thermometer" style="color: ${getTempColor(gpuTemp)}; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: ${getTempColor(gpuTemp)};">${gpuTemp > 0 ? gpuTemp + "°C" : "N/A"}</span>
+                            </div>
+                            <div class="vigi-badge" title="Memória VRAM em uso" style="flex-grow: 1;">
+                                <i data-lucide="hard-drive" style="color: #60a5fa; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #60a5fa;">VRAM: ${vramText}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- REDE SECTION -->
+                        <div class="vigi-section-title">Tráfego de Rede (Velocidade)</div>
+                        <div class="vigi-net-row" style="display:flex; justify-content:space-between; font-size:11px; background:rgba(0,0,0,0.15); padding:6px 10px; border-radius:4px; border:1px solid var(--border-color); margin-top:4px;">
+                            <span style="color:var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="arrow-down" style="width:11px; height:11px; color:#10b981;"></i> Down: <b style="color:var(--text-main); font-family:monospace;">${rxSpeed}</b></span>
+                            <span style="color:var(--text-muted); display:flex; align-items:center; gap:4px;"><i data-lucide="arrow-up" style="width:11px; height:11px; color:var(--color-primary);"></i> Up: <b style="color:var(--text-main); font-family:monospace;">${txSpeed}</b></span>
+                        </div>
+
+                        <!-- PARTIÇÕES SECTION -->
+                        <div class="vigi-section-title">Partições de Armazenamento</div>
+                        <div class="vigi-disks-container">
+                            ${disksHtml}
+                        </div>
                         
                         <!-- PROCESSOS SECTION -->
                         <div class="vigi-section-title">Processos Ativos (RAM)</div>
-                        <div class="vigi-procs-container">
+                        <div class="vigi-procs-container" style="margin-bottom:10px;">
                             ${procHtml}
                         </div>
+
+                        <!-- SERVIÇOS CRÍTICOS -->
+                        ${servicesHtml}
+
+                        <!-- CONTROLES REMOTOS -->
+                        ${controlButtons}
                     </div>
                 </div>
             `;
@@ -2305,6 +2491,11 @@ async function loadServersFromSupabase() {
         
         grid.innerHTML = html;
         lucide.createIcons();
+        try {
+            updateVigiOverview(rows);
+        } catch(e) {
+            console.error("Erro ao atualizar overview Vigi:", e);
+        }
     } catch(err) {
         console.error("Erro ao carregar servidores do Supabase:", err);
     }
@@ -2482,3 +2673,416 @@ window.triggerExplorerUpload = triggerExplorerUpload;
 window.handleExplorerUpload = handleExplorerUpload;
 window.openExplorerDrive = openExplorerDrive;
 window.downloadFileExplorer = downloadFileExplorer;
+
+// Funções de controle de servidores Vigi
+function showToast(message, type = 'info') {
+    let container = document.getElementById('vigi-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'vigi-toast-container';
+        container.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; max-width: 320px;';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    let bg = '#3b82f6';
+    if (type === 'success') bg = '#10b981';
+    if (type === 'warning') bg = '#f59e0b';
+    if (type === 'error') bg = '#ef4444';
+    
+    toast.style.cssText = `background: ${bg}; color: white; padding: 12px 18px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: all 0.3s; opacity: 0; transform: translateY(20px);`;
+    toast.innerHTML = `<span>${message}</span><button style="background:none; border:none; color:white; font-size:0.9rem; cursor:pointer;" onclick="this.parentElement.remove()">×</button>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    }, 10);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+function getAuthHeaders() {
+    const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
+    return {
+        'Authorization': `Bearer ${vigiToken}`,
+        'Content-Type': 'application/json'
+    };
+}
+
+function sendPowerAction(ip, action) {
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    let actionName = action === 'restart' ? 'Reiniciar' : (action === 'shutdown' ? 'Desligar' : 'Suspender');
+    if(!confirm(`Tem certeza que deseja ${actionName} o servidor no IP ${ip}?`)) return;
+    
+    fetch(`${vigiUrl}/api/power`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ip, action })
+    }).then(res => res.json()).then(data => {
+        if (data.success) showToast(`Sinal de energia enviado com sucesso.`, 'success');
+        else showToast('Erro ao enviar sinal.', 'error');
+    }).catch(e => showToast('Falha na comunicação.', 'error'));
+}
+
+function wakeServer(serverId) {
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const btn = document.getElementById(`btn-wake-${serverId}`);
+    let originalHtml = '';
+    if (btn) {
+        originalHtml = btn.innerHTML;
+        btn.innerHTML = `Enviando...`;
+        btn.disabled = true;
+    }
+    showToast('Enviando sinal de ativação (Wake-on-LAN)...', 'info');
+    fetch(`${vigiUrl}/api/wake`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ id: serverId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+        if (data.success) {
+            showToast(data.message || 'Sinal Wake-on-LAN enviado com sucesso!', 'success');
+        } else {
+            showToast(data.error || 'Erro ao enviar sinal.', 'error');
+        }
+    })
+    .catch(e => {
+        if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+        showToast('Falha na comunicação: ' + e.message, 'error');
+    });
+}
+
+function controlService(ip, action, service) {
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    if (!confirm(`Deseja realmente ${action === 'start' ? 'INICIAR' : 'PARAR'} o serviço: ${service.toUpperCase()}?`)) return;
+    
+    showToast(`${action === 'start' ? 'Iniciando' : 'Parando'} ${service}...`, 'info');
+    fetch(`${vigiUrl}/api/service`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ip, action, service })
+    })
+    .then(res => res.json())
+    .then(d => {
+        if (d.success) showToast(`Comando enviado para ${service}!`, 'success');
+        else showToast(`Erro ao controlar ${service}.`, 'error');
+    })
+    .catch(e => showToast('Falha de conexão', 'error'));
+}
+
+function optimizeProcesses(ip, mode = 'performance') {
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const isPerformance = mode === 'performance';
+    const confirmMsg = isPerformance
+        ? '⚡ MÁXIMO DESEMPENHO (PC Principal)\n\nIsso vai:\n- Fechar Discord, Spotify, Steam, Epic, launchers e apps em segundo plano\n- Ativar plano de energia Ultimate Performance\n- Aplicar tweaks de CPU/GPU para jogos\n- Manter: Antigravity, Chrome, VSCode, AnyDesk, Tailscale\n\nDeseja continuar?'
+        : '🌿 ECONOMIA + WoL (PC Secundário)\n\nIsso vai:\n- Fechar apps GUI pesados e processos desnecessários\n- Ativar plano de energia Economia\n- Manter: serviços de rede (WoL), AnyDesk, Tailscale\n\nDeseja continuar?';
+    
+    if (!confirm(confirmMsg)) return;
+    
+    const label = isPerformance ? '⚡ Máximo Desempenho' : '🌿 Economia + WoL';
+    showToast(`Iniciando otimização: ${label}...`, 'info');
+    
+    fetch(`${vigiUrl}/api/optimize-processes`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ip, mode })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            const list = d.killed || [];
+            const appliedMode = d.mode === 'performance' ? '⚡ Desempenho Máximo' : '🌿 Economia';
+            if (list.length > 0) {
+                showToast(`${appliedMode}: ${list.length} itens otimizados!`, 'success');
+            } else {
+                showToast(`${appliedMode}: PC já estava otimizado!`, 'success');
+            }
+        } else {
+            showToast('Erro ao otimizar: ' + (d.error || 'Erro desconhecido'), 'error');
+        }
+    })
+    .catch(e => showToast('Falha de conexão: ' + e.message, 'error'));
+}
+
+function runSpeedtest(ip, id) {
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const span = document.getElementById(`speed-${id}`);
+    if(span) span.innerHTML = '...';
+    
+    fetch(`${vigiUrl}/api/speedtest`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ip })
+    }).then(r => r.json()).then(d => {
+        if(d.success) {
+            if(span) span.innerHTML = `${d.mbps} Mbps`;
+            showToast(`Download Local no PC (${ip}): ${d.mbps} Mbps`, 'success');
+        } else {
+            if(span) span.innerHTML = 'Falha';
+            showToast('Falha no Speedtest.', 'error');
+        }
+    }).catch(e => {
+        if(span) span.innerHTML = 'Erro';
+        showToast('Falha de conexão', 'error');
+    });
+}
+
+function cleanDisk(ip) {
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    if(!confirm("Esvaziar a lixeira e apagar todos os arquivos temporários deste PC? Isso liberará gigabytes de espaço silenciosamente.")) return;
+    fetch(`${vigiUrl}/api/clean`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ip })
+    }).then(r => r.json()).then(d => {
+        if(d.success) showToast('Limpeza de disco concluída!', 'success');
+        else showToast('Erro ao limpar disco.', 'error');
+    }).catch(e => showToast('Falha de conexão', 'error'));
+}
+
+function checkWindowsUpdate(ip, id) {
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const btn = document.getElementById(`btn-update-${id}`);
+    let originalHtml = '';
+    if (btn) {
+        originalHtml = btn.innerHTML;
+        btn.innerHTML = `...`;
+        btn.disabled = true;
+    }
+    showToast('Buscando atualizações pendentes do Windows...', 'info');
+    fetch(`${vigiUrl}/api/check-updates`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ip })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+        if (d.success) {
+            if (d.count > 0) {
+                showToast(`Existem ${d.count} atualizações pendentes no Windows!`, 'warning');
+            } else {
+                showToast('O Windows está totalmente atualizado!', 'success');
+            }
+        } else {
+            showToast('Erro ao verificar atualizações: ' + (d.error || 'Falha desconhecida'), 'error');
+        }
+    })
+    .catch(e => {
+        if (btn) {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+        showToast('Falha de conexão', 'error');
+    });
+}
+
+let currentTerminalIp = null;
+function openTerminal(ip) {
+    currentTerminalIp = ip;
+    document.getElementById('terminal-target').innerText = ip;
+    document.getElementById('terminal-modal').style.display = 'flex';
+    const out = document.getElementById('terminal-output');
+    out.innerHTML = `Conexão estabelecida. CWD: Sistema/Windows.\nAlvo: ${ip}\nDigite seu comando abaixo...\n`;
+    setTimeout(() => document.getElementById('terminal-input').focus(), 100);
+}
+
+function closeTerminal() {
+    document.getElementById('terminal-modal').style.display = 'none';
+    currentTerminalIp = null;
+    document.getElementById('terminal-input').value = '';
+}
+
+function sendTerminalCommand() {
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const input = document.getElementById('terminal-input');
+    const cmd = input.value.trim();
+    if (!cmd || !currentTerminalIp) return;
+    
+    const out = document.getElementById('terminal-output');
+    out.innerHTML += `\n<span style="color: #fff">> ${cmd}</span>\n<span style="color: #aaa" id="term-loading">Executando...</span>`;
+    out.scrollTop = out.scrollHeight;
+    input.value = '';
+    
+    fetch(`${vigiUrl}/api/cmd`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ip: currentTerminalIp, command: cmd })
+    }).then(res => res.json()).then(data => {
+        const loading = document.getElementById('term-loading');
+        if (loading) loading.remove();
+        if (data.output) {
+            out.innerHTML += data.output + '\n';
+        } else {
+            out.innerHTML += 'Sem resposta ou erro interno.\n';
+        }
+        out.scrollTop = out.scrollHeight;
+    }).catch(e => {
+        const loading = document.getElementById('term-loading');
+        if (loading) loading.remove();
+        out.innerHTML += `Erro de conexão: ${e.message}\n`;
+        out.scrollTop = out.scrollHeight;
+    });
+}
+let lastVigiActiveAlerts = [];
+
+function updateVigiOverview(rows) {
+    const dash = document.getElementById('vigi-overview-dashboard');
+    if (!dash) return;
+    
+    const allowedIds = ['pcerickintel', 'pcerickamd', 'desktop-1v21v3f'];
+    const servers = rows.filter(r => r && r.machine_id && allowedIds.includes(r.machine_id.toLowerCase()));
+    
+    if (servers.length > 0) {
+        dash.style.display = 'grid';
+    } else {
+        dash.style.display = 'none';
+        return;
+    }
+    
+    let onlineCount = 0;
+    let totalCpu = 0;
+    let totalRamUsedGB = 0;
+    let totalRamGB = 0;
+    let totalStorageUsedGB = 0;
+    let totalStorageGB = 0;
+    let totalPower = 0;
+    let activeAlerts = [];
+    
+    let totalCores = 0;
+    let totalThreads = 0;
+    let totalRx = 0;
+    let totalTx = 0;
+    let totalDisksCount = 0;
+    let healthyDisksCount = 0;
+    
+    servers.forEach(row => {
+        const isOnline = (Date.now() - new Date(row.updated_at).getTime()) < 45000;
+        const data = row.hardware_data || {};
+        
+        if (isOnline) {
+            onlineCount++;
+            totalCpu += parseFloat(data.cpuUsage || 0);
+            const ramTotal = parseFloat(data.ramTotalGB || 0);
+            totalRamUsedGB += (parseFloat(data.ramUsage || 0) / 100) * ramTotal;
+            totalRamGB += ramTotal;
+            totalPower += parseFloat(data.cpuPower || 0) + parseFloat(data.gpuPower || 0);
+            
+            totalRx += parseFloat(data.rxSec || 0);
+            totalTx += parseFloat(data.txSec || 0);
+            
+            if (data.cpuThreads && data.cpuThreads.length > 0) {
+                totalThreads += data.cpuThreads.length;
+                totalCores += Math.round(data.cpuThreads.length / 2);
+            }
+            
+            // Check Alerts
+            if (data.cpuUsage > 90) activeAlerts.push(`CPU Crítica em ${row.displayName} (${data.cpuUsage}%)`);
+            if (data.ramUsage > 90) activeAlerts.push(`RAM Crítica em ${row.displayName} (${data.ramUsage}%)`);
+            if (data.cpuTemp >= 80) activeAlerts.push(`Superaquecimento em ${row.displayName} (${data.cpuTemp}°C)`);
+            if (data.gpuTemp >= 85) activeAlerts.push(`Superaquecimento GPU em ${row.displayName} (${data.gpuTemp}°C)`);
+            
+            if (data.disks && data.disks.length > 0) {
+                data.disks.forEach(d => {
+                    totalStorageGB += d.totalGB || 0;
+                    totalStorageUsedGB += d.usedGB || 0;
+                    const pct = (d.usedGB / d.totalGB) * 100;
+                    if (pct > 90) activeAlerts.push(`Espaço Crítico em ${row.displayName} (Disco ${d.letter}: ${pct.toFixed(0)}%)`);
+                });
+            }
+            if (data.diskHealth && data.diskHealth.length > 0) {
+                data.diskHealth.forEach(d => {
+                    totalDisksCount++;
+                    if (d.HealthStatus === 'Healthy') {
+                        healthyDisksCount++;
+                    }
+                    if (d.HealthStatus !== 'Healthy') activeAlerts.push(`Falha S.M.A.R.T em ${row.displayName} (${d.FriendlyName})`);
+                });
+            }
+        } else {
+            activeAlerts.push(`Servidor ${row.displayName} está OFFLINE`);
+        }
+    });
+    
+    // Toast alerts
+    activeAlerts.forEach(alertMsg => {
+        if (!lastVigiActiveAlerts.includes(alertMsg)) {
+            showToast(alertMsg, 'error');
+        }
+    });
+    lastVigiActiveAlerts = activeAlerts;
+    
+    const avgCpu = onlineCount > 0 ? (totalCpu / onlineCount).toFixed(1) : 0;
+    
+    document.getElementById('vigi-overview-servers').innerText = `${onlineCount} / ${servers.length}`;
+    
+    const formatMBs = (bytes) => (bytes / 1024 / 1024).toFixed(1);
+    const serversSubtext = onlineCount > 0
+        ? `Rede: ↓ ${formatMBs(totalRx)} MB/s | ↑ ${formatMBs(totalTx)} MB/s`
+        : 'Sem tráfego de rede';
+    document.getElementById('vigi-overview-servers-sub').innerText = serversSubtext;
+    
+    document.getElementById('vigi-overview-cpu').innerText = `${avgCpu}%`;
+    const cpuSubtext = totalThreads > 0 
+        ? `${totalCores} Cores / ${totalThreads} Threads` 
+        : 'Processamento total';
+    document.getElementById('vigi-overview-cpu-sub').innerText = cpuSubtext;
+    
+    document.getElementById('vigi-overview-ram').innerText = `${totalRamUsedGB.toFixed(1).replace('.', ',')} GB / ${totalRamGB.toFixed(0)} GB`;
+    
+    document.getElementById('vigi-overview-power').innerText = `${totalPower.toFixed(0)} W`;
+    
+    const formatGB = (gb) => {
+        if (gb > 1024) return (gb / 1024).toFixed(1) + ' TB';
+        return gb.toFixed(0) + ' GB';
+    };
+    
+    const totalStorageFreeGB = totalStorageGB - totalStorageUsedGB;
+    document.getElementById('vigi-overview-storage').innerText = `${formatGB(totalStorageUsedGB)} Usado`;
+    
+    const storageSubtext = totalDisksCount > 0
+        ? `${formatGB(totalStorageFreeGB)} Livre / ${formatGB(totalStorageGB)} Total (${healthyDisksCount}/${totalDisksCount} Discos OK)`
+        : `${formatGB(totalStorageFreeGB)} Livre / ${formatGB(totalStorageGB)} Total`;
+    document.getElementById('vigi-overview-storage-sub').innerText = storageSubtext;
+    
+    const alertsList = document.getElementById('vigi-alerts-list');
+    if (activeAlerts.length > 0) {
+        alertsList.innerHTML = activeAlerts.map(a => `<li style="margin-bottom:2px;"><i data-lucide="alert-triangle" style="width:10px; height:10px; color:#ef4444; display:inline-block; vertical-align:middle; margin-right:3px;"></i> ${a}</li>`).join('');
+        document.getElementById('vigi-overview-alerts').style.borderColor = 'rgba(239, 68, 68, 0.4)';
+    } else {
+        alertsList.innerHTML = `<li style="color: var(--text-muted);"><i data-lucide="check-circle" style="color: #10b981; width:10px; height:10px; display:inline-block; vertical-align:middle; margin-right:3px;"></i> Sistemas operando perfeitamente.</li>`;
+        document.getElementById('vigi-overview-alerts').style.borderColor = 'var(--border-color)';
+    }
+    lucide.createIcons();
+}
+
+window.goUpExplorer = goUpExplorer;
+window.triggerExplorerUpload = triggerExplorerUpload;
+window.handleExplorerUpload = handleExplorerUpload;
+window.openExplorerDrive = openExplorerDrive;
+window.downloadFileExplorer = downloadFileExplorer;
+window.showToast = showToast;
+window.sendPowerAction = sendPowerAction;
+window.wakeServer = wakeServer;
+window.controlService = controlService;
+window.optimizeProcesses = optimizeProcesses;
+window.runSpeedtest = runSpeedtest;
+window.cleanDisk = cleanDisk;
+window.checkWindowsUpdate = checkWindowsUpdate;
+window.openTerminal = openTerminal;
+window.closeTerminal = closeTerminal;
+window.sendTerminalCommand = sendTerminalCommand;
+window.updateVigiOverview = updateVigiOverview;
