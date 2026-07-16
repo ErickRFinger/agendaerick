@@ -68,6 +68,22 @@
             </div>
         </header>
 
+        <!-- NAVEGAÇÃO PRINCIPAL DO SISTEMA -->
+        <nav class="main-nav-tabs">
+            <button class="main-tab-btn active" id="btn-tab-agenda" onclick="switchMainTab('agenda')">
+                <i data-lucide="calendar"></i>
+                <span>Diário & Foco</span>
+            </button>
+            <button class="main-tab-btn" id="btn-tab-servers" onclick="switchMainTab('servers')">
+                <i data-lucide="hard-drive"></i>
+                <span>Servidores</span>
+            </button>
+            <button class="main-tab-btn" id="btn-tab-files" onclick="switchMainTab('files')">
+                <i data-lucide="folder-open"></i>
+                <span>Arquivos & Drive</span>
+            </button>
+        </nav>
+
         <!-- CONTAINER PRINCIPAL -->
         <main class="main-content">
             <!-- COLUNA ESQUERDA: LINHA DO TEMPO (DEMANDAS POR HORA) -->
@@ -385,6 +401,59 @@
                 </div>
             </div>
         </section>
+
+        <!-- SEÇÃO DE MONITORAMENTO DE SERVIDORES (VIGI) -->
+        <section class="panel servers-panel" id="panel-servers" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title-area">
+                    <div class="panel-icon servers-icon" style="background: linear-gradient(135deg, var(--color-primary), var(--color-success));">
+                        <i data-lucide="hard-drive"></i>
+                    </div>
+                    <h2>Monitoramento de Servidores</h2>
+                </div>
+                <div class="sync-badge" id="vigi-servers-sync-status">
+                    <i data-lucide="refresh-cw" class="spin-animation"></i> Conectado em Tempo Real
+                </div>
+            </div>
+            
+            <div class="servers-grid" id="vigi-servers-grid">
+                <p style="color: var(--text-muted); font-size: 0.95rem; padding: 20px;">Carregando status dos servidores do Supabase...</p>
+            </div>
+        </section>
+
+        <!-- SEÇÃO DE EXPLORADOR DE ARQUIVOS (DRIVE) -->
+        <section class="panel files-panel" id="panel-files" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title-area">
+                    <div class="panel-icon files-icon" style="background: linear-gradient(135deg, var(--color-primary), var(--color-water));">
+                        <i data-lucide="folder-open"></i>
+                    </div>
+                    <h2>Meus Arquivos & Drive</h2>
+                </div>
+                <div id="vigi-explorer-breadcrumbs" class="breadcrumbs-container" style="font-size: 13px; color: var(--text-muted); font-family: monospace; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); flex-grow: 1; max-width: 400px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                    Nenhum diretório aberto
+                </div>
+            </div>
+            
+            <div class="explorer-toolbar" style="display: flex; gap: 10px; margin-bottom: 16px; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); align-items: center;">
+                <button class="btn btn-secondary-sm" id="btn-explorer-back" onclick="goUpExplorer()">
+                    <i data-lucide="chevron-left"></i> Voltar
+                </button>
+                <button class="btn btn-primary-sm" onclick="triggerExplorerUpload()">
+                    <i data-lucide="upload"></i> Enviar Arquivo
+                </button>
+                <input type="file" id="explorer-file-upload" style="display: none;" onchange="handleExplorerUpload(event)">
+            </div>
+            
+            <div class="explorer-body" style="background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid var(--border-color); padding: 12px; min-height: 350px; position: relative;">
+                <div id="explorer-loading-spinner" class="loader-spinner" style="display: none; text-align: center; padding: 40px; color: var(--color-primary);">
+                    <i data-lucide="refresh-cw" class="spin-animation"></i> Carregando diretório...
+                </div>
+                <div class="files-grid" id="explorer-files-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px;">
+                    <p style="color: var(--text-muted); font-size: 0.95rem; padding: 20px;">Nenhum diretório aberto. Clique em um disco no painel de monitoramento para explorar.</p>
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- MODAL DE ADICIONAR TAREFA (DEMANDA) -->
@@ -552,6 +621,18 @@
                             <option value="15" selected>15 min antes</option>
                             <option value="30">30 min antes</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="setting-item-group" style="margin-top: 16px; background: rgba(255,255,255,0.02); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
+                    <span class="group-title" style="font-weight: 700; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--color-primary);">Vigi Drive & Servidores</span>
+                    <div class="form-group" style="margin-top: 4px;">
+                        <label for="vigi-url-input">URL do Servidor Central (Vigi)</label>
+                        <input type="text" id="vigi-url-input" placeholder="Ex: http://localhost:3030" style="width: 100%;">
+                    </div>
+                    <div class="form-group" style="margin-top: 4px;">
+                        <label for="vigi-token-input">Token de Acesso</label>
+                        <input type="password" id="vigi-token-input" placeholder="Ex: VIGI-SECURE-TOKEN-123" style="width: 100%;">
                     </div>
                 </div>
 

@@ -2299,3 +2299,341 @@ textarea {
 .btn-close-inline:hover {
     color: var(--text-main);
 }
+
+/* ==========================================================================
+   NAVEGAÇÃO PRINCIPAL POR ABAS (DIÁRIO / SERVIDORES / ARQUIVOS)
+   ========================================================================== */
+.main-nav-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 16px 24px;
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.main-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    outline: none;
+}
+
+.main-tab-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.main-tab-btn.active {
+    color: var(--text-on-primary);
+    background: var(--color-primary);
+    box-shadow: 0 0 14px var(--color-primary-glow);
+}
+
+.main-tab-btn i {
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================
+   MONITORAMENTO DE SERVIDORES (VIGI)
+   ========================================================================== */
+.servers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 16px 0;
+}
+
+.vigi-server-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    transition: var(--transition-smooth);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vigi-server-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.vigi-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.vigi-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vigi-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-danger);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    transition: var(--transition-smooth);
+}
+
+.vigi-server-card.status-online .vigi-status-dot {
+    background: var(--color-success);
+    box-shadow: 0 0 8px var(--color-success-glow);
+}
+
+.vigi-card-title h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.vigi-status-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.vigi-server-card.status-online .vigi-status-badge {
+    background: hsla(150, 75%, 45%, 0.15);
+    color: var(--color-success);
+}
+
+.vigi-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vigi-spec-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vigi-metric-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vigi-metric-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.vigi-progress {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.vigi-progress-fill {
+    height: 100%;
+    background: var(--color-primary);
+    box-shadow: 0 0 8px var(--color-primary-glow);
+    border-radius: 3px;
+    transition: width 0.8s ease-in-out;
+}
+
+.vigi-sensor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.vigi-sensor-box {
+    background: rgba(0,0,0,0.15);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.vigi-sensor-lbl {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-dimmed);
+}
+
+.vigi-sensor-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.vigi-section-title {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 4px;
+    margin-top: 6px;
+}
+
+.vigi-disks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vigi-disk-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.vigi-disk-item:hover {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--color-primary);
+}
+
+.vigi-disk-letter {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.vigi-disk-bar-container {
+    flex-grow: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.vigi-disk-bar-fill {
+    height: 100%;
+    background: var(--color-water);
+    border-radius: 2px;
+}
+
+.vigi-disk-text {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.vigi-procs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vigi-proc-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.01);
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   EXPLORADOR DE ARQUIVOS (DRIVE STYLE)
+   ========================================================================== */
+.vigi-file-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.vigi-file-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+}
+
+.vigi-file-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+}
+
+.vigi-file-card:hover .vigi-file-icon {
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+    box-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+.vigi-file-icon i {
+    width: 22px;
+    height: 22px;
+}
+
+.vigi-file-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-main);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vigi-file-size {
+    font-size: 9px;
+    color: var(--text-muted);
+}

@@ -1390,6 +1390,9 @@ function setupEventListeners() {
             document.getElementById("water-interval").value = state.settings.waterInterval;
             document.getElementById("task-warning").value = state.settings.taskWarning;
             
+            document.getElementById("vigi-url-input").value = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+            document.getElementById("vigi-token-input").value = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
+            
             document.getElementById("notification-details").style.display = state.settings.notificationsEnabled ? "block" : "none";
         });
     }
@@ -1430,6 +1433,12 @@ function setupEventListeners() {
             state.settings.notificationsEnabled = document.getElementById("toggle-notifications").checked;
             state.settings.waterInterval = parseInt(document.getElementById("water-interval").value);
             state.settings.taskWarning = parseInt(document.getElementById("task-warning").value);
+            
+            // Salvar Configurações do Vigi Server
+            const urlInput = document.getElementById("vigi-url-input").value.trim();
+            const tokenInput = document.getElementById("vigi-token-input").value.trim();
+            localStorage.setItem("FOCOFACIL_VIGI_URL", urlInput);
+            localStorage.setItem("FOCOFACIL_VIGI_TOKEN", tokenInput);
             
             // Se ativou as notificações e não bebeu água ainda hoje, começa a contar a partir de agora
             if (state.settings.notificationsEnabled && (!state.lastWaterTimestamp || state.lastWaterTimestamp === 0)) {
@@ -1998,6 +2007,343 @@ function drop(ev) {
     }
 }
 
+// ==========================================================================
+// VIGI SERVERLESS INTEGRATION (MONITORING & GOOGLE DRIVE FILE EXPLORER)
+// ==========================================================================
+let vigiPollInterval = null;
+let currentExplorerPath = "";
+
+function switchMainTab(tab) {
+    const btnAgenda = document.getElementById("btn-tab-agenda");
+    const btnServers = document.getElementById("btn-tab-servers");
+    const btnFiles = document.getElementById("btn-tab-files");
+    
+    const panelTimeline = document.getElementById("panel-timeline");
+    const sideColumn = document.querySelector(".side-column");
+    const panelKanban = document.getElementById("panel-kanban");
+    const panelServers = document.getElementById("panel-servers");
+    const panelFiles = document.getElementById("panel-files");
+    
+    // Remove active state
+    btnAgenda.classList.remove("active");
+    btnServers.classList.remove("active");
+    btnFiles.classList.remove("active");
+    
+    // Default hidden
+    panelTimeline.style.display = "none";
+    if (sideColumn) sideColumn.style.display = "none";
+    if (panelKanban) panelKanban.style.display = "none";
+    panelServers.style.display = "none";
+    panelFiles.style.display = "none";
+    
+    // Stop polling if leaving servers
+    if (vigiPollInterval) {
+        clearInterval(vigiPollInterval);
+        vigiPollInterval = null;
+    }
+    
+    if (tab === 'agenda') {
+        btnAgenda.classList.add("active");
+        panelTimeline.style.display = "block";
+        if (sideColumn) sideColumn.style.display = "flex";
+        if (panelKanban) panelKanban.style.display = "block";
+    } 
+    else if (tab === 'servers') {
+        btnServers.classList.add("active");
+        panelServers.style.display = "block";
+        loadServersFromSupabase();
+        vigiPollInterval = setInterval(loadServersFromSupabase, 10000); // Poll status every 10s
+    } 
+    else if (tab === 'files') {
+        btnFiles.classList.add("active");
+        panelFiles.style.display = "block";
+        if (!currentExplorerPath) {
+            document.getElementById("explorer-files-grid").innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
+                    <i data-lucide="folder" style="width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.5;"></i>
+                    <p style="font-size: 0.95rem;">Nenhum diretório aberto ainda.</p>
+                    <p style="font-size: 0.85rem; margin-top: 4px;">Vá na aba de <b>Servidores</b> e clique em um dos discos (C:, D:, etc.) para explorar os arquivos.</p>
+                </div>
+            `;
+            lucide.createIcons();
+        } else {
+            loadDirectoryExplorer(currentExplorerPath);
+        }
+    }
+    
+    lucide.createIcons();
+}
+
+async function loadServersFromSupabase() {
+    try {
+        const response = await fetch("https://hnfhrjgzeivzrcpumkyk.supabase.co/rest/v1/vigi_machines?select=*", {
+            headers: {
+                'apikey': "sb_publishable_ekOWLdVoQWfk6UANQPiYDg_o6bkYCmX",
+                'Authorization': `Bearer sb_publishable_ekOWLdVoQWfk6UANQPiYDg_o6bkYCmX`
+            }
+        });
+        if (!response.ok) throw new Error("Erro ao consultar banco do Supabase");
+        
+        const rows = await response.json();
+        const grid = document.getElementById("vigi-servers-grid");
+        
+        if (!rows || rows.length === 0) {
+            grid.innerHTML = `<p style="color: var(--text-muted); font-size: 0.95rem; padding: 20px;">Nenhum servidor cadastrado no Supabase.</p>`;
+            return;
+        }
+        
+        rows.sort((a,b) => a.machine_id.localeCompare(b.machine_id));
+        
+        let html = "";
+        rows.forEach(row => {
+            const data = row.hardware_data || {};
+            const isOnline = (Date.now() - new Date(row.updated_at).getTime()) < 45000;
+            const statusClass = isOnline ? "status-online" : "status-offline";
+            const statusLabel = isOnline ? "ONLINE" : "OFFLINE";
+            
+            const cpuUsage = data.cpuUsage || 0;
+            const ramUsage = data.ramUsage || 0;
+            const cpuTemp = data.cpuTemp || 0;
+            const gpuTemp = data.gpuTemp || 0;
+            
+            let disksHtml = "";
+            if (data.disks && data.disks.length > 0) {
+                data.disks.forEach(d => {
+                    const usagePct = d.totalGB > 0 ? Math.round((d.usedGB / d.totalGB) * 100) : 0;
+                    disksHtml += `
+                        <div class="vigi-disk-item" onclick="openExplorerDrive('${row.ip}', '${d.letter}')" title="Clique para navegar nesta partição">
+                            <span class="vigi-disk-letter"><i data-lucide="hard-drive" style="width:12px;height:12px;margin-right:2px;"></i> ${d.letter}:</span>
+                            <div class="vigi-disk-bar-container">
+                                <div class="vigi-disk-bar-fill" style="width: ${usagePct}%;"></div>
+                            </div>
+                            <span class="vigi-disk-text">${d.usedGB}GB / ${d.totalGB}GB</span>
+                        </div>
+                    `;
+                });
+            } else {
+                disksHtml = `<span style="font-size:0.75rem;color:var(--text-dimmed);">Nenhum disco detectado</span>`;
+            }
+            
+            let procHtml = "";
+            if (data.processes && data.processes.length > 0) {
+                const topProcs = data.processes.slice(0, 3);
+                topProcs.forEach(p => {
+                    procHtml += `<div class="vigi-proc-row"><span>${p.name}</span><span style="font-family:monospace;font-weight:700;color:var(--color-primary);">${p.cpu.toFixed(1)}%</span></div>`;
+                });
+            } else {
+                procHtml = `<div class="vigi-proc-row" style="color:var(--text-dimmed);">Nenhum processo pesado</div>`;
+            }
+            
+            html += `
+                <div class="vigi-server-card ${statusClass}">
+                    <div class="vigi-card-header">
+                        <div class="vigi-card-title">
+                            <span class="vigi-status-dot"></span>
+                            <h3>${row.machine_id.toUpperCase()}</h3>
+                        </div>
+                        <span class="vigi-status-badge">${statusLabel}</span>
+                    </div>
+                    
+                    <div class="vigi-card-body">
+                        <div class="vigi-spec-text">${data.cpuModel || "Processador Desconhecido"}</div>
+                        <div class="vigi-spec-text" style="color:var(--text-dimmed);font-size:0.75rem;margin-bottom:8px;">IP: ${row.ip || "N/A"}</div>
+                        
+                        <div class="vigi-metric-row">
+                            <div class="vigi-metric-label"><span>CPU</span><span>${cpuUsage}%</span></div>
+                            <div class="vigi-progress"><div class="vigi-progress-fill" style="width: ${cpuUsage}%;"></div></div>
+                        </div>
+                        
+                        <div class="vigi-metric-row" style="margin-top: 6px;">
+                            <div class="vigi-metric-label"><span>Memória RAM</span><span>${ramUsage}% (${data.ramUsedGB || 0}GB / ${data.ramTotalGB || 0}GB)</span></div>
+                            <div class="vigi-progress"><div class="vigi-progress-fill" style="width: ${ramUsage}%;"></div></div>
+                        </div>
+                        
+                        <div class="vigi-sensor-grid">
+                            <div class="vigi-sensor-box">
+                                <span class="vigi-sensor-lbl">TEMP CPU</span>
+                                <span class="vigi-sensor-val">${cpuTemp > 0 ? cpuTemp + "°C" : "N/A"}</span>
+                            </div>
+                            <div class="vigi-sensor-box">
+                                <span class="vigi-sensor-lbl">TEMP GPU</span>
+                                <span class="vigi-sensor-val">${gpuTemp > 0 ? gpuTemp + "°C" : "N/A"}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="vigi-section-title">Partições de Armazenamento</div>
+                        <div class="vigi-disks-container">
+                            ${disksHtml}
+                        </div>
+                        
+                        <div class="vigi-section-title">Processos Ativos (CPU)</div>
+                        <div class="vigi-procs-container">
+                            ${procHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        grid.innerHTML = html;
+        lucide.createIcons();
+    } catch(err) {
+        console.error("Erro ao carregar servidores do Supabase:", err);
+    }
+}
+
+function openExplorerDrive(serverIp, diskLetter) {
+    playClickSound();
+    currentExplorerPath = `\\\\\\\\${serverIp}\\\\${diskLetter}`;
+    switchMainTab('files');
+}
+
+async function loadDirectoryExplorer(pathStr) {
+    const spinner = document.getElementById("explorer-loading-spinner");
+    const grid = document.getElementById("explorer-files-grid");
+    const breadcrumbs = document.getElementById("vigi-explorer-breadcrumbs");
+    
+    spinner.style.display = "block";
+    grid.innerHTML = "";
+    breadcrumbs.textContent = pathStr;
+    
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
+    
+    try {
+        const response = await fetch(`${vigiUrl}/api/explore?path=${encodeURIComponent(pathStr)}`, {
+            headers: {
+                'Authorization': `Bearer ${vigiToken}`
+            }
+        });
+        
+        spinner.style.display = "none";
+        
+        if (!response.ok) {
+            throw new Error(`Servidor respondeu com status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.items || data.items.length === 0) {
+            grid.innerHTML = `<p style="color: var(--text-muted); font-size: 0.95rem; padding: 20px; grid-column: 1 / -1; text-align: center;">Este diretório está vazio.</p>`;
+            return;
+        }
+        
+        let html = "";
+        data.items.forEach(item => {
+            const icon = item.isDirectory ? "folder" : "file";
+            const clickAction = item.isDirectory 
+                ? `loadDirectoryExplorer('${item.path.replace(/\\/g, '\\\\')}')`
+                : `downloadFileExplorer('${item.path.replace(/\\/g, '\\\\')}')`;
+            
+            html += `
+                <div class="vigi-file-card" onclick="${clickAction}" title="${item.name}">
+                    <div class="vigi-file-icon">
+                        <i data-lucide="${icon}"></i>
+                    </div>
+                    <div class="vigi-file-name">${item.name}</div>
+                    <div class="vigi-file-size">${item.isDirectory ? "Pasta" : formatBytes(item.size)}</div>
+                </div>
+            `;
+        });
+        
+        grid.innerHTML = html;
+        lucide.createIcons();
+    } catch(err) {
+        spinner.style.display = "none";
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-danger);">
+                <i data-lucide="alert-circle" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
+                <p style="font-size: 0.95rem; font-weight:600;">Falha de Conexão com o Servidor Vigi</p>
+                <p style="font-size: 0.85rem; margin-top: 4px; color: var(--text-muted);">
+                    Certifique-se de que o <b>server.js</b> (Central) está rodando localmente na sua máquina e a URL nas configurações está correta.<br>
+                    Erro: ${err.message}
+                </p>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+}
+
+function goUpExplorer() {
+    playClickSound();
+    if (!currentExplorerPath) return;
+    const parts = currentExplorerPath.split('\\');
+    if (parts.length > 4) { 
+        parts.pop(); 
+        currentExplorerPath = parts.join('\\');
+        loadDirectoryExplorer(currentExplorerPath); 
+    } else {
+        showToast("Você já está na raiz do disco.", "info");
+    }
+}
+
+function triggerExplorerUpload() {
+    playClickSound();
+    if (!currentExplorerPath) {
+        showToast("Abra uma pasta antes de enviar um arquivo.", "warning");
+        return;
+    }
+    document.getElementById("explorer-file-upload").click();
+}
+
+async function handleExplorerUpload(event) {
+    const file = event.target.files[0]; 
+    if (!file || !currentExplorerPath) return;
+    
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    showToast(`Enviando arquivo: ${file.name}...`, "info");
+    
+    try {
+        const response = await fetch(`${vigiUrl}/api/upload?path=${encodeURIComponent(currentExplorerPath)}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${vigiToken}`
+            },
+            body: formData
+        });
+        
+        if (response.ok) {
+            showToast(`Arquivo enviado com sucesso!`, "success");
+            loadDirectoryExplorer(currentExplorerPath); // Recarrega pasta
+        } else {
+            const errText = await response.text();
+            throw new Error(errText || "Falha no upload");
+        }
+    } catch(err) {
+        showToast(`Erro ao enviar arquivo: ${err.message}`, "error");
+    }
+}
+
+function downloadFileExplorer(filePath) {
+    playClickSound();
+    showToast(`Iniciando download...`, 'info');
+    
+    const vigiUrl = localStorage.getItem("FOCOFACIL_VIGI_URL") || "http://localhost:3030";
+    const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
+    
+    const url = `${vigiUrl}/api/download?path=${encodeURIComponent(filePath)}&token=${vigiToken}`;
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filePath.split('\\').pop();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 // Vincula funções ao objeto global window para uso em eventos inline do HTML
 window.showInlineInput = showInlineInput;
 window.hideInlineInput = hideInlineInput;
@@ -2010,3 +2356,9 @@ window.allowDrop = allowDrop;
 window.dragEnter = dragEnter;
 window.dragLeave = dragLeave;
 window.drop = drop;
+window.switchMainTab = switchMainTab;
+window.goUpExplorer = goUpExplorer;
+window.triggerExplorerUpload = triggerExplorerUpload;
+window.handleExplorerUpload = handleExplorerUpload;
+window.openExplorerDrive = openExplorerDrive;
+window.downloadFileExplorer = downloadFileExplorer;
