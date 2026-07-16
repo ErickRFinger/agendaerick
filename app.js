@@ -1613,6 +1613,19 @@ function updateSyncStatusBadge(status, customErrorMsg = "") {
     }
 }
 
+function isStateDefault(s) {
+    if (!s) return true;
+    if (s.isDefault === true) return true;
+    
+    const hasUserTasks = s.tasks && s.tasks.some(t => !["t1", "t2", "t3"].includes(t.id));
+    const hasUserMeds = s.meds && s.meds.some(m => !["m1", "m2"].includes(m.id));
+    const hasWaterHistory = s.waterHistory && Object.keys(s.waterHistory).length > 0;
+    const hasOtherLiquids = s.otherLiquids && s.otherLiquids.length > 0;
+    const hasUserKanban = s.kanbanNotes && s.kanbanNotes.some(k => !["k1", "k2", "k3", "k4"].includes(k.id));
+    
+    return !hasUserTasks && !hasUserMeds && !hasWaterHistory && !hasOtherLiquids && !hasUserKanban;
+}
+
 async function pullFromCloud() {
     if (!syncCode) return;
     updateSyncStatusBadge("syncing");
@@ -1627,18 +1640,30 @@ async function pullFromCloud() {
             const cloudState = resData.data;
             
             if (cloudState) {
-                // Algoritmo de Resolução de Conflito (Última alteração vence)
-                const localTS = state.lastSavedTimestamp || 0;
-                const cloudTS = cloudState.lastSavedTimestamp || 0;
+                // Algoritmo Inteligente de Resolução de Conflito
+                const localDefault = isStateDefault(state);
+                const cloudDefault = isStateDefault(cloudState);
                 
-                if (cloudTS > localTS) {
-                    // Estado da nuvem é mais recente, substitui local
+                if (cloudDefault && !localDefault) {
+                    // Estado local tem dados reais e a nuvem tem o padrão. Envia o local para a nuvem.
+                    pushToCloud();
+                } else if (localDefault && !cloudDefault) {
+                    // A nuvem tem dados reais e o local é o padrão. Substitui o local pelo da nuvem.
                     state = cloudState;
                     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
                     renderAll();
-                } else if (localTS > cloudTS) {
-                    // Estado local é mais recente, envia para a nuvem
-                    pushToCloud();
+                } else {
+                    // Se ambos forem padrão ou ambos tiverem dados reais, vence o timestamp mais recente
+                    const localTS = state.lastSavedTimestamp || 0;
+                    const cloudTS = cloudState.lastSavedTimestamp || 0;
+                    
+                    if (cloudTS > localTS) {
+                        state = cloudState;
+                        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+                        renderAll();
+                    } else if (localTS > cloudTS) {
+                        pushToCloud();
+                    }
                 }
             } else {
                 // Nuvem vazia para este código, envia o estado local atual
