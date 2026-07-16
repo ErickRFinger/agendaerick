@@ -2009,33 +2009,28 @@ function drop(ev) {
 }
 
 // ==========================================================================
-// VIGI SERVERLESS INTEGRATION (MONITORING & GOOGLE DRIVE FILE EXPLORER)
+// VIGI SERVERLESS INTEGRATION (MONITORAMENTO DE HARDWARE)
 // ==========================================================================
 let vigiPollInterval = null;
-let currentExplorerPath = "";
 
 function switchMainTab(tab) {
     const btnAgenda = document.getElementById("btn-tab-agenda");
     const btnServers = document.getElementById("btn-tab-servers");
-    const btnFiles = document.getElementById("btn-tab-files");
     
     const panelTimeline = document.getElementById("panel-timeline");
     const sideColumn = document.querySelector(".side-column");
     const panelKanban = document.getElementById("panel-kanban");
     const panelServers = document.getElementById("panel-servers");
-    const panelFiles = document.getElementById("panel-files");
     
     // Remove active state
-    btnAgenda.classList.remove("active");
-    btnServers.classList.remove("active");
-    btnFiles.classList.remove("active");
+    if (btnAgenda) btnAgenda.classList.remove("active");
+    if (btnServers) btnServers.classList.remove("active");
     
     // Default hidden
-    panelTimeline.style.display = "none";
+    if (panelTimeline) panelTimeline.style.display = "none";
     if (sideColumn) sideColumn.style.display = "none";
     if (panelKanban) panelKanban.style.display = "none";
-    panelServers.style.display = "none";
-    panelFiles.style.display = "none";
+    if (panelServers) panelServers.style.display = "none";
     
     // Stop polling if leaving servers
     if (vigiPollInterval) {
@@ -2044,32 +2039,16 @@ function switchMainTab(tab) {
     }
     
     if (tab === 'agenda') {
-        btnAgenda.classList.add("active");
-        panelTimeline.style.display = "block";
+        if (btnAgenda) btnAgenda.classList.add("active");
+        if (panelTimeline) panelTimeline.style.display = "block";
         if (sideColumn) sideColumn.style.display = "flex";
         if (panelKanban) panelKanban.style.display = "block";
     } 
     else if (tab === 'servers') {
-        btnServers.classList.add("active");
-        panelServers.style.display = "block";
+        if (btnServers) btnServers.classList.add("active");
+        if (panelServers) panelServers.style.display = "block";
         loadServersFromSupabase();
-        vigiPollInterval = setInterval(loadServersFromSupabase, 10000); // Poll status every 10s
-    } 
-    else if (tab === 'files') {
-        btnFiles.classList.add("active");
-        panelFiles.style.display = "block";
-        if (!currentExplorerPath) {
-            document.getElementById("explorer-files-grid").innerHTML = `
-                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
-                    <i data-lucide="folder" style="width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.5;"></i>
-                    <p style="font-size: 0.95rem;">Nenhum diretório aberto ainda.</p>
-                    <p style="font-size: 0.85rem; margin-top: 4px;">Vá na aba de <b>Servidores</b> e clique em um dos discos (C:, D:, etc.) para explorar os arquivos.</p>
-                </div>
-            `;
-            lucide.createIcons();
-        } else {
-            loadDirectoryExplorer(currentExplorerPath);
-        }
+        vigiPollInterval = setInterval(loadServersFromSupabase, 10000);
     }
     
     lucide.createIcons();
@@ -2180,7 +2159,7 @@ async function loadServersFromSupabase() {
                 data.disks.forEach(d => {
                     const usagePct = d.totalGB > 0 ? Math.round((d.usedGB / d.totalGB) * 100) : 0;
                     disksHtml += `
-                        <div class="vigi-disk-item" onclick="openExplorerDrive('${row.ip}', '${d.letter}')" title="Clique para navegar nesta partição">
+                        <div class="vigi-disk-item" style="cursor: default;" title="Armazenamento da partição ${d.letter}:">
                             <span class="vigi-disk-letter"><i data-lucide="hard-drive" style="width:12px;height:12px;margin-right:2px;"></i> ${d.letter}:</span>
                             <div class="vigi-disk-bar-container">
                                 <div class="vigi-disk-bar-fill" style="width: ${usagePct}%;"></div>
@@ -2409,172 +2388,7 @@ async function loadServersFromSupabase() {
     }
 }
 
-function openExplorerDrive(serverIp, diskLetter) {
-    playClickSound();
-    currentExplorerPath = `\\\\\\\\${serverIp}\\\\${diskLetter}`;
-    switchMainTab('files');
-}
-
-async function loadDirectoryExplorer(pathStr) {
-    const spinner = document.getElementById("explorer-loading-spinner");
-    const grid = document.getElementById("explorer-files-grid");
-    const breadcrumbs = document.getElementById("vigi-explorer-breadcrumbs");
-    
-    spinner.style.display = "block";
-    grid.innerHTML = "";
-    breadcrumbs.textContent = pathStr;
-    
-    const vigiUrl = await getVigiUrl();
-    const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
-    
-    try {
-        const response = await fetch(`${vigiUrl}/api/explore?path=${encodeURIComponent(pathStr)}`, {
-            headers: {
-                'Authorization': `Bearer ${vigiToken}`
-            }
-        });
-        
-        spinner.style.display = "none";
-        
-        if (!response.ok) {
-            throw new Error(`Servidor respondeu com status ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.items || data.items.length === 0) {
-            grid.innerHTML = `<p style="color: var(--text-muted); font-size: 0.95rem; padding: 20px; grid-column: 1 / -1; text-align: center;">Este diretório está vazio.</p>`;
-            return;
-        }
-        
-        let html = "";
-        data.items.forEach(item => {
-            const icon = item.isDirectory ? "folder" : "file";
-            const clickAction = item.isDirectory 
-                ? `loadDirectoryExplorer('${item.path.replace(/\\/g, '\\\\')}')`
-                : `downloadFileExplorer('${item.path.replace(/\\/g, '\\\\')}')`;
-            
-            html += `
-                <div class="vigi-file-card" onclick="${clickAction}" title="${item.name}">
-                    <div class="vigi-file-icon">
-                        <i data-lucide="${icon}"></i>
-                    </div>
-                    <div class="vigi-file-name">${item.name}</div>
-                    <div class="vigi-file-size">${item.isDirectory ? "Pasta" : formatBytes(item.size)}</div>
-                </div>
-            `;
-        });
-        
-        grid.innerHTML = html;
-        lucide.createIcons();
-    } catch(err) {
-        spinner.style.display = "none";
-        
-        let mixedContentTip = "";
-        if (window.location.protocol === 'https:' && vigiUrl.startsWith('http:')) {
-            mixedContentTip = `<br><br><span style="color:#f59e0b; font-weight:600;">⚠️ BLOQUEIO DE CONTEÚDO MISTO DO NAVEGADOR (HTTPS -> HTTP):</span><br>
-            Você está acessando a Agenda via HTTPS (Vercel), mas configurou o Servidor Vigi com HTTP seguro básico (${vigiUrl}).<br>
-            O navegador Chrome/Edge bloqueia isso por segurança e gera o erro "Failed to fetch".<br>
-            <br>
-            <b>Como resolver de forma simples:</b><br>
-            1. Abra e use a Agenda via endereço local HTTP: <b>http://localhost:8085</b> (onde o navegador permite ler o servidor local perfeitamente).<br>
-            2. Ou ative o <i>Tailscale Funnel</i> no servidor i5 executando <code>tailscale funnel 3030</code> no CMD do i5 para obter uma URL HTTPS pública segura e cole-a nas configurações da engrenagem.`;
-        }
-        
-        grid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-danger);">
-                <i data-lucide="alert-circle" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
-                <p style="font-size: 0.95rem; font-weight:600;">Falha de Conexão com o Servidor Vigi</p>
-                <p style="font-size: 0.85rem; margin-top: 4px; color: var(--text-muted); line-height: 1.5;">
-                    Certifique-se de que o <b>server.js</b> (Central) está rodando no PC i5 e a URL/Token nas configurações da engrenagem estão corretos.<br>
-                    Erro: ${err.message}
-                    ${mixedContentTip}
-                </p>
-            </div>
-        `;
-        lucide.createIcons();
-    }
-}
-
-function goUpExplorer() {
-    playClickSound();
-    if (!currentExplorerPath) return;
-    const parts = currentExplorerPath.split('\\');
-    if (parts.length > 4) { 
-        parts.pop(); 
-        currentExplorerPath = parts.join('\\');
-        loadDirectoryExplorer(currentExplorerPath); 
-    } else {
-        showToast("Você já está na raiz do disco.", "info");
-    }
-}
-
-function triggerExplorerUpload() {
-    playClickSound();
-    if (!currentExplorerPath) {
-        showToast("Abra uma pasta antes de enviar um arquivo.", "warning");
-        return;
-    }
-    document.getElementById("explorer-file-upload").click();
-}
-
-async function handleExplorerUpload(event) {
-    const file = event.target.files[0]; 
-    if (!file || !currentExplorerPath) return;
-    
-    const vigiUrl = await getVigiUrl();
-    const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    showToast(`Enviando arquivo: ${file.name}...`, "info");
-    
-    try {
-        const response = await fetch(`${vigiUrl}/api/upload?path=${encodeURIComponent(currentExplorerPath)}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${vigiToken}`
-            },
-            body: formData
-        });
-        
-        if (response.ok) {
-            showToast(`Arquivo enviado com sucesso!`, "success");
-            loadDirectoryExplorer(currentExplorerPath); // Recarrega pasta
-        } else {
-            const errText = await response.text();
-            throw new Error(errText || "Falha no upload");
-        }
-    } catch(err) {
-        showToast(`Erro ao enviar arquivo: ${err.message}`, "error");
-    }
-}
-
-async function downloadFileExplorer(filePath) {
-    playClickSound();
-    showToast(`Iniciando download...`, 'info');
-    
-    const vigiUrl = await getVigiUrl();
-    const vigiToken = localStorage.getItem("FOCOFACIL_VIGI_TOKEN") || "VIGI-SECURE-TOKEN-123";
-    
-    const url = `${vigiUrl}/api/download?path=${encodeURIComponent(filePath)}&token=${vigiToken}`;
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filePath.split('\\').pop();
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
-function formatBytes(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+// Funções do explorador de arquivos removidas a pedido do usuário (somente monitoramento ativo)
 
 // Vincula funções ao objeto global window para uso em eventos inline do HTML
 window.showInlineInput = showInlineInput;
@@ -2589,11 +2403,7 @@ window.dragEnter = dragEnter;
 window.dragLeave = dragLeave;
 window.drop = drop;
 window.switchMainTab = switchMainTab;
-window.goUpExplorer = goUpExplorer;
-window.triggerExplorerUpload = triggerExplorerUpload;
-window.handleExplorerUpload = handleExplorerUpload;
-window.openExplorerDrive = openExplorerDrive;
-window.downloadFileExplorer = downloadFileExplorer;
+
 
 // Funções de controle de servidores Vigi
 function showToast(message, type = 'info') {
@@ -3048,11 +2858,7 @@ function updateVigiOverview(rows) {
     lucide.createIcons();
 }
 
-window.goUpExplorer = goUpExplorer;
-window.triggerExplorerUpload = triggerExplorerUpload;
-window.handleExplorerUpload = handleExplorerUpload;
-window.openExplorerDrive = openExplorerDrive;
-window.downloadFileExplorer = downloadFileExplorer;
+
 window.showToast = showToast;
 window.sendPowerAction = sendPowerAction;
 window.wakeServer = wakeServer;
