@@ -2468,13 +2468,26 @@ async function loadDirectoryExplorer(pathStr) {
         lucide.createIcons();
     } catch(err) {
         spinner.style.display = "none";
+        
+        let mixedContentTip = "";
+        if (window.location.protocol === 'https:' && vigiUrl.startsWith('http:')) {
+            mixedContentTip = `<br><br><span style="color:#f59e0b; font-weight:600;">⚠️ BLOQUEIO DE CONTEÚDO MISTO DO NAVEGADOR (HTTPS -> HTTP):</span><br>
+            Você está acessando a Agenda via HTTPS (Vercel), mas configurou o Servidor Vigi com HTTP seguro básico (${vigiUrl}).<br>
+            O navegador Chrome/Edge bloqueia isso por segurança e gera o erro "Failed to fetch".<br>
+            <br>
+            <b>Como resolver de forma simples:</b><br>
+            1. Abra e use a Agenda via endereço local HTTP: <b>http://localhost:8085</b> (onde o navegador permite ler o servidor local perfeitamente).<br>
+            2. Ou ative o <i>Tailscale Funnel</i> no servidor i5 executando <code>tailscale funnel 3030</code> no CMD do i5 para obter uma URL HTTPS pública segura e cole-a nas configurações da engrenagem.`;
+        }
+        
         grid.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-danger);">
                 <i data-lucide="alert-circle" style="width: 48px; height: 48px; margin-bottom: 12px;"></i>
                 <p style="font-size: 0.95rem; font-weight:600;">Falha de Conexão com o Servidor Vigi</p>
-                <p style="font-size: 0.85rem; margin-top: 4px; color: var(--text-muted);">
-                    Certifique-se de que o <b>server.js</b> (Central) está rodando localmente na sua máquina e a URL nas configurações está correta.<br>
+                <p style="font-size: 0.85rem; margin-top: 4px; color: var(--text-muted); line-height: 1.5;">
+                    Certifique-se de que o <b>server.js</b> (Central) está rodando no PC i5 e a URL/Token nas configurações da engrenagem estão corretos.<br>
                     Erro: ${err.message}
+                    ${mixedContentTip}
                 </p>
             </div>
         `;
