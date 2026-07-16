@@ -2128,7 +2128,7 @@ async function loadServersFromSupabase() {
             if (data.processes && data.processes.length > 0) {
                 const topProcs = data.processes.slice(0, 3);
                 topProcs.forEach(p => {
-                    procHtml += `<div class="vigi-proc-row"><span>${p.name}</span><span style="font-family:monospace;font-weight:700;color:var(--color-primary);">${p.cpu.toFixed(1)}%</span></div>`;
+                    procHtml += `<div class="vigi-proc-row"><span>${p.name}</span><span style="font-family:monospace;font-weight:700;color:var(--color-primary);">${p.ramMB} MB</span></div>`;
                 });
             } else {
                 procHtml = `<div class="vigi-proc-row" style="color:var(--text-dimmed);">Nenhum processo pesado</div>`;
