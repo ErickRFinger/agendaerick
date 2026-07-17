@@ -74,9 +74,9 @@
                 <i data-lucide="calendar"></i>
                 <span>Diário & Foco</span>
             </button>
-            <button class="main-tab-btn" id="btn-tab-servers" onclick="switchMainTab('servers')">
-                <i data-lucide="hard-drive"></i>
-                <span>Servidores</span>
+            <button class="main-tab-btn" id="btn-tab-kanban" onclick="switchMainTab('kanban')">
+                <i data-lucide="kanban-square"></i>
+                <span>Kanban</span>
             </button>
         </nav>
 
@@ -398,74 +398,6 @@
             </div>
         </section>
 
-        <!-- SEÇÃO DE MONITORAMENTO DE SERVIDORES (VIGI) -->
-        <section class="panel servers-panel" id="panel-servers" style="display: none;">
-            <div class="panel-header">
-                <div class="panel-title-area">
-                    <div class="panel-icon servers-icon" style="background: linear-gradient(135deg, var(--color-primary), var(--color-success));">
-                        <i data-lucide="hard-drive"></i>
-                    </div>
-                    <h2>Monitoramento de Servidores</h2>
-                </div>
-                <div class="sync-badge" id="vigi-servers-sync-status">
-                    <i data-lucide="refresh-cw" class="spin-animation"></i> Conectado em Tempo Real
-                </div>
-            </div>
-            <!-- Painel de Resumo Global -->
-            <div id="vigi-overview-dashboard" style="display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; padding: 0 10px;">
-                <div class="vigi-overview-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; transition: all 0.3s;">
-                    <div style="background: rgba(59, 130, 246, 0.1); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #3b82f6;"><i data-lucide="desktop-tower" style="width: 18px; height: 18px;"></i></div>
-                    <div>
-                        <h4 id="vigi-overview-servers" style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-main);">0 / 0</h4>
-                        <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Servidores Online</p>
-                        <span id="vigi-overview-servers-sub" style="font-size: 0.65rem; color: var(--text-dimmed); display: block; margin-top: 1px;">Rede inativa</span>
-                    </div>
-                </div>
-                <div class="vigi-overview-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; transition: all 0.3s;">
-                    <div style="background: rgba(167, 139, 250, 0.1); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #a78bfa;"><i data-lucide="cpu" style="width: 18px; height: 18px;"></i></div>
-                    <div>
-                        <h4 id="vigi-overview-cpu" style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-main);">0%</h4>
-                        <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Uso Médio CPU</p>
-                        <span id="vigi-overview-cpu-sub" style="font-size: 0.65rem; color: var(--text-dimmed); display: block; margin-top: 1px;">Carga média</span>
-                    </div>
-                </div>
-                <div class="vigi-overview-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; transition: all 0.3s;">
-                    <div style="background: rgba(245, 158, 11, 0.1); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #f59e0b;"><i data-lucide="layers" style="width: 18px; height: 18px;"></i></div>
-                    <div>
-                        <h4 id="vigi-overview-ram" style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-main);">0 GB</h4>
-                        <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Memória RAM</p>
-                        <span style="font-size: 0.65rem; color: var(--text-dimmed); display: block; margin-top: 1px;">Soma do uso físico</span>
-                    </div>
-                </div>
-                <div class="vigi-overview-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; transition: all 0.3s;">
-                    <div style="background: rgba(16, 185, 129, 0.1); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #10b981;"><i data-lucide="hard-drive" style="width: 18px; height: 18px;"></i></div>
-                    <div>
-                        <h4 id="vigi-overview-storage" style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-main);">0 GB Usado</h4>
-                        <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Armazenamento</p>
-                        <span id="vigi-overview-storage-sub" style="font-size: 0.65rem; color: var(--text-dimmed); display: block; margin-top: 1px;">Espaço total dos discos</span>
-                    </div>
-                </div>
-                <div class="vigi-overview-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; transition: all 0.3s;">
-                    <div style="background: rgba(239, 68, 68, 0.1); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #ef4444;"><i data-lucide="zap" style="width: 18px; height: 18px;"></i></div>
-                    <div>
-                        <h4 id="vigi-overview-power" style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text-main);">0 W</h4>
-                        <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Consumo Total</p>
-                        <span style="font-size: 0.65rem; color: var(--text-dimmed); display: block; margin-top: 1px;">Soma CPU + GPU</span>
-                    </div>
-                </div>
-                <div class="vigi-overview-card alerts-card" id="vigi-overview-alerts" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; transition: all 0.3s;">
-                    <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;"><i data-lucide="bell" style="width: 14px; height: 14px; color: #ef4444;"></i> Alertas de Infraestrutura</h4>
-                    <ul id="vigi-alerts-list" style="margin: 0; padding-left: 18px; font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
-                        <li>Carregando alertas...</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="servers-grid" id="vigi-servers-grid">
-                <p style="color: var(--text-muted); font-size: 0.95rem; padding: 20px;">Carregando status dos servidores do Supabase...</p>
-            </div>
-        </section>
-
     </div>
 
     <!-- MODAL DE ADICIONAR TAREFA (DEMANDA) -->
@@ -636,17 +568,7 @@
                     </div>
                 </div>
 
-                <div class="setting-item-group" style="margin-top: 16px; background: rgba(255,255,255,0.02); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
-                    <span class="group-title" style="font-weight: 700; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--color-primary);">Vigi Drive & Servidores</span>
-                    <div class="form-group" style="margin-top: 4px;">
-                        <label for="vigi-url-input">URL do Servidor Central (Vigi)</label>
-                        <input type="text" id="vigi-url-input" placeholder="Ex: http://localhost:3030" style="width: 100%;">
-                    </div>
-                    <div class="form-group" style="margin-top: 4px;">
-                        <label for="vigi-token-input">Token de Acesso</label>
-                        <input type="password" id="vigi-token-input" placeholder="Ex: VIGI-SECURE-TOKEN-123" style="width: 100%;">
-                    </div>
-                </div>
+
 
                 <div class="modal-actions" style="margin-top: 24px;">
                     <button type="button" class="btn btn-primary" id="btn-save-settings" style="width: 100%;">Salvar Configurações</button>
@@ -655,23 +577,7 @@
         </div>
     </div>
 
-    <!-- Modal do Terminal Web (CMD Remoto) -->
-    <div id="terminal-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1100; align-items: center; justify-content: center;">
-        <div class="modal-content" style="max-width: 800px; width: 90%; height: 60vh; background: #0c0d12; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
-            <div class="modal-header" style="background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;">
-                <h3 style="font-size: 1rem; display: flex; align-items: center; gap: 8px; color: var(--text-main); margin: 0;">
-                    <i data-lucide="terminal" style="color: var(--color-primary); width: 16px; height: 16px;"></i> CMD Remoto: <span id="terminal-target" style="font-family: monospace; color: var(--color-success); font-size: 0.95rem;"></span>
-                </h3>
-                <button type="button" class="btn-icon" onclick="closeTerminal()" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: all 0.2s;"><i data-lucide="x" style="width: 18px; height: 18px;"></i></button>
-            </div>
-            <div id="terminal-output" style="flex: 1; padding: 16px; overflow-y: auto; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.85rem; color: #e2e8f0; white-space: pre-wrap; line-height: 1.4; background: #06070a;"></div>
-            <div style="padding: 12px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px;">
-                <span style="color: var(--color-success); font-family: monospace; font-weight: bold; font-size: 1.1rem;">&gt;</span>
-                <input type="text" id="terminal-input" placeholder="Digite um comando do Windows..." style="flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: 'Consolas', monospace; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') sendTerminalCommand()">
-                <button type="button" class="btn btn-primary" onclick="sendTerminalCommand()" style="padding: 6px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; border-radius: 4px;">Enviar <i data-lucide="send" style="width: 12px; height: 12px;"></i></button>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Script principal -->
     <script src="app.js"></script>
