@@ -1930,8 +1930,9 @@ textarea {
    QUADRO KANBAN DE ANOTAÇÕES (ESTILO TRELLO)
    ========================================================================== */
 .kanban-panel {
-    margin-top: 24px;
+    margin-top: 0;
     width: 100%;
+    min-height: calc(100vh - 120px);
 }
 
 .kanban-board {
@@ -1969,8 +1970,8 @@ textarea {
     padding: 16px;
     display: flex;
     flex-direction: column;
-    max-height: 500px;
-    min-height: 140px;
+    max-height: calc(100vh - 170px);
+    min-height: 480px;
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
