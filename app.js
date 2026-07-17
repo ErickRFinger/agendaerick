@@ -2063,27 +2063,42 @@ function getTempColor(temp) {
 }
 
 function renderCpuThreads(threads, serverId) {
-    let cellsHtml = "";
-    if (threads && threads.length > 0) {
-        threads.forEach((val, idx) => {
-            let bg = 'rgba(16, 185, 129, 0.05)';
-            let border = 'rgba(16, 185, 129, 0.15)';
-            if (val >= 90) {
-                bg = 'rgba(239, 68, 68, 0.15)';
-                border = 'rgba(239, 68, 68, 0.3)';
-            } else if (val >= 70) {
-                bg = 'rgba(245, 158, 11, 0.15)';
-                border = 'rgba(245, 158, 11, 0.3)';
-            }
-            cellsHtml += `
-                <div class="vigi-thread-cell" style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 2px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 32px;" title="Thread T${idx + 1}: ${val.toFixed(0)}%">
-                    <span style="font-size: 8px; color: var(--text-dimmed); font-weight: 700; display:block; line-height:1;">T${idx + 1}</span>
-                    <span style="font-size: 10px; font-weight: 700; color: var(--color-primary); font-family: monospace; display:block; line-height:1; margin-top:2px;">${val.toFixed(0)}%</span>
-                </div>
-            `;
-        });
+    // Parse defensivo: Supabase pode serializar arrays como string
+    if (typeof threads === 'string') {
+        try { threads = JSON.parse(threads); } catch(e) { threads = []; }
     }
-    return `<div class="vigi-threads-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px; margin-top: 6px;">${cellsHtml}</div>`;
+    if (!Array.isArray(threads) || threads.length === 0) return '';
+
+    let cellsHtml = "";
+    threads.forEach((val, idx) => {
+        const pct = typeof val === 'number' ? val : parseFloat(val) || 0;
+        let bar = `#10b981`; // verde
+        if (pct >= 90) bar = '#ef4444';
+        else if (pct >= 70) bar = '#f59e0b';
+        else if (pct >= 40) bar = '#60a5fa';
+
+        cellsHtml += `
+            <div title="Núcleo ${idx + 1}: ${pct.toFixed(0)}%" style="
+                background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 5px;
+                padding: 4px 3px 3px;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+                min-width: 34px;
+            ">
+                <span style="font-size:8px;color:var(--text-dimmed);font-weight:700;line-height:1;">C${idx + 1}</span>
+                <div style="width:100%;height:28px;background:rgba(0,0,0,0.3);border-radius:3px;overflow:hidden;display:flex;align-items:flex-end;">
+                    <div style="width:100%;height:${Math.max(2, pct)}%;background:${bar};transition:height 0.4s;"></div>
+                </div>
+                <span style="font-size:9px;font-weight:800;color:${bar};font-family:monospace;line-height:1;">${pct.toFixed(0)}%</span>
+            </div>
+        `;
+    });
+    return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px;margin-top:6px;">${cellsHtml}</div>`;
 }
 
 async function loadServersFromSupabase() {
@@ -2152,7 +2167,21 @@ async function loadServersFromSupabase() {
             // CPU Details
             const cpuFreq = data.cpuFreqMHz ? `${data.cpuFreqMHz} MHz` : "--";
             const cpuPower = data.cpuPower ? `${parseInt(data.cpuPower)}W` : "0W";
+            const gpuPower = data.gpuPower ? `${parseInt(data.gpuPower)}W` : null;
             const vcoreVal = data.vcore ? `${data.vcore.toFixed(3)}V` : "--";
+            const vrmTempVal = data.vrmTemp || 0;
+            const cmosVbat = data.cmosVbat ? `${data.cmosVbat.toFixed(2)}V` : null;
+
+            // Fans
+            let fansHtml = "";
+            if (data.fans && data.fans.length > 0) {
+                fansHtml = data.fans.map(f =>
+                    `<div class="vigi-badge" title="${f.name}">
+                        <i data-lucide="wind" style="color:#67e8f9;width:11px;height:11px;"></i>
+                        <span class="vigi-badge-val" style="color:#67e8f9;">${f.rpm} RPM</span>
+                    </div>`
+                ).join('');
+            }
             
 
             
@@ -2287,17 +2316,32 @@ async function loadServersFromSupabase() {
                                 <span class="vigi-badge-val" style="color: #f59e0b;">${cpuPower}</span>
                             </div>
                             ${data.vcore ? `
-                            <div class="vigi-badge" title="Tensão Vcore">
-                                <i data-lucide="zap-off" style="color: #60a5fa; width:11px; height:11px;"></i>
+                            <div class="vigi-badge" title="Tensão VCore">
+                                <i data-lucide="zap" style="color: #60a5fa; width:11px; height:11px;"></i>
                                 <span class="vigi-badge-val" style="color: #60a5fa;">${vcoreVal}</span>
+                            </div>` : ''}
+                            ${cmosVbat ? `
+                            <div class="vigi-badge" title="Voltagem Pilha CMOS">
+                                <i data-lucide="battery" style="color: #4ade80; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #4ade80;">${cmosVbat}</span>
+                            </div>` : ''}
+                            ${vrmTempVal > 0 ? `
+                            <div class="vigi-badge" title="Temperatura VRM">
+                                <i data-lucide="thermometer" style="color: ${getTempColor(vrmTempVal)}; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: ${getTempColor(vrmTempVal)};">VRM ${vrmTempVal}°C</span>
                             </div>` : ''}
                         </div>
                         
                         <!-- CPU Threads Grid -->
-                        ${data.cpuThreads && data.cpuThreads.length > 0 ? `
-                        <div class="vigi-section-title">Uso por Threads (${data.cpuThreads.length} núcleos)</div>
-                        ${renderCpuThreads(data.cpuThreads, row.machine_id)}
-                        ` : ''}
+                        ${(() => {
+                            let threads = data.cpuThreads;
+                            if (typeof threads === 'string') { try { threads = JSON.parse(threads); } catch(e) { threads = []; } }
+                            if (!Array.isArray(threads) || threads.length === 0) return '';
+                            return `
+                            <div class="vigi-section-title" style="margin-top:8px;">Uso por Núcleo (${threads.length} threads)</div>
+                            ${renderCpuThreads(threads, row.machine_id)}
+                            `;
+                        })()}
 
                         <!-- MEMÓRIA RAM SECTION -->
                         <div class="vigi-section-header" style="margin-top: 10px;">
@@ -2325,11 +2369,23 @@ async function loadServersFromSupabase() {
                                 <span class="vigi-badge-val" style="color: ${getTempColor(gpuTemp)};">${gpuTemp > 0 ? gpuTemp + "°C" : "N/A"}</span>
                             </div>
                             <div class="vigi-badge" title="Memória VRAM em uso" style="flex-grow: 1;">
-                                <i data-lucide="hard-drive" style="color: #60a5fa; width:11px; height:11px;"></i>
+                                <i data-lucide="layers" style="color: #60a5fa; width:11px; height:11px;"></i>
                                 <span class="vigi-badge-val" style="color: #60a5fa;">VRAM: ${vramText}</span>
                             </div>
+                            ${gpuPower ? `
+                            <div class="vigi-badge" title="Consumo GPU">
+                                <i data-lucide="zap" style="color: #f59e0b; width:11px; height:11px;"></i>
+                                <span class="vigi-badge-val" style="color: #f59e0b;">${gpuPower}</span>
+                            </div>` : ''}
                         </div>
                         ` : ''}
+
+                        <!-- FANS / COOLERS -->
+                        ${fansHtml ? `
+                        <div class="vigi-section-title" style="margin-top:8px;">Coolers (RPM)</div>
+                        <div class="vigi-badges-row" style="flex-wrap:wrap;">
+                            ${fansHtml}
+                        </div>` : ''}
 
                         <!-- REDE SECTION -->
                         <div class="vigi-section-title">Tráfego de Rede (Velocidade)</div>
