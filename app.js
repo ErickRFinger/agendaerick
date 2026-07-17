@@ -79,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initTimelineHours();
     setupConfettiCanvas();
     setupEventListeners();
+    initPomodoro();
 
     // Sincronização automática e silenciosa baseada no Supabase
     const savedSyncCode = localStorage.getItem("FOCOFACIL_SYNC_CODE");
@@ -1795,12 +1796,16 @@ window.checkNotifications = function() {
 };
 
 function sendPushNotification(title, options) {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification(title, options);
-        });
-    } else {
-        new Notification(title, options);
+    if ('Notification' in window && Notification.permission === 'granted') {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(title, options);
+            }).catch(() => {
+                try { new Notification(title, options); } catch (e) {}
+            });
+        } else {
+            try { new Notification(title, options); } catch (e) {}
+        }
     }
 }
 
@@ -1809,13 +1814,28 @@ function sendPushNotification(title, options) {
    ========================================================================== */
 const KANBAN_COLUMNS = ['dia', 'semana', 'mes', 'lembretes', 'concluidas'];
 
+let currentKanbanQuery = "";
+let currentKanbanPriority = "all";
+
 function renderKanban() {
     if (!state.kanbanNotes) {
         state.kanbanNotes = [];
     }
 
     KANBAN_COLUMNS.forEach(col => {
-        const columnNotes = state.kanbanNotes.filter(note => note.column === col);
+        let columnNotes = state.kanbanNotes.filter(note => note.column === col);
+        
+        // Aplica filtro de texto
+        if (currentKanbanQuery) {
+            columnNotes = columnNotes.filter(note => 
+                note.text.toLowerCase().includes(currentKanbanQuery)
+            );
+        }
+        
+        // Aplica filtro de prioridade
+        if (currentKanbanPriority && currentKanbanPriority !== 'all') {
+            columnNotes = columnNotes.filter(note => note.priority === currentKanbanPriority);
+        }
         
         // Atualiza o contador da coluna
         const badge = document.getElementById(`badge-${col}`);
@@ -1845,7 +1865,18 @@ function renderKanban() {
             const leftBtn = colIndex > 0 ? `<button class="kanban-card-btn move-btn" onclick="moveKanbanNoteMobile('${note.id}', -1)" title="Mover para esquerda"><i data-lucide="chevron-left"></i></button>` : '';
             const rightBtn = colIndex < 4 ? `<button class="kanban-card-btn move-btn" onclick="moveKanbanNoteMobile('${note.id}', 1)" title="Mover para direita"><i data-lucide="chevron-right"></i></button>` : '';
 
+            // Tag de prioridade com cores elegantes
+            let prioTag = '';
+            if (note.priority === 'high') {
+                prioTag = `<span class="kanban-prio-tag" style="background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3.5px; width: fit-content; letter-spacing: 0.5px; margin-bottom: 6px;"><span style="width:5px; height:5px; border-radius:50%; background:#ef4444; display:block;"></span>ALTA</span>`;
+            } else if (note.priority === 'medium') {
+                prioTag = `<span class="kanban-prio-tag" style="background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); color: #f59e0b; font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3.5px; width: fit-content; letter-spacing: 0.5px; margin-bottom: 6px;"><span style="width:5px; height:5px; border-radius:50%; background:#f59e0b; display:block;"></span>MÉDIA</span>`;
+            } else if (note.priority === 'low') {
+                prioTag = `<span class="kanban-prio-tag" style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); color: #10b981; font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3.5px; width: fit-content; letter-spacing: 0.5px; margin-bottom: 6px;"><span style="width:5px; height:5px; border-radius:50%; background:#10b981; display:block;"></span>BAIXA</span>`;
+            }
+
             card.innerHTML = `
+                ${prioTag}
                 <div class="kanban-card-text">${escapeHtml(note.text)}</div>
                 <div class="kanban-card-actions">
                     <div class="quick-move-area">
@@ -1867,6 +1898,7 @@ function showInlineInput(col) {
     const inputArea = document.getElementById(`add-area-${col}`);
     const addBtn = document.getElementById(`btn-add-trigger-${col}`);
     const textarea = document.getElementById(`input-${col}`);
+    const prioritySelect = document.getElementById(`priority-${col}`);
     
     if (inputArea && addBtn) {
         inputArea.style.display = 'block';
@@ -1874,6 +1906,9 @@ function showInlineInput(col) {
         if (textarea) {
             textarea.value = '';
             textarea.focus();
+        }
+        if (prioritySelect) {
+            prioritySelect.value = 'none';
         }
     }
 }
@@ -1899,10 +1934,14 @@ function addKanbanNoteFromInput(col) {
     const text = textarea.value.trim();
     if (!text) return;
 
+    const prioritySelect = document.getElementById(`priority-${col}`);
+    const priority = prioritySelect && prioritySelect.value !== 'none' ? prioritySelect.value : null;
+
     const newNote = {
         id: 'k_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
         text: text,
-        column: col
+        column: col,
+        priority: priority
     };
 
     if (!state.kanbanNotes) {
@@ -1911,6 +1950,11 @@ function addKanbanNoteFromInput(col) {
 
     state.kanbanNotes.push(newNote);
     saveState();
+    
+    if (prioritySelect) {
+        prioritySelect.value = 'none';
+    }
+    
     hideInlineInput(col);
     renderKanban();
     lucide.createIcons();
@@ -1937,6 +1981,18 @@ function editKanbanNote(id) {
         deleteKanbanNote(id);
     } else {
         note.text = trimmed;
+        
+        // Permite editar a prioridade também
+        const currentP = note.priority === 'high' ? '1' : (note.priority === 'medium' ? '2' : (note.priority === 'low' ? '3' : ''));
+        const prioOpt = prompt("Defina a prioridade:\n1 - Alta\n2 - Média\n3 - Baixa\nDeixe vazio para Nenhuma", currentP);
+        if (prioOpt !== null) {
+            const p = prioOpt.trim();
+            if (p === '1') note.priority = 'high';
+            else if (p === '2') note.priority = 'medium';
+            else if (p === '3') note.priority = 'low';
+            else note.priority = null;
+        }
+
         saveState();
         renderKanban();
         lucide.createIcons();
@@ -2034,6 +2090,120 @@ function switchMainTab(tab) {
     lucide.createIcons();
 }
 
+// ==========================================================================
+// LÓGICA DO TEMPORIZADOR DE FOCO (POMODORO)
+// ==========================================================================
+let pomodoroTimeLeft = 25 * 60; // 25 minutos
+let pomodoroInterval = null;
+let pomodoroIsRunning = false;
+let pomodoroCyclesToday = 0;
+
+function initPomodoro() {
+    const todayKey = "FOCOFACIL_POMODORO_CYCLES_" + getTodayDateString();
+    pomodoroCyclesToday = parseInt(localStorage.getItem(todayKey)) || 0;
+    updatePomodoroDisplay();
+}
+
+function updatePomodoroDisplay() {
+    const minutes = Math.floor(pomodoroTimeLeft / 60).toString().padStart(2, '0');
+    const seconds = (pomodoroTimeLeft % 60).toString().padStart(2, '0');
+    const timeEl = document.getElementById("pomodoro-time");
+    if (timeEl) timeEl.textContent = `${minutes}:${seconds}`;
+    
+    const countEl = document.getElementById("pomodoro-count");
+    if (countEl) countEl.textContent = pomodoroCyclesToday;
+}
+
+function togglePomodoro() {
+    const btnToggle = document.getElementById("btn-pomodoro-toggle");
+    if (!btnToggle) return;
+    
+    if (pomodoroIsRunning) {
+        // Pausar
+        clearInterval(pomodoroInterval);
+        pomodoroInterval = null;
+        pomodoroIsRunning = false;
+        btnToggle.innerHTML = `<i data-lucide="play" style="width:14px; height:14px;"></i> <span>Iniciar</span>`;
+        playClickSound();
+    } else {
+        // Iniciar
+        pomodoroIsRunning = true;
+        btnToggle.innerHTML = `<i data-lucide="pause" style="width:14px; height:14px;"></i> <span>Pausar</span>`;
+        playClickSound();
+        
+        pomodoroInterval = setInterval(() => {
+            if (pomodoroTimeLeft > 0) {
+                pomodoroTimeLeft--;
+                updatePomodoroDisplay();
+            } else {
+                // Finalizado
+                clearInterval(pomodoroInterval);
+                pomodoroInterval = null;
+                pomodoroIsRunning = false;
+                pomodoroTimeLeft = 25 * 60;
+                
+                const todayKey = "FOCOFACIL_POMODORO_CYCLES_" + getTodayDateString();
+                pomodoroCyclesToday++;
+                localStorage.setItem(todayKey, pomodoroCyclesToday);
+                
+                btnToggle.innerHTML = `<i data-lucide="play" style="width:14px; height:14px;"></i> <span>Iniciar</span>`;
+                updatePomodoroDisplay();
+                
+                playSuccessSound();
+                if ("Notification" in window && Notification.permission === "granted") {
+                    sendPushNotification("Hora de descansar!", {
+                        body: "Você concluiu um ciclo de foco de 25 minutos. Parabéns!",
+                        icon: "favicon.png"
+                    });
+                } else {
+                    alert("Ciclo de foco concluído! Faça uma pausa de 5 minutos.");
+                }
+            }
+        }, 1000);
+    }
+    lucide.createIcons();
+}
+
+function resetPomodoro() {
+    clearInterval(pomodoroInterval);
+    pomodoroInterval = null;
+    pomodoroIsRunning = false;
+    pomodoroTimeLeft = 25 * 60;
+    
+    const btnToggle = document.getElementById("btn-pomodoro-toggle");
+    if (btnToggle) {
+        btnToggle.innerHTML = `<i data-lucide="play" style="width:14px; height:14px;"></i> <span>Iniciar</span>`;
+    }
+    
+    updatePomodoroDisplay();
+    playClickSound();
+    lucide.createIcons();
+}
+
+// ==========================================================================
+// FILTROS DO KANBAN DE ANOTAÇÕES
+// ==========================================================================
+function filterKanbanNotes() {
+    const searchInput = document.getElementById("kanban-search");
+    if (searchInput) {
+        currentKanbanQuery = searchInput.value.trim().toLowerCase();
+    }
+    renderKanban();
+    lucide.createIcons();
+}
+
+function filterKanbanNotesByPriority(prio, btn) {
+    currentKanbanPriority = prio;
+    
+    document.querySelectorAll(".filter-prio-btn").forEach(el => {
+        el.classList.remove("active");
+    });
+    if (btn) btn.classList.add("active");
+    
+    renderKanban();
+    lucide.createIcons();
+}
+
 // Vincula funções ao objeto global window para uso em eventos inline do HTML
 window.showInlineInput = showInlineInput;
 window.hideInlineInput = hideInlineInput;
@@ -2047,3 +2217,8 @@ window.dragEnter = dragEnter;
 window.dragLeave = dragLeave;
 window.drop = drop;
 window.switchMainTab = switchMainTab;
+window.togglePomodoro = togglePomodoro;
+window.resetPomodoro = resetPomodoro;
+window.filterKanbanNotes = filterKanbanNotes;
+window.filterKanbanNotesByPriority = filterKanbanNotesByPriority;
+window.initPomodoro = initPomodoro;

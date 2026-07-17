@@ -248,13 +248,29 @@
                             </ul>
                         </div>
 
-                        <div class="other-liquids-footer-actions">
-                            <button class="btn-text-only" id="btn-add-liquid-trigger">
-                                <i data-lucide="plus"></i> Registrar Outro
+
+                <!-- BLOCO POMODORO TIMER -->
+                <section class="panel pomodoro-panel" style="margin-top: 20px;">
+                    <div class="panel-header">
+                        <div class="panel-title-area">
+                            <div class="panel-icon pomodoro-icon" style="background: linear-gradient(135deg, #ef4444, #f97316);">
+                                <i data-lucide="timer"></i>
+                            </div>
+                            <h2>Foco (Pomodoro)</h2>
+                        </div>
+                    </div>
+                    <div class="pomodoro-container" style="display:flex; flex-direction:column; align-items:center; gap:12px; padding:10px 0;">
+                        <div class="pomodoro-timer" id="pomodoro-time" style="font-size:2.6rem; font-weight:800; font-family:monospace; color:var(--text-main); letter-spacing:1px; line-height:1;">25:00</div>
+                        <div class="pomodoro-controls" style="display:flex; gap:8px; width:100%;">
+                            <button class="btn btn-primary" id="btn-pomodoro-toggle" onclick="togglePomodoro()" style="flex:1; justify-content:center; gap:4px; font-size:12px; padding:8px;">
+                                <i data-lucide="play" style="width:14px; height:14px;"></i> <span>Iniciar</span>
                             </button>
-                            <button class="btn-text-only text-danger" id="btn-reset-liquids">
-                                <i data-lucide="trash-2"></i> Zerar Todos
+                            <button class="btn btn-secondary" id="btn-pomodoro-reset" onclick="resetPomodoro()" style="padding: 8px 12px;" title="Resetar">
+                                <i data-lucide="rotate-ccw" style="width:14px; height:14px;"></i>
                             </button>
+                        </div>
+                        <div class="pomodoro-stats" style="font-size:0.75rem; color:var(--text-muted); display:flex; gap:12px; justify-content:center; width:100%; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:4px;">
+                            <span>Ciclos Concluídos Hoje: <b id="pomodoro-count" style="color:var(--text-main);">0</b></span>
                         </div>
                     </div>
                 </section>
@@ -263,15 +279,31 @@
 
         <!-- SEÇÃO DO KANBAN DE ANOTAÇÕES (ESTILO TRELLO) -->
         <section class="panel kanban-panel" id="panel-kanban" style="display: none;">
-            <div class="panel-header">
-                <div class="panel-title-area">
-                    <div class="panel-icon kanban-icon" style="background: linear-gradient(135deg, var(--color-primary), var(--color-water));">
-                        <i data-lucide="kanban-square"></i>
+            <div class="panel-header" style="flex-direction: column; align-items: stretch; gap: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div class="panel-title-area">
+                        <div class="panel-icon kanban-icon" style="background: linear-gradient(135deg, var(--color-primary), var(--color-water));">
+                            <i data-lucide="kanban-square"></i>
+                        </div>
+                        <h2>Quadro de Anotações Kanban</h2>
                     </div>
-                    <h2>Quadro de Anotações Kanban</h2>
+                    <div style="font-size: 12px; color: var(--text-muted); font-weight: 500;">
+                        Arraste os cards ou use as setas para organizar
+                    </div>
                 </div>
-                <div class="kanban-actions">
-                    <span class="text-muted" style="font-size: 13px;">Arraste os cards ou use as setas para organizar suas anotações</span>
+                <!-- BARRA DE BUSCA E FILTROS DO KANBAN -->
+                <div class="kanban-filter-bar" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap;">
+                    <div class="search-box" style="position: relative; flex: 1; max-width: 320px; min-width: 200px;">
+                        <i data-lucide="search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-dimmed);"></i>
+                        <input type="text" id="kanban-search" placeholder="Pesquisar anotações..." style="width: 100%; padding: 8px 12px 8px 34px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); font-size: 13px; outline: none; transition: all 0.2s;" oninput="filterKanbanNotes()">
+                    </div>
+                    <div class="prio-filters" style="display: flex; gap: 6px; align-items: center;">
+                        <span style="font-size: 12px; color: var(--text-muted); margin-right: 4px;">Prioridade:</span>
+                        <button class="tab-btn active filter-prio-btn" data-prio="all" onclick="filterKanbanNotesByPriority('all', this)" style="padding: 6px 12px; font-size: 11px;">Todas</button>
+                        <button class="tab-btn filter-prio-btn" data-prio="high" onclick="filterKanbanNotesByPriority('high', this)" style="padding: 6px 12px; font-size: 11px; border-color: rgba(239,68,68,0.2); color: #ef4444;">🔴 Alta</button>
+                        <button class="tab-btn filter-prio-btn" data-prio="medium" onclick="filterKanbanNotesByPriority('medium', this)" style="padding: 6px 12px; font-size: 11px; border-color: rgba(245,158,11,0.2); color: #f59e0b;">🟡 Média</button>
+                        <button class="tab-btn filter-prio-btn" data-prio="low" onclick="filterKanbanNotesByPriority('low', this)" style="padding: 6px 12px; font-size: 11px; border-color: rgba(16,185,129,0.2); color: #10b981;">🟢 Baixa</button>
+                    </div>
                 </div>
             </div>
             
@@ -292,9 +324,17 @@
                         </button>
                         <div class="inline-add-area" id="add-area-dia" style="display: none;">
                             <textarea id="input-dia" placeholder="Escreva sua anotação..." rows="2"></textarea>
-                            <div class="inline-add-actions">
-                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('dia')">Adicionar</button>
-                                <button class="btn-close-inline" onclick="hideInlineInput('dia')">&times;</button>
+                            <div class="inline-add-actions" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                <select id="priority-dia" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); font-size:11px; padding:2px 4px; border-radius:4px; outline:none; cursor:pointer;">
+                                    <option value="none">Prioridade: Nenhuma</option>
+                                    <option value="high" style="color:#ef4444;">🔴 Alta</option>
+                                    <option value="medium" style="color:#f59e0b;">🟡 Média</option>
+                                    <option value="low" style="color:#10b981;">🟢 Baixa</option>
+                                </select>
+                                <div style="display:flex; gap:6px;">
+                                    <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('dia')">Adicionar</button>
+                                    <button class="btn-close-inline" onclick="hideInlineInput('dia')">&times;</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -316,9 +356,17 @@
                         </button>
                         <div class="inline-add-area" id="add-area-semana" style="display: none;">
                             <textarea id="input-semana" placeholder="Escreva sua anotação..." rows="2"></textarea>
-                            <div class="inline-add-actions">
-                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('semana')">Adicionar</button>
-                                <button class="btn-close-inline" onclick="hideInlineInput('semana')">&times;</button>
+                            <div class="inline-add-actions" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                <select id="priority-semana" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); font-size:11px; padding:2px 4px; border-radius:4px; outline:none; cursor:pointer;">
+                                    <option value="none">Prioridade: Nenhuma</option>
+                                    <option value="high" style="color:#ef4444;">🔴 Alta</option>
+                                    <option value="medium" style="color:#f59e0b;">🟡 Média</option>
+                                    <option value="low" style="color:#10b981;">🟢 Baixa</option>
+                                </select>
+                                <div style="display:flex; gap:6px;">
+                                    <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('semana')">Adicionar</button>
+                                    <button class="btn-close-inline" onclick="hideInlineInput('semana')">&times;</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -340,9 +388,17 @@
                         </button>
                         <div class="inline-add-area" id="add-area-mes" style="display: none;">
                             <textarea id="input-mes" placeholder="Escreva sua anotação..." rows="2"></textarea>
-                            <div class="inline-add-actions">
-                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('mes')">Adicionar</button>
-                                <button class="btn-close-inline" onclick="hideInlineInput('mes')">&times;</button>
+                            <div class="inline-add-actions" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                <select id="priority-mes" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); font-size:11px; padding:2px 4px; border-radius:4px; outline:none; cursor:pointer;">
+                                    <option value="none">Prioridade: Nenhuma</option>
+                                    <option value="high" style="color:#ef4444;">🔴 Alta</option>
+                                    <option value="medium" style="color:#f59e0b;">🟡 Média</option>
+                                    <option value="low" style="color:#10b981;">🟢 Baixa</option>
+                                </select>
+                                <div style="display:flex; gap:6px;">
+                                    <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('mes')">Adicionar</button>
+                                    <button class="btn-close-inline" onclick="hideInlineInput('mes')">&times;</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -364,9 +420,17 @@
                         </button>
                         <div class="inline-add-area" id="add-area-lembretes" style="display: none;">
                             <textarea id="input-lembretes" placeholder="Escreva sua anotação..." rows="2"></textarea>
-                            <div class="inline-add-actions">
-                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('lembretes')">Adicionar</button>
-                                <button class="btn-close-inline" onclick="hideInlineInput('lembretes')">&times;</button>
+                            <div class="inline-add-actions" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                <select id="priority-lembretes" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); font-size:11px; padding:2px 4px; border-radius:4px; outline:none; cursor:pointer;">
+                                    <option value="none">Prioridade: Nenhuma</option>
+                                    <option value="high" style="color:#ef4444;">🔴 Alta</option>
+                                    <option value="medium" style="color:#f59e0b;">🟡 Média</option>
+                                    <option value="low" style="color:#10b981;">🟢 Baixa</option>
+                                </select>
+                                <div style="display:flex; gap:6px;">
+                                    <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('lembretes')">Adicionar</button>
+                                    <button class="btn-close-inline" onclick="hideInlineInput('lembretes')">&times;</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -388,9 +452,17 @@
                         </button>
                         <div class="inline-add-area" id="add-area-concluidas" style="display: none;">
                             <textarea id="input-concluidas" placeholder="Escreva sua anotação..." rows="2"></textarea>
-                            <div class="inline-add-actions">
-                                <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('concluidas')">Adicionar</button>
-                                <button class="btn-close-inline" onclick="hideInlineInput('concluidas')">&times;</button>
+                            <div class="inline-add-actions" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                <select id="priority-concluidas" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); font-size:11px; padding:2px 4px; border-radius:4px; outline:none; cursor:pointer;">
+                                    <option value="none">Prioridade: Nenhuma</option>
+                                    <option value="high" style="color:#ef4444;">🔴 Alta</option>
+                                    <option value="medium" style="color:#f59e0b;">🟡 Média</option>
+                                    <option value="low" style="color:#10b981;">🟢 Baixa</option>
+                                </select>
+                                <div style="display:flex; gap:6px;">
+                                    <button class="btn btn-primary-sm" onclick="addKanbanNoteFromInput('concluidas')">Adicionar</button>
+                                    <button class="btn-close-inline" onclick="hideInlineInput('concluidas')">&times;</button>
+                                </div>
                             </div>
                         </div>
                     </div>
