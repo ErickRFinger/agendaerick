@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FocoFácil - Sua Agenda de Foco Simplificado</title>
+    <title>FocoFácil - Agenda, Diário, Foco, Kanban & Financeiro</title>
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#f59e0b">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,7 +24,61 @@
     <!-- Canvas de Confete para Comemorações -->
     <canvas id="confetti-canvas"></canvas>
 
-    <div class="app-container">
+    <!-- TELA DE LOGIN & AUTENTICAÇÃO DE USUÁRIOS -->
+    <div class="login-screen-overlay" id="screen-login">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <h2>Foco<span>Fácil</span></h2>
+                <p>Acesse sua conta para continuar</p>
+            </div>
+
+            <div class="login-error-alert" id="login-error-msg" style="display: none;">
+                <i data-lucide="alert-circle"></i>
+                <span>Usuário ou senha incorretos!</span>
+            </div>
+
+            <form id="form-login" class="login-form">
+                <div class="form-group">
+                    <label for="login-username">Usuário</label>
+                    <div class="input-icon-wrapper">
+                        <i data-lucide="user" class="input-icon"></i>
+                        <input type="text" id="login-username" placeholder="Digite seu usuário (Ex: Erick)" required autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Senha</label>
+                    <div class="input-icon-wrapper">
+                        <i data-lucide="lock" class="input-icon"></i>
+                        <input type="password" id="login-password" placeholder="Digite sua senha" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-pw" id="btn-toggle-login-password" title="Mostrar/Ocultar senha">
+                            <i data-lucide="eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-remember">
+                        <input type="checkbox" id="login-remember" checked>
+                        <span>Lembrar de mim neste dispositivo</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-login-submit">
+                    <i data-lucide="log-in"></i> <span>Entrar no Sistema</span>
+                </button>
+            </form>
+
+            <div class="login-footer-hint">
+                <span>Dica: Conta Master <strong>Erick</strong> / <strong>clic3369</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="app-container">
         <!-- CABEÇALHO -->
         <header class="app-header">
             <div class="header-left">
@@ -41,7 +95,19 @@
             </div>
             
             <div class="header-right">
-                <!-- Barra de Progresso Geral -->
+                <!-- Perfil do Usuário e Logout -->
+                <div class="user-profile-badge" id="user-profile-badge">
+                    <div class="user-avatar" id="user-avatar-icon">
+                        <i data-lucide="user"></i>
+                    </div>
+                    <span class="user-name-text" id="header-user-name">Erick</span>
+                    <button class="btn-logout" id="btn-logout-user" onclick="logoutUser()" title="Encerrar Sessão">
+                        <i data-lucide="log-out"></i>
+                        <span>Sair</span>
+                    </button>
+                </div>
+
+                <!-- Barra de Progresso Geral do Dia -->
                 <div class="day-progress-container">
                     <div class="progress-labels">
                         <span class="progress-title">Conclusão do Dia</span>
@@ -51,16 +117,35 @@
                         <div class="progress-bar-fill" id="day-progress-fill"></div>
                     </div>
                 </div>
+
+                <!-- Central de Notificações Popover Trigger -->
+                <div class="notification-popover-wrapper" style="position: relative;">
+                    <button class="icon-btn btn-settings" id="btn-notifications-trigger" title="Central de Notificações" onclick="toggleNotificationPopover()">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                    </button>
+                    <!-- Popover Dropdown de Notificações -->
+                    <div class="notification-popover" id="notification-popover" style="display: none;">
+                        <div class="popover-header">
+                            <h4><i data-lucide="bell"></i> Notificações Recentes</h4>
+                            <button class="btn-text-only" onclick="clearNotificationsLog()" style="font-size: 11px;">Limpar</button>
+                        </div>
+                        <div class="popover-body" id="notification-list-popover">
+                            <!-- Gerado via JS -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Botão de Instalação PWA -->
                 <button class="icon-btn btn-settings btn-install-pwa" id="btn-install-app" title="Instalar Aplicativo" style="display: none;">
                     <i data-lucide="download"></i>
                     <span class="btn-text">Instalar App</span>
                 </button>
                 <!-- Botão de Configurações Gerais -->
-                <button class="icon-btn btn-settings" id="btn-settings-trigger" title="Configurações e Notificações">
+                <button class="icon-btn btn-settings" id="btn-settings-trigger" title="Configurações do Sistema">
                     <i data-lucide="settings"></i>
                 </button>
-                <!-- Botão de Limpar Dados -->
+                <!-- Botão de Reiniciar Dia -->
                 <button class="icon-btn btn-settings" id="btn-reset-day" title="Reiniciar Dia">
                     <i data-lucide="refresh-ccw"></i>
                     <span class="btn-text">Reiniciar Dia</span>
@@ -68,20 +153,92 @@
             </div>
         </header>
 
-        <!-- NAVEGAÇÃO PRINCIPAL DO SISTEMA -->
+        <!-- NAVEGAÇÃO PRINCIPAL DO SISTEMA (5 MÓDULOS) -->
         <nav class="main-nav-tabs">
             <button class="main-tab-btn active" id="btn-tab-agenda" onclick="switchMainTab('agenda')">
                 <i data-lucide="calendar"></i>
-                <span>Diário & Foco</span>
+                <span>Agenda</span>
+            </button>
+            <button class="main-tab-btn" id="btn-tab-diario" onclick="switchMainTab('diario')">
+                <i data-lucide="book-open"></i>
+                <span>Diário & Rotina</span>
+            </button>
+            <button class="main-tab-btn" id="btn-tab-foco" onclick="switchMainTab('foco')">
+                <i data-lucide="timer"></i>
+                <span>Foco & Produtividade</span>
             </button>
             <button class="main-tab-btn" id="btn-tab-kanban" onclick="switchMainTab('kanban')">
                 <i data-lucide="kanban-square"></i>
                 <span>Kanban</span>
             </button>
+            <button class="main-tab-btn" id="btn-tab-financeiro" onclick="switchMainTab('financeiro')">
+                <i data-lucide="wallet"></i>
+                <span>Financeiro</span>
+            </button>
         </nav>
 
-        <!-- CONTAINER PRINCIPAL -->
-        <main class="main-content">
+        <!-- MÓDULO 1: AGENDA SEPARADA -->
+        <section class="panel agenda-module-panel" id="panel-agenda">
+            <div class="panel-header">
+                <div class="panel-title-area">
+                    <div class="panel-icon agenda-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+                        <i data-lucide="calendar-range"></i>
+                    </div>
+                    <div>
+                        <h2>Minha Agenda & Compromissos</h2>
+                        <span style="font-size: 12px; color: var(--text-muted);">Organize seus eventos, reuniões e datas importantes</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn btn-primary" id="btn-add-event-trigger">
+                        <i data-lucide="plus"></i>
+                        <span>Novo Compromisso</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="agenda-layout-grid">
+                <!-- Coluna Esquerda: Calendário Interativo Visual Mensal -->
+                <div class="agenda-calendar-card">
+                    <div class="month-nav-bar">
+                        <button class="icon-btn btn-month-nav" id="btn-prev-month" onclick="navigateMonth(-1)"><i data-lucide="chevron-left"></i></button>
+                        <h3 id="calendar-month-label" class="calendar-month-title">Mês Ano</h3>
+                        <button class="icon-btn btn-month-nav" id="btn-next-month" onclick="navigateMonth(1)"><i data-lucide="chevron-right"></i></button>
+                    </div>
+
+                    <div class="calendar-month-grid-header">
+                        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                    </div>
+                    <div class="calendar-month-grid" id="calendar-month-grid">
+                        <!-- Gerado dinamicamente via JS -->
+                    </div>
+                </div>
+
+                <!-- Coluna Direita: Detalhes e Lista de Compromissos da Data -->
+                <div class="agenda-events-card">
+                    <div class="events-card-header">
+                        <div>
+                            <h3 id="selected-agenda-date-title">Compromissos do Dia</h3>
+                            <span id="selected-agenda-date-subtitle" style="font-size: 12px; color: var(--text-muted);">Nenhum compromisso selecionado</span>
+                        </div>
+                        <div class="agenda-category-filters">
+                            <button class="tab-btn active agenda-filter-btn" data-cat="all" onclick="filterAgendaEvents('all', this)">Todos</button>
+                            <button class="tab-btn agenda-filter-btn" data-cat="work" onclick="filterAgendaEvents('work', this)">💼 Trabalho</button>
+                            <button class="tab-btn agenda-filter-btn" data-cat="study" onclick="filterAgendaEvents('study', this)">📚 Estudos</button>
+                            <button class="tab-btn agenda-filter-btn" data-cat="health" onclick="filterAgendaEvents('health', this)">🏥 Saúde</button>
+                            <button class="tab-btn agenda-filter-btn" data-cat="personal" onclick="filterAgendaEvents('personal', this)">🏠 Pessoal</button>
+                        </div>
+                    </div>
+
+                    <div class="agenda-events-list" id="agenda-events-list">
+                        <!-- Lista gerada via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 2: DIÁRIO E ROTINA -->
+        <main class="main-content" id="panel-diario" style="display: none;">
             <!-- COLUNA ESQUERDA: LINHA DO TEMPO (DEMANDAS POR HORA) -->
             <section class="panel timeline-panel" id="panel-timeline">
                 <div class="panel-header">
@@ -125,7 +282,7 @@
             <!-- COLUNA DIREITA: REMÉDIOS E ÁGUA -->
             <div class="side-column">
                 
-                <!-- BLOCo MEDICAMENTOS -->
+                <!-- BLOCO MEDICAMENTOS -->
                 <section class="panel meds-panel">
                     <div class="panel-header">
                         <div class="panel-title-area">
@@ -221,7 +378,6 @@
                     </div>
 
                     <div class="other-liquids-body">
-                        <!-- Botões de Log Rápido -->
                         <div class="quick-drink-grid">
                             <button class="btn-quick-drink" data-type="coffee" data-amount="150" data-name="Café">
                                 <i data-lucide="coffee"></i>
@@ -241,43 +397,125 @@
                             </button>
                         </div>
 
-                        <!-- Lista dos líquidos consumidos hoje -->
                         <div class="drink-logs-container">
                             <ul class="drink-logs-list" id="drink-logs-list">
                                 <!-- Gerado dinamicamente via JS -->
                             </ul>
-                        </div>
-
-
-                <!-- BLOCO POMODORO TIMER -->
-                <section class="panel pomodoro-panel" style="margin-top: 20px;">
-                    <div class="panel-header">
-                        <div class="panel-title-area">
-                            <div class="panel-icon pomodoro-icon" style="background: linear-gradient(135deg, #ef4444, #f97316);">
-                                <i data-lucide="timer"></i>
-                            </div>
-                            <h2>Foco (Pomodoro)</h2>
-                        </div>
-                    </div>
-                    <div class="pomodoro-container" style="display:flex; flex-direction:column; align-items:center; gap:12px; padding:10px 0;">
-                        <div class="pomodoro-timer" id="pomodoro-time" style="font-size:2.6rem; font-weight:800; font-family:monospace; color:var(--text-main); letter-spacing:1px; line-height:1;">25:00</div>
-                        <div class="pomodoro-controls" style="display:flex; gap:8px; width:100%;">
-                            <button class="btn btn-primary" id="btn-pomodoro-toggle" onclick="togglePomodoro()" style="flex:1; justify-content:center; gap:4px; font-size:12px; padding:8px;">
-                                <i data-lucide="play" style="width:14px; height:14px;"></i> <span>Iniciar</span>
-                            </button>
-                            <button class="btn btn-secondary" id="btn-pomodoro-reset" onclick="resetPomodoro()" style="padding: 8px 12px;" title="Resetar">
-                                <i data-lucide="rotate-ccw" style="width:14px; height:14px;"></i>
-                            </button>
-                        </div>
-                        <div class="pomodoro-stats" style="font-size:0.75rem; color:var(--text-muted); display:flex; gap:12px; justify-content:center; width:100%; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px; margin-top:4px;">
-                            <span>Ciclos Concluídos Hoje: <b id="pomodoro-count" style="color:var(--text-main);">0</b></span>
                         </div>
                     </div>
                 </section>
             </div>
         </main>
 
-        <!-- SEÇÃO DO KANBAN DE ANOTAÇÕES (ESTILO TRELLO) -->
+        <!-- MÓDULO 3: FOCO & PRODUTIVIDADE -->
+        <section class="panel focus-studio-panel" id="panel-foco" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title-area">
+                    <div class="panel-icon focus-icon" style="background: linear-gradient(135deg, #ef4444, #f97316);">
+                        <i data-lucide="timer"></i>
+                    </div>
+                    <div>
+                        <h2>Estúdio de Foco & Concentração</h2>
+                        <span style="font-size: 12px; color: var(--text-muted);">Técnica Pomodoro, Ruído Branco e Métricas de Produtividade</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="focus-grid-container">
+                <!-- Card Principal: Timer Pomodoro -->
+                <div class="focus-timer-card">
+                    <div class="pomodoro-mode-selector">
+                        <button class="tab-btn active" id="pomo-mode-25" onclick="setPomodoroPreset(25, 5)">25/5 min (Padrão)</button>
+                        <button class="tab-btn" id="pomo-mode-50" onclick="setPomodoroPreset(50, 10)">50/10 min (Intenso)</button>
+                        <button class="tab-btn" id="pomo-mode-custom" onclick="promptCustomPomodoro()">Personalizado</button>
+                    </div>
+
+                    <div class="pomodoro-display-circle">
+                        <span class="pomodoro-state-badge" id="pomodoro-state-label">FOCO</span>
+                        <div class="pomodoro-timer-text" id="pomodoro-time">25:00</div>
+                        <span style="font-size: 12px; color: var(--text-muted);" id="pomodoro-sub-text">Mantenha a atenção total</span>
+                    </div>
+
+                    <div class="pomodoro-actions-bar">
+                        <button class="btn btn-primary btn-lg" id="btn-pomodoro-toggle" onclick="togglePomodoro()">
+                            <i data-lucide="play"></i> <span>Iniciar Foco</span>
+                        </button>
+                        <button class="btn btn-secondary" id="btn-pomodoro-reset" onclick="resetPomodoro()" title="Resetar">
+                            <i data-lucide="rotate-ccw"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card de Gerador de Sons Ambiente e Ruído Branco -->
+                <div class="focus-sounds-card">
+                    <div class="card-subtitle-header">
+                        <h3><i data-lucide="headphones"></i> Sons Ambiente para Concentração</h3>
+                        <span style="font-size: 12px; color: var(--text-muted);">Sintetizador Web Audio de ruído relaxante</span>
+                    </div>
+
+                    <div class="ambient-sound-grid">
+                        <div class="ambient-card" id="ambient-rain" onclick="toggleAmbientSound('rain')">
+                            <div class="ambient-icon"><i data-lucide="cloud-rain"></i></div>
+                            <div class="ambient-info">
+                                <strong>Chuva Suave</strong>
+                                <small>Som relaxante de gotas</small>
+                            </div>
+                            <span class="ambient-badge">Desligado</span>
+                        </div>
+                        <div class="ambient-card" id="ambient-waves" onclick="toggleAmbientSound('waves')">
+                            <div class="ambient-icon"><i data-lucide="waves"></i></div>
+                            <div class="ambient-info">
+                                <strong>Ondas do Mar</strong>
+                                <small>Ritmo constante da maré</small>
+                            </div>
+                            <span class="ambient-badge">Desligado</span>
+                        </div>
+                        <div class="ambient-card" id="ambient-noise" onclick="toggleAmbientSound('noise')">
+                            <div class="ambient-icon"><i data-lucide="radio"></i></div>
+                            <div class="ambient-info">
+                                <strong>Ruído Rosa</strong>
+                                <small>Bloqueador de distrações</small>
+                            </div>
+                            <span class="ambient-badge">Desligado</span>
+                        </div>
+                        <div class="ambient-card" id="ambient-cafe" onclick="toggleAmbientSound('cafe')">
+                            <div class="ambient-icon"><i data-lucide="coffee"></i></div>
+                            <div class="ambient-info">
+                                <strong>Cafeteria</strong>
+                                <small>Zumbido de fundo suave</small>
+                            </div>
+                            <span class="ambient-badge">Desligado</span>
+                        </div>
+                    </div>
+
+                    <div class="ambient-volume-control">
+                        <label><i data-lucide="volume-2"></i> Volume Ambiente</label>
+                        <input type="range" id="ambient-volume-slider" min="0" max="1" step="0.05" value="0.6" oninput="updateAmbientVolume(this.value)">
+                    </div>
+                </div>
+
+                <!-- Card de Estatísticas de Foco -->
+                <div class="focus-stats-card">
+                    <div class="card-subtitle-header">
+                        <h3><i data-lucide="bar-chart-3"></i> Suas Estatísticas de Foco</h3>
+                        <span style="font-size: 12px; color: var(--text-muted);">Acompanhamento diário</span>
+                    </div>
+
+                    <div class="stats-summary-grid">
+                        <div class="stat-box">
+                            <span class="stat-number" id="stat-completed-cycles">0</span>
+                            <span class="stat-label">Ciclos Concluídos Hoje</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-number" id="stat-total-minutes">0 min</span>
+                            <span class="stat-label">Tempo Total de Foco</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 4: QUADRO KANBAN (ESTILO TRELLO) -->
         <section class="panel kanban-panel" id="panel-kanban" style="display: none;">
             <div class="panel-header" style="flex-direction: column; align-items: stretch; gap: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -288,7 +526,7 @@
                         <h2>Quadro de Anotações Kanban</h2>
                     </div>
                     <div style="font-size: 12px; color: var(--text-muted); font-weight: 500;">
-                        Arraste os cards ou use as setas para organizar
+                        Arraste os cards ou use os botões para organizar
                     </div>
                 </div>
                 <!-- BARRA DE BUSCA E FILTROS DO KANBAN -->
@@ -470,6 +708,368 @@
             </div>
         </section>
 
+        <!-- MÓDULO 5: GESTÃO FINANCEIRA -->
+        <section class="panel financial-module-panel" id="panel-financeiro" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title-area">
+                    <div class="panel-icon financial-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i data-lucide="wallet"></i>
+                    </div>
+                    <div>
+                        <h2>Gestão Financeira & Investimentos</h2>
+                        <span style="font-size: 12px; color: var(--text-muted);">Controle de saldos, lançamentos e carteira de investimentos</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button class="btn btn-secondary-sm" id="btn-add-account-trigger" onclick="openAddAccountModal()">
+                        <i data-lucide="building-2"></i> <span>+ Banco</span>
+                    </button>
+                    <button class="btn btn-secondary-sm" id="btn-add-investment-trigger" onclick="openAddInvestmentModal()">
+                        <i data-lucide="trending-up"></i> <span>+ Investimento</span>
+                    </button>
+                    <button class="btn btn-primary" id="btn-add-transaction-trigger" onclick="openAddTransactionModal()">
+                        <i data-lucide="plus-circle"></i> <span>Novo Lançamento</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard de Indicadores Superiores -->
+            <div class="financial-summary-grid">
+                <div class="fin-card">
+                    <div class="fin-card-header">
+                        <span class="fin-label">Patrimônio Consolidado</span>
+                        <i data-lucide="coins" class="fin-icon-accent"></i>
+                    </div>
+                    <div class="fin-value" id="fin-net-worth">R$ 0,00</div>
+                    <span class="fin-subtext">Bancos + Investimentos</span>
+                </div>
+                <div class="fin-card">
+                    <div class="fin-card-header">
+                        <span class="fin-label">Saldos Bancários</span>
+                        <i data-lucide="landmark" class="fin-icon-blue"></i>
+                    </div>
+                    <div class="fin-value" id="fin-bank-balance">R$ 0,00</div>
+                    <span class="fin-subtext">Disponível em contas</span>
+                </div>
+                <div class="fin-card">
+                    <div class="fin-card-header">
+                        <span class="fin-label">Receitas do Mês</span>
+                        <i data-lucide="arrow-up-right" class="fin-icon-green"></i>
+                    </div>
+                    <div class="fin-value text-success" id="fin-month-income">R$ 0,00</div>
+                    <span class="fin-subtext">Entradas confirmadas</span>
+                </div>
+                <div class="fin-card">
+                    <div class="fin-card-header">
+                        <span class="fin-label">Despesas do Mês</span>
+                        <i data-lucide="arrow-down-right" class="fin-icon-red"></i>
+                    </div>
+                    <div class="fin-value text-danger" id="fin-month-expense">R$ 0,00</div>
+                    <span class="fin-subtext">Saídas e gastos</span>
+                </div>
+                <div class="fin-card">
+                    <div class="fin-card-header">
+                        <span class="fin-label">Investimentos Total</span>
+                        <i data-lucide="line-chart" class="fin-icon-purple"></i>
+                    </div>
+                    <div class="fin-value" id="fin-total-invested">R$ 0,00</div>
+                    <span class="fin-subtext" id="fin-invested-subtext">Rendimento acumulado</span>
+                </div>
+            </div>
+
+            <!-- Seção 1: Minhas Contas & Bancos -->
+            <div class="fin-section-card">
+                <div class="fin-section-header">
+                    <h3><i data-lucide="building-2"></i> Minhas Contas & Bancos</h3>
+                    <span style="font-size: 12px; color: var(--text-muted);">Contas e saldos disponíveis</span>
+                </div>
+                <div class="bank-accounts-grid" id="bank-accounts-grid">
+                    <!-- Gerado via JS (BTG, Inter, Sicredi, Mercado Pago) -->
+                </div>
+            </div>
+
+            <!-- Seção 2: Carteira de Investimentos -->
+            <div class="fin-section-card">
+                <div class="fin-section-header">
+                    <div>
+                        <h3><i data-lucide="trending-up"></i> Carteira de Investimentos</h3>
+                        <span style="font-size: 12px; color: var(--text-muted);">Atualize o valor dos seus ativos a qualquer momento</span>
+                    </div>
+                </div>
+                <div class="investments-grid" id="investments-grid">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+
+            <!-- Seção 3: Extrato de Lançamentos -->
+            <div class="fin-section-card">
+                <div class="fin-section-header" style="flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h3><i data-lucide="receipt"></i> Extrato de Lançamentos</h3>
+                        <span style="font-size: 12px; color: var(--text-muted);">Entradas e saídas financeiras</span>
+                    </div>
+                    <div class="fin-filters-bar" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <select id="fin-filter-month" onchange="renderFinancialDashboard()" style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:var(--text-main); font-size:12px; padding:6px 10px; border-radius:6px; outline:none;">
+                            <!-- Preenchido via JS -->
+                        </select>
+                        <select id="fin-filter-type" onchange="renderFinancialDashboard()" style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:var(--text-main); font-size:12px; padding:6px 10px; border-radius:6px; outline:none;">
+                            <option value="all">Todos os Tipos</option>
+                            <option value="income">🟢 Apenas Entradas (Receitas)</option>
+                            <option value="expense">🔴 Apenas Saídas (Despesas)</option>
+                        </select>
+                        <select id="fin-filter-bank" onchange="renderFinancialDashboard()" style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:var(--text-main); font-size:12px; padding:6px 10px; border-radius:6px; outline:none;">
+                            <!-- Preenchido via JS -->
+                        </select>
+                    </div>
+                </div>
+                <div class="transactions-list-container" id="transactions-list-container">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- MODAL DE NOVO COMPROMISSO NA AGENDA -->
+    <div class="modal-backdrop" id="modal-event">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i data-lucide="calendar-plus"></i> Novo Compromisso na Agenda</h3>
+                <button class="btn-close-modal" id="btn-close-event-modal">&times;</button>
+            </div>
+            <form id="form-add-event">
+                <div class="form-group">
+                    <label for="event-title">Título do Compromisso</label>
+                    <input type="text" id="event-title" required placeholder="Ex: Reunião de Equipe, Consulta Médica..." autocomplete="off">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="event-date">Data</label>
+                        <input type="date" id="event-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-time">Horário</label>
+                        <input type="time" id="event-time" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="event-category">Categoria</label>
+                        <select id="event-category" required>
+                            <option value="work">💼 Trabalho</option>
+                            <option value="study">📚 Estudos</option>
+                            <option value="health">🏥 Saúde</option>
+                            <option value="personal">🏠 Pessoal</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-warning">Aviso Antecedente</label>
+                        <select id="event-warning">
+                            <option value="0">Na hora do evento</option>
+                            <option value="5">5 minutos antes</option>
+                            <option value="15" selected>15 minutos antes</option>
+                            <option value="30">30 minutos antes</option>
+                            <option value="60">1 hora antes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="event-location">Local / Link (Opcional)</label>
+                    <input type="text" id="event-location" placeholder="Ex: Sala 3, Google Meet, Endereço..." autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="event-notes">Observações / Detalhes (Opcional)</label>
+                    <textarea id="event-notes" placeholder="Adicione notas adicionais..." rows="2"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-event">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Compromisso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOVO LANÇAMENTO FINANCEIRO -->
+    <div class="modal-backdrop" id="modal-transaction">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i data-lucide="plus-circle"></i> Novo Lançamento Financeiro</h3>
+                <button class="btn-close-modal" id="btn-close-transaction-modal" onclick="closeAddTransactionModal()">&times;</button>
+            </div>
+            <form id="form-add-transaction">
+                <div class="form-group">
+                    <label for="tx-title">Descrição do Lançamento</label>
+                    <input type="text" id="tx-title" required placeholder="Ex: Salário, Aluguel, Mercado, Supermercado..." autocomplete="off">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tx-amount">Valor (R$)</label>
+                        <input type="number" step="0.01" id="tx-amount" required placeholder="0.00" min="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="tx-type">Tipo</label>
+                        <select id="tx-type" required>
+                            <option value="expense">🔴 Despesa (Saída)</option>
+                            <option value="income">🟢 Receita (Entrada)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tx-account">Banco / Conta</label>
+                        <select id="tx-account" required>
+                            <!-- Preenchido via JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tx-category">Categoria</label>
+                        <select id="tx-category" required>
+                            <option value="Alimentação">🍔 Alimentação</option>
+                            <option value="Moradia">🏠 Moradia / Contas</option>
+                            <option value="Transporte">🚗 Transporte / Combustível</option>
+                            <option value="Salário">💼 Salário / Rendimento</option>
+                            <option value="Freelance">💻 Freelance / Serviços</option>
+                            <option value="Saúde">🏥 Saúde / Farmácia</option>
+                            <option value="Lazer">🎉 Lazer / Entretenimento</option>
+                            <option value="Educação">📚 Educação / Cursos</option>
+                            <option value="Investimentos">📈 Investimento / Aplicação</option>
+                            <option value="Outros">📦 Outros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tx-date">Data</label>
+                        <input type="date" id="tx-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tx-status">Status</label>
+                        <select id="tx-status">
+                            <option value="paid">✅ Concluído / Pago</option>
+                            <option value="pending">⏳ Pendente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddTransactionModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar Lançamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOVO INVESTIMENTO -->
+    <div class="modal-backdrop" id="modal-investment">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i data-lucide="trending-up"></i> Cadastrar Investimento</h3>
+                <button class="btn-close-modal" id="btn-close-investment-modal" onclick="closeAddInvestmentModal()">&times;</button>
+            </div>
+            <form id="form-add-investment">
+                <div class="form-group">
+                    <label for="inv-name">Nome do Ativo / Aplicação</label>
+                    <input type="text" id="inv-name" required placeholder="Ex: CDI do Inter, Tesouro Selic 2029, Ações..." autocomplete="off">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inv-category">Categoria do Ativo</label>
+                        <select id="inv-category" required>
+                            <option value="Renda Fixa">💰 Renda Fixa (CDI / CDB / LCI)</option>
+                            <option value="Reserva">🛡️ Reserva de Emergência</option>
+                            <option value="Ações">📈 Ações</option>
+                            <option value="FIIs">🏢 FIIs (Fundos Imobiliários)</option>
+                            <option value="Tesouro">🏛️ Tesouro Direto</option>
+                            <option value="Cripto">🪙 Criptomoedas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inv-account">Banco / Corretora</label>
+                        <select id="inv-account" required>
+                            <!-- JS vai preencher com BTG, Inter, Sicredi, Mercado Pago -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inv-initial">Valor Inicial Aplicado (R$)</label>
+                        <input type="number" step="0.01" id="inv-initial" required placeholder="Ex: 45000.00" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="inv-current">Valor Atualizado (R$)</label>
+                        <input type="number" step="0.01" id="inv-current" required placeholder="Ex: 45000.00" min="0">
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddInvestmentModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Investimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE ATUALIZAÇÃO RÁPIDA DE INVESTIMENTO -->
+    <div class="modal-backdrop" id="modal-update-investment">
+        <div class="modal-card" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3><i data-lucide="refresh-cw"></i> Atualizar Valor do Investimento</h3>
+                <button class="btn-close-modal" onclick="closeUpdateInvestmentModal()">&times;</button>
+            </div>
+            <form id="form-update-investment">
+                <input type="hidden" id="update-inv-id">
+                <div class="form-group">
+                    <label id="update-inv-name-label" style="font-weight: 700; font-size: 15px; color: var(--color-primary);">Nome do Ativo</label>
+                    <span id="update-inv-sub-label" style="font-size: 12px; color: var(--text-muted);">Informe o novo saldo total atualizado</span>
+                </div>
+
+                <div class="form-group" style="margin-top: 12px;">
+                    <label for="update-inv-new-val">Novo Valor Atual (R$)</label>
+                    <input type="number" step="0.01" id="update-inv-new-val" required min="0" placeholder="0.00" style="font-size: 1.2rem; font-weight: 700;">
+                </div>
+
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeUpdateInvestmentModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Novo Saldo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOVA CONTA BANCÁRIA -->
+    <div class="modal-backdrop" id="modal-account">
+        <div class="modal-card" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3><i data-lucide="building-2"></i> Cadastrar Nova Conta / Banco</h3>
+                <button class="btn-close-modal" onclick="closeAddAccountModal()">&times;</button>
+            </div>
+            <form id="form-add-account">
+                <div class="form-group">
+                    <label for="acc-name">Nome do Banco / Instituição</label>
+                    <input type="text" id="acc-name" required placeholder="Ex: Nubank, C6 Bank, XP Investimentos..." autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="acc-initial-balance">Saldo Inicial (R$)</label>
+                    <input type="number" step="0.01" id="acc-initial-balance" required placeholder="0.00">
+                </div>
+
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddAccountModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cadastrar Banco</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- MODAL DE ADICIONAR TAREFA (DEMANDA) -->
@@ -604,17 +1204,28 @@
     <div class="modal-backdrop" id="modal-settings">
         <div class="modal-card" style="max-width: 450px;">
             <div class="modal-header">
-                <h3><i data-lucide="settings"></i> Configurações</h3>
+                <h3><i data-lucide="settings"></i> Configurações do Sistema</h3>
                 <button class="btn-close-modal" id="btn-close-settings-modal">&times;</button>
             </div>
             <div class="settings-body" style="padding-top: 16px;">
                 <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
                     <div class="setting-info" style="display: flex; flex-direction: column;">
-                        <span class="setting-title" style="font-weight: 600; font-size: 14px;">Notificações Push</span>
-                        <span class="setting-desc" style="font-size: 12px; color: var(--text-muted);">Avisos de água e demandas</span>
+                        <span class="setting-title" style="font-weight: 600; font-size: 14px;">Notificações Push & Alertas</span>
+                        <span class="setting-desc" style="font-size: 12px; color: var(--text-muted);">Agenda, água, remédios e demandas</span>
                     </div>
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggle-notifications">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div class="setting-info" style="display: flex; flex-direction: column;">
+                        <span class="setting-title" style="font-weight: 600; font-size: 14px;">Efeitos Sonoros & Avisos</span>
+                        <span class="setting-desc" style="font-size: 12px; color: var(--text-muted);">Sintetizador de áudio Web Audio API</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-sound-effects" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -640,16 +1251,12 @@
                     </div>
                 </div>
 
-
-
                 <div class="modal-actions" style="margin-top: 24px;">
                     <button type="button" class="btn btn-primary" id="btn-save-settings" style="width: 100%;">Salvar Configurações</button>
                 </div>
             </div>
         </div>
     </div>
-
-
 
     <!-- Script principal -->
     <script src="app.js"></script>

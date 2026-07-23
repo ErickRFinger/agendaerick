@@ -9,6 +9,12 @@ let state = {
     waterHistory: {}, // Mapeado por data: { "YYYY-MM-DD": ml }
     waterGoal: 2000,
     notes: [],
+    events: [],
+    notificationsLog: [],
+    focusSessions: [],
+    accounts: [],
+    investments: [],
+    transactions: [],
     lastUpdatedDate: "",
     kanbanNotes: []
 };
@@ -26,6 +32,14 @@ let confettiAnimationId = null;
 // Controle de Edição de Itens
 let editingTaskId = null;
 let editingMedId = null;
+let editingEventId = null;
+let editingTransactionId = null;
+
+// Agenda Calendar State
+let currentAgendaYear = new Date().getFullYear();
+let currentAgendaMonth = new Date().getMonth();
+let selectedAgendaDate = "";
+let activeAgendaCategoryFilter = "all";
 
 // PWA e Sincronização em Nuvem
 let deferredPrompt = null;
@@ -51,14 +65,35 @@ const defaultState = {
         { id: "n1", text: "Dica: Se uma tarefa parecer gigante, quebre-a em 3 passos minúsculos." },
         { id: "n2", text: "Ter água sempre na mesa ajuda a lembrar de beber!" }
     ],
+    events: [
+        { id: "e1", title: "Reunião de Alinhamento de Projeto", date: "", time: "10:30", category: "work", warningMinutes: 15, location: "Google Meet", notes: "Apresentar novidades do FocoFácil", completed: false },
+        { id: "e2", title: "Consulta Odontológica", date: "", time: "15:00", category: "health", warningMinutes: 30, location: "Clínica Odonto", notes: "Levar exames", completed: false }
+    ],
+    accounts: [
+        { id: "acc_btg", name: "BTG Pactual", color: "#3b82f6", balance: 5000 },
+        { id: "acc_inter", name: "Banco Inter", color: "#f97316", balance: 3200 },
+        { id: "acc_sicredi", name: "Sicredi", color: "#10b981", balance: 1800 },
+        { id: "acc_mp", name: "Mercado Pago", color: "#06b6d4", balance: 1200 }
+    ],
+    investments: [
+        { id: "inv_1", name: "CDI do Inter", category: "Renda Fixa", accountId: "acc_inter", initialAmount: 45000, currentAmount: 45000, lastUpdated: "" }
+    ],
+    transactions: [
+        { id: "tx_1", title: "Rendimento / Projeto Freelance", amount: 2500, type: "income", date: "", category: "Freelance", accountId: "acc_inter", status: "paid" },
+        { id: "tx_2", title: "Supermercado Semanal", amount: 480.50, type: "expense", date: "", category: "Alimentação", accountId: "acc_btg", status: "paid" }
+    ],
+    notificationsLog: [],
+    focusSessions: [],
     otherLiquids: [],
     settings: {
-        notificationsEnabled: false,
+        notificationsEnabled: true,
+        soundEnabled: true,
         waterInterval: 3,
         taskWarning: 15
     },
     lastWaterTimestamp: 0,
     notifiedTasks: [],
+    notifiedEvents: [],
     lastUpdatedDate: "",
     lastSavedTimestamp: 0,
     kanbanNotes: [
@@ -94,8 +129,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     pullFromCloud(); // Busca dados atualizados da nuvem
 
-
-    renderAll();
+    // Verifica a sessão de usuário (Erick / clic3369)
+    checkAuthSession();
     lucide.createIcons();
 
     // Registra Service Worker para PWA
@@ -157,10 +192,14 @@ function initializeDefaultState() {
     state = JSON.parse(JSON.stringify(defaultState));
     const today = getTodayDateString();
     
-    // Associa tarefas iniciais ao dia de hoje
+    // Associa tarefas e compromissos iniciais ao dia de hoje
     state.tasks.forEach(t => t.date = today);
+    if (state.events) state.events.forEach(e => e.date = today);
     state.lastUpdatedDate = today;
     if (!state.otherLiquids) state.otherLiquids = [];
+    if (!state.events) state.events = [];
+    if (!state.notificationsLog) state.notificationsLog = [];
+    if (!state.focusSessions) state.focusSessions = [];
     saveState();
 }
 
@@ -170,10 +209,15 @@ function fillMissingStateFields() {
     if (!state.waterHistory) state.waterHistory = {};
     if (!state.waterGoal) state.waterGoal = 2000;
     if (!state.notes) state.notes = [];
+    if (!state.events) state.events = [];
+    if (!state.notificationsLog) state.notificationsLog = [];
+    if (!state.focusSessions) state.focusSessions = [];
     if (!state.otherLiquids) state.otherLiquids = [];
-    if (!state.settings) state.settings = { notificationsEnabled: false, waterInterval: 3, taskWarning: 15 };
+    if (!state.settings) state.settings = { notificationsEnabled: true, soundEnabled: true, waterInterval: 3, taskWarning: 15 };
+    if (state.settings.soundEnabled === undefined) state.settings.soundEnabled = true;
     if (!state.lastWaterTimestamp) state.lastWaterTimestamp = 0;
     if (!state.notifiedTasks) state.notifiedTasks = [];
+    if (!state.notifiedEvents) state.notifiedEvents = [];
     if (!state.lastSavedTimestamp) state.lastSavedTimestamp = 0;
     if (!state.kanbanNotes) state.kanbanNotes = [];
 }
@@ -313,9 +357,177 @@ function playBeep(freq, type, duration, delay = 0, volume = 0.15) {
 }
 
 function playSuccessSound() {
+    if (state.settings && state.settings.soundEnabled === false) return;
     const freqs = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
     freqs.forEach((freq, idx) => {
         playBeep(freq, 'sine', 0.35, idx * 0.07, 0.12);
+    });
+}
+
+function playChimeSound() {
+    if (state.settings && state.settings.soundEnabled === false) return;
+    playBeep(523.25, 'sine', 0.25, 0, 0.15); // C5
+    playBeep(659.25, 'sine', 0.35, 0.1, 0.15); // E5
+}
+
+function playClickSound() {
+    if (state.settings && state.settings.soundEnabled === false) return;
+    playBeep(180, 'sine', 0.05, 0, 0.08);
+}
+
+/* --- Sintetizador de Som Ambiente Aprimorado para Foco --- */
+let ambientAudioNode = null;
+let ambientGainNode = null;
+let ambientFilterNode = null;
+let ambientLfoNode = null;
+let currentAmbientType = null;
+let ambientMasterVolume = 0.6;
+
+function toggleAmbientSound(type) {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    if (currentAmbientType === type) {
+        stopAmbientSound();
+        return;
+    }
+    stopAmbientSound();
+    currentAmbientType = type;
+    createAmbientNoise(type);
+    updateAmbientCardsUI();
+}
+
+function stopAmbientSound() {
+    if (ambientLfoNode) {
+        try { ambientLfoNode.stop(); } catch(e){}
+        try { ambientLfoNode.disconnect(); } catch(e){}
+        ambientLfoNode = null;
+    }
+    if (ambientAudioNode) {
+        try { ambientAudioNode.stop(); } catch(e){}
+        try { ambientAudioNode.disconnect(); } catch(e){}
+        ambientAudioNode = null;
+    }
+    currentAmbientType = null;
+    updateAmbientCardsUI();
+}
+
+function createAmbientNoise(type) {
+    initAudio();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    
+    try {
+        const bufferSize = 5 * audioCtx.sampleRate;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        
+        // Algoritmo de Ruído Rosa Aveludado para um som mais natural
+        let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
+        for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            b0 = 0.99886 * b0 + white * 0.0555179;
+            b1 = 0.99332 * b1 + white * 0.0750759;
+            b2 = 0.96900 * b2 + white * 0.1538520;
+            b3 = 0.86650 * b3 + white * 0.3104856;
+            b4 = 0.55000 * b4 + white * 0.5329522;
+            b5 = -0.7616 * b5 - white * 0.0168980;
+            output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+            b6 = white * 0.115926;
+        }
+
+        const noiseSource = audioCtx.createBufferSource();
+        noiseSource.buffer = noiseBuffer;
+        noiseSource.loop = true;
+
+        ambientGainNode = audioCtx.createGain();
+        const baseVol = ambientMasterVolume * 0.45;
+        ambientGainNode.gain.setValueAtTime(baseVol, audioCtx.currentTime);
+
+        ambientFilterNode = audioCtx.createBiquadFilter();
+
+        if (type === 'rain') {
+            // Chuva Suave: filtro passa-baixas em 1200Hz
+            ambientFilterNode.type = 'lowpass';
+            ambientFilterNode.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            noiseSource.connect(ambientFilterNode);
+            ambientFilterNode.connect(ambientGainNode);
+        } else if (type === 'waves') {
+            // Ondas do Mar: oscilador LFO simulando o movimento da maré
+            ambientFilterNode.type = 'lowpass';
+            ambientFilterNode.frequency.setValueAtTime(450, audioCtx.currentTime);
+            
+            ambientLfoNode = audioCtx.createOscillator();
+            ambientLfoNode.type = 'sine';
+            ambientLfoNode.frequency.value = 0.12; // ciclo de ~8s por onda
+            
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = 400; // oscila frequência do filtro
+            
+            ambientLfoNode.connect(lfoGain);
+            lfoGain.connect(ambientFilterNode.frequency);
+            ambientLfoNode.start();
+            
+            noiseSource.connect(ambientFilterNode);
+            ambientFilterNode.connect(ambientGainNode);
+        } else if (type === 'noise') {
+            // Ruído Rosa purificado: filtro em 1800Hz
+            ambientFilterNode.type = 'lowpass';
+            ambientFilterNode.frequency.setValueAtTime(1800, audioCtx.currentTime);
+            noiseSource.connect(ambientFilterNode);
+            ambientFilterNode.connect(ambientGainNode);
+        } else if (type === 'cafe') {
+            // Cafeteria: passa-banda em ~650Hz com leve oscilação de volume
+            ambientFilterNode.type = 'bandpass';
+            ambientFilterNode.frequency.setValueAtTime(650, audioCtx.currentTime);
+            ambientFilterNode.Q.value = 0.8;
+            
+            ambientLfoNode = audioCtx.createOscillator();
+            ambientLfoNode.type = 'sine';
+            ambientLfoNode.frequency.value = 0.3;
+            
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = baseVol * 0.25;
+            
+            ambientLfoNode.connect(lfoGain);
+            lfoGain.connect(ambientGainNode.gain);
+            ambientLfoNode.start();
+            
+            noiseSource.connect(ambientFilterNode);
+            ambientFilterNode.connect(ambientGainNode);
+        }
+
+        ambientGainNode.connect(audioCtx.destination);
+        noiseSource.start();
+        ambientAudioNode = noiseSource;
+    } catch (e) {
+        console.error("Erro ao sintetizar som ambiente:", e);
+    }
+}
+
+function updateAmbientVolume(val) {
+    ambientMasterVolume = parseFloat(val);
+    if (ambientGainNode && audioCtx) {
+        ambientGainNode.gain.setValueAtTime(ambientMasterVolume * 0.45, audioCtx.currentTime);
+    }
+}
+
+function updateAmbientCardsUI() {
+    ['rain', 'waves', 'noise', 'cafe'].forEach(t => {
+        const card = document.getElementById(`ambient-${t}`);
+        if (card) {
+            const badge = card.querySelector('.ambient-badge');
+            if (currentAmbientType === t) {
+                card.classList.add('active');
+                if (badge) badge.textContent = 'Tocando';
+            } else {
+                card.classList.remove('active');
+                if (badge) badge.textContent = 'Desligado';
+            }
+        }
     });
 }
 
@@ -427,13 +639,18 @@ function animateConfetti() {
    RENDERIZAÇÃO - MÓDULO GERAL
    ========================================================================== */
 function renderAll() {
+    renderAgendaCalendar();
+    renderAgendaEvents();
     renderCalendarStrip();
     renderTimeline();
     renderMeds();
     renderWater();
     renderOtherLiquids();
     renderKanban();
+    renderFinancialDashboard();
     updateGeneralProgress();
+    renderNotificationPopover();
+    updateFocusStats();
     lucide.createIcons();
 }
 
@@ -1168,6 +1385,54 @@ function setupEventListeners() {
         initAudio();
     }, { once: true });
 
+    // --- Modal da Agenda (Compromissos) ---
+    const btnAddEvent = document.getElementById("btn-add-event-trigger");
+    if (btnAddEvent) btnAddEvent.addEventListener("click", () => openAddEventModal());
+    
+    const btnCloseEvent = document.getElementById("btn-close-event-modal");
+    if (btnCloseEvent) btnCloseEvent.addEventListener("click", closeAddEventModal);
+    
+    const btnCancelEvent = document.getElementById("btn-cancel-event");
+    if (btnCancelEvent) btnCancelEvent.addEventListener("click", closeAddEventModal);
+    
+    const formEvent = document.getElementById("form-add-event");
+    if (formEvent) {
+        formEvent.addEventListener("submit", (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById("event-title").value.trim();
+            const date = document.getElementById("event-date").value;
+            const time = document.getElementById("event-time").value;
+            const category = document.getElementById("event-category").value;
+            const warningMinutes = document.getElementById("event-warning").value;
+            const location = document.getElementById("event-location").value.trim();
+            const notes = document.getElementById("event-notes").value.trim();
+            
+            if (!title || !date || !time) return;
+            
+            const newEvent = {
+                id: "e_" + Date.now(),
+                title,
+                date,
+                time,
+                category,
+                warningMinutes,
+                location,
+                notes,
+                completed: false
+            };
+            
+            if (!state.events) state.events = [];
+            state.events.push(newEvent);
+            saveState();
+            closeAddEventModal();
+            selectedAgendaDate = date;
+            renderAgendaCalendar();
+            renderAgendaEvents();
+            playSuccessSound();
+        });
+    }
+
     // --- Modal de Tarefas ---
     document.getElementById("btn-add-task-trigger").addEventListener("click", () => openAddTaskModal());
     document.getElementById("btn-close-task-modal").addEventListener("click", closeAddTaskModal);
@@ -1561,6 +1826,155 @@ function setupEventListeners() {
             }
         });
     }
+
+    // --- Formulários do Módulo Financeiro ---
+    const formTx = document.getElementById("form-add-transaction");
+    if (formTx) {
+        formTx.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const title = document.getElementById("tx-title").value.trim();
+            const amount = parseFloat(document.getElementById("tx-amount").value);
+            const type = document.getElementById("tx-type").value;
+            const accountId = document.getElementById("tx-account").value;
+            const category = document.getElementById("tx-category").value;
+            const date = document.getElementById("tx-date").value;
+            const status = document.getElementById("tx-status").value;
+
+            if (!title || isNaN(amount) || !date || !accountId) return;
+
+            const newTx = {
+                id: "tx_" + Date.now(),
+                title,
+                amount,
+                type,
+                accountId,
+                category,
+                date,
+                status
+            };
+
+            if (!state.transactions) state.transactions = [];
+            state.transactions.push(newTx);
+
+            if (status === 'paid') {
+                const acc = state.accounts.find(a => a.id === accountId);
+                if (acc) {
+                    if (type === 'income') acc.balance += amount;
+                    else if (type === 'expense') acc.balance -= amount;
+                }
+            }
+
+            saveState();
+            closeAddTransactionModal();
+            renderFinancialDashboard();
+            playSuccessSound();
+        });
+    }
+
+    const formInv = document.getElementById("form-add-investment");
+    if (formInv) {
+        formInv.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const name = document.getElementById("inv-name").value.trim();
+            const category = document.getElementById("inv-category").value;
+            const accountId = document.getElementById("inv-account").value;
+            const initialAmount = parseFloat(document.getElementById("inv-initial").value);
+            const currentAmount = parseFloat(document.getElementById("inv-current").value);
+
+            if (!name || isNaN(initialAmount) || isNaN(currentAmount)) return;
+
+            const newInv = {
+                id: "inv_" + Date.now(),
+                name,
+                category,
+                accountId,
+                initialAmount,
+                currentAmount,
+                lastUpdated: getTodayDateString()
+            };
+
+            if (!state.investments) state.investments = [];
+            state.investments.push(newInv);
+            saveState();
+            closeAddInvestmentModal();
+            renderFinancialDashboard();
+            playSuccessSound();
+        });
+    }
+
+    const formUpdateInv = document.getElementById("form-update-investment");
+    if (formUpdateInv) {
+        formUpdateInv.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const id = document.getElementById("update-inv-id").value;
+            const newCurrent = parseFloat(document.getElementById("update-inv-new-val").value);
+
+            if (!id || isNaN(newCurrent)) return;
+
+            const inv = state.investments.find(i => i.id === id);
+            if (inv) {
+                inv.currentAmount = newCurrent;
+                inv.lastUpdated = getTodayDateString();
+                saveState();
+                closeUpdateInvestmentModal();
+                renderFinancialDashboard();
+                playSuccessSound();
+            }
+        });
+    }
+
+    const formAcc = document.getElementById("form-add-account");
+    if (formAcc) {
+        formAcc.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const name = document.getElementById("acc-name").value.trim();
+            const balance = parseFloat(document.getElementById("acc-initial-balance").value) || 0;
+
+            if (!name) return;
+
+            const newAcc = {
+                id: "acc_" + Date.now(),
+                name,
+                color: "#6366f1",
+                balance
+            };
+
+            if (!state.accounts) state.accounts = [];
+            state.accounts.push(newAcc);
+            saveState();
+            closeAddAccountModal();
+            renderFinancialDashboard();
+            playSuccessSound();
+        });
+    }
+
+    // --- Formulário de Login ---
+    const formLogin = document.getElementById("form-login");
+    if (formLogin) {
+        formLogin.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const username = document.getElementById("login-username").value;
+            const password = document.getElementById("login-password").value;
+            const remember = document.getElementById("login-remember").checked;
+            loginUser(username, password, remember);
+        });
+    }
+
+    const btnTogglePw = document.getElementById("btn-toggle-login-password");
+    if (btnTogglePw) {
+        btnTogglePw.addEventListener("click", () => {
+            playClickSound();
+            const pwInput = document.getElementById("login-password");
+            if (pwInput.type === "password") {
+                pwInput.type = "text";
+                btnTogglePw.innerHTML = `<i data-lucide="eye-off"></i>`;
+            } else {
+                pwInput.type = "password";
+                btnTogglePw.innerHTML = `<i data-lucide="eye"></i>`;
+            }
+            lucide.createIcons();
+        });
+    }
 }
 
 /* ==========================================================================
@@ -1740,10 +2154,10 @@ function escapeHtml(unsafe) {
    ========================================================================== */
 window.checkNotifications = function() {
     if (!state.settings || !state.settings.notificationsEnabled) return;
-    if (!("Notification" in window) || Notification.permission !== "granted") return;
 
     const now = Date.now();
     const todayStr = getTodayDateString();
+    const currentHourMin = new Date().getHours() * 60 + new Date().getMinutes();
     
     // 1. Verifica Água
     if (state.lastWaterTimestamp > 0) {
@@ -1757,17 +2171,41 @@ window.checkNotifications = function() {
                 tag: 'water-reminder',
                 vibrate: [200, 100, 200]
             });
-            // Atualiza o timestamp para reiniciar o contador (evitar spam)
             state.lastWaterTimestamp = now;
             saveState();
         }
     }
 
-    // 2. Verifica Tarefas (Apenas para o dia de hoje)
+    // 2. Verifica Compromissos da Agenda
+    if (!state.notifiedEvents) state.notifiedEvents = [];
+    const eventsToday = (state.events || []).filter(e => e.date === todayStr && !e.completed);
+    
+    eventsToday.forEach(ev => {
+        if (!ev.time) return;
+        const [h, m] = ev.time.split(':').map(Number);
+        if (isNaN(h) || isNaN(m)) return;
+        
+        const eventMinutes = h * 60 + m;
+        const diffMinutes = eventMinutes - currentHourMin;
+        const warnMin = parseInt(ev.warningMinutes) || 15;
+        
+        if (diffMinutes >= 0 && diffMinutes <= warnMin) {
+            const evKey = `${ev.id}_${todayStr}_${warnMin}`;
+            if (!state.notifiedEvents.includes(evKey)) {
+                sendPushNotification(`Compromisso Próximo: ${ev.title} 📅`, {
+                    body: diffMinutes === 0 ? "O evento está começando agora!" : `Faltam ${diffMinutes} minuto(s) para este compromisso.`,
+                    icon: '/favicon.png',
+                    tag: `event-${ev.id}`
+                });
+                state.notifiedEvents.push(evKey);
+                saveState();
+            }
+        }
+    });
+
+    // 3. Verifica Tarefas e Demandas
     if (!state.notifiedTasks) state.notifiedTasks = [];
     const tasksToday = state.tasks.filter(t => t.date === todayStr && !t.completed);
-    
-    const currentHourMin = new Date().getHours() * 60 + new Date().getMinutes();
     
     tasksToday.forEach(task => {
         if (!task.hour) return;
@@ -1778,7 +2216,6 @@ window.checkNotifications = function() {
         const taskMinutes = h * 60 + m;
         const diffMinutes = taskMinutes - currentHourMin;
         
-        // Se faltam exatos (ou menos que) o aviso estipulado, e ainda não notificamos
         if (diffMinutes > 0 && diffMinutes <= state.settings.taskWarning) {
             const taskIdWithDate = `${task.id}_${todayStr}`;
             if (!state.notifiedTasks.includes(taskIdWithDate)) {
@@ -1795,7 +2232,23 @@ window.checkNotifications = function() {
     });
 };
 
-function sendPushNotification(title, options) {
+function sendPushNotification(title, options = {}) {
+    // 1. Toca som de notificação (Chime)
+    playChimeSound();
+
+    // 2. Registra no histórico de notificações da Central Popover
+    if (!state.notificationsLog) state.notificationsLog = [];
+    const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    state.notificationsLog.push({
+        id: Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+        title,
+        body: options.body || '',
+        time: timeStr
+    });
+    saveState();
+    renderNotificationPopover();
+
+    // 3. Dispara notificação push nativa se houver permissão
     if ('Notification' in window && Notification.permission === 'granted') {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(registration => {
@@ -2058,50 +2511,346 @@ function drop(ev) {
 }
 
 // ==========================================================================
-// ABAS DE NAVEGAÇÃO PRINCIPAL (DIÁRIO / KANBAN)
+// ABAS DE NAVEGAÇÃO PRINCIPAL (AGENDA, DIÁRIO, FOCO, KANBAN)
 // ==========================================================================
 function switchMainTab(tab) {
     const btnAgenda = document.getElementById("btn-tab-agenda");
+    const btnDiario = document.getElementById("btn-tab-diario");
+    const btnFoco = document.getElementById("btn-tab-foco");
     const btnKanban = document.getElementById("btn-tab-kanban");
+    const btnFinanceiro = document.getElementById("btn-tab-financeiro");
     
-    const panelTimeline = document.getElementById("panel-timeline");
-    const sideColumn = document.querySelector(".side-column");
+    const panelAgenda = document.getElementById("panel-agenda");
+    const panelDiario = document.getElementById("panel-diario");
+    const panelFoco = document.getElementById("panel-foco");
     const panelKanban = document.getElementById("panel-kanban");
+    const panelFinanceiro = document.getElementById("panel-financeiro");
     
-    // Remove active state
-    if (btnAgenda) btnAgenda.classList.remove("active");
-    if (btnKanban) btnKanban.classList.remove("active");
+    // Reset active buttons
+    [btnAgenda, btnDiario, btnFoco, btnKanban, btnFinanceiro].forEach(b => b && b.classList.remove("active"));
     
-    // Default hidden
-    if (panelTimeline) panelTimeline.style.display = "none";
-    if (sideColumn) sideColumn.style.display = "none";
-    if (panelKanban) panelKanban.style.display = "none";
+    // Hide panels
+    [panelAgenda, panelDiario, panelFoco, panelKanban, panelFinanceiro].forEach(p => p && (p.style.display = "none"));
     
     if (tab === 'agenda') {
         if (btnAgenda) btnAgenda.classList.add("active");
-        if (panelTimeline) panelTimeline.style.display = "block";
-        if (sideColumn) sideColumn.style.display = "flex";
-    } 
-    else if (tab === 'kanban') {
+        if (panelAgenda) panelAgenda.style.display = "flex";
+        if (!selectedAgendaDate) selectedAgendaDate = getTodayDateString();
+        renderAgendaCalendar();
+        renderAgendaEvents();
+    } else if (tab === 'diario') {
+        if (btnDiario) btnDiario.classList.add("active");
+        if (panelDiario) panelDiario.style.display = "grid";
+    } else if (tab === 'foco') {
+        if (btnFoco) btnFoco.classList.add("active");
+        if (panelFoco) panelFoco.style.display = "flex";
+        updateFocusStats();
+    } else if (tab === 'kanban') {
         if (btnKanban) btnKanban.classList.add("active");
-        if (panelKanban) panelKanban.style.display = "block";
+        if (panelKanban) panelKanban.style.display = "flex";
+        renderKanban();
+    } else if (tab === 'financeiro') {
+        if (btnFinanceiro) btnFinanceiro.classList.add("active");
+        if (panelFinanceiro) panelFinanceiro.style.display = "flex";
+        renderFinancialDashboard();
     }
     
     lucide.createIcons();
 }
 
 // ==========================================================================
-// LÓGICA DO TEMPORIZADOR DE FOCO (POMODORO)
+// MÓDULO DE AGENDA & COMPROMISSOS
 // ==========================================================================
-let pomodoroTimeLeft = 25 * 60; // 25 minutos
+function renderAgendaCalendar() {
+    const grid = document.getElementById("calendar-month-grid");
+    const label = document.getElementById("calendar-month-label");
+    if (!grid || !label) return;
+    
+    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    label.textContent = `${monthNames[currentAgendaMonth]} ${currentAgendaYear}`;
+    
+    grid.innerHTML = "";
+    
+    const firstDayIndex = new Date(currentAgendaYear, currentAgendaMonth, 1).getDay();
+    const totalDays = new Date(currentAgendaYear, currentAgendaMonth + 1, 0).getDate();
+    const prevMonthTotalDays = new Date(currentAgendaYear, currentAgendaMonth, 0).getDate();
+    
+    const todayStr = getTodayDateString();
+    if (!selectedAgendaDate) selectedAgendaDate = todayStr;
+    
+    // Dias do mês anterior
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+        const dayNum = prevMonthTotalDays - i;
+        const cell = document.createElement("div");
+        cell.className = "calendar-day-cell other-month";
+        cell.textContent = dayNum;
+        grid.appendChild(cell);
+    }
+    
+    // Dias do mês atual
+    for (let day = 1; day <= totalDays; day++) {
+        const monthStr = String(currentAgendaMonth + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const fullDateStr = `${currentAgendaYear}-${monthStr}-${dayStr}`;
+        
+        const cell = document.createElement("div");
+        cell.className = "calendar-day-cell";
+        cell.textContent = day;
+        
+        if (fullDateStr === todayStr) cell.classList.add("today");
+        if (fullDateStr === selectedAgendaDate) cell.classList.add("selected");
+        
+        // Verifica se há compromissos para esse dia
+        const hasEvents = state.events && state.events.some(e => e.date === fullDateStr);
+        if (hasEvents) {
+            const dot = document.createElement("div");
+            dot.className = "event-dot";
+            cell.appendChild(dot);
+        }
+        
+        cell.addEventListener("click", () => selectAgendaDate(fullDateStr));
+        grid.appendChild(cell);
+    }
+}
+
+function navigateMonth(dir) {
+    currentAgendaMonth += dir;
+    if (currentAgendaMonth < 0) {
+        currentAgendaMonth = 11;
+        currentAgendaYear--;
+    } else if (currentAgendaMonth > 11) {
+        currentAgendaMonth = 0;
+        currentAgendaYear++;
+    }
+    renderAgendaCalendar();
+}
+
+function selectAgendaDate(dateStr) {
+    selectedAgendaDate = dateStr;
+    renderAgendaCalendar();
+    renderAgendaEvents();
+}
+
+function filterAgendaEvents(cat, btn) {
+    activeAgendaCategoryFilter = cat;
+    document.querySelectorAll(".agenda-filter-btn").forEach(b => b.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+    renderAgendaEvents();
+}
+
+function renderAgendaEvents() {
+    const list = document.getElementById("agenda-events-list");
+    const titleEl = document.getElementById("selected-agenda-date-title");
+    const subtitleEl = document.getElementById("selected-agenda-date-subtitle");
+    if (!list) return;
+    
+    if (!selectedAgendaDate) selectedAgendaDate = getTodayDateString();
+    
+    const dateObj = parseDateString(selectedAgendaDate);
+    const dateFormatted = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    
+    if (titleEl) titleEl.textContent = `Compromissos: ${dateFormatted}`;
+    
+    const eventsForDate = (state.events || []).filter(e => {
+        const matchDate = e.date === selectedAgendaDate;
+        const matchCat = activeAgendaCategoryFilter === "all" || e.category === activeAgendaCategoryFilter;
+        return matchDate && matchCat;
+    });
+    
+    if (subtitleEl) {
+        subtitleEl.textContent = `${eventsForDate.length} compromisso(s) agendado(s)`;
+    }
+    
+    if (eventsForDate.length === 0) {
+        list.innerHTML = `
+            <div style="text-align:center; padding:32px 16px; color:var(--text-muted); font-size:13px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+                <i data-lucide="calendar" style="width:28px; height:28px; opacity:0.4;"></i>
+                <p>Nenhum compromisso agendado para esta data.</p>
+                <button class="btn btn-secondary-sm" onclick="openAddEventModal('${selectedAgendaDate}')" style="margin-top:4px;">
+                    <i data-lucide="plus"></i> Adicionar Compromisso
+                </button>
+            </div>
+        `;
+        lucide.createIcons();
+        return;
+    }
+    
+    // Ordena compromissos por horário
+    eventsForDate.sort((a, b) => a.time.localeCompare(b.time));
+    
+    const catLabels = { work: '💼 Trabalho', study: '📚 Estudos', health: '🏥 Saúde', personal: '🏠 Pessoal' };
+    
+    list.innerHTML = eventsForDate.map(ev => `
+        <div class="event-card-item ${ev.completed ? 'completed' : ''}">
+            <div class="event-left-info">
+                <button class="icon-btn" onclick="toggleAgendaEvent('${ev.id}')" title="${ev.completed ? 'Desmarcar' : 'Marcar Concluído'}" style="width:28px; height:28px;">
+                    <i data-lucide="${ev.completed ? 'check-circle-2' : 'circle'}" style="color:${ev.completed ? 'var(--color-success)' : 'var(--text-muted)'}"></i>
+                </button>
+                <div class="event-time-badge">
+                    <i data-lucide="clock" style="width:12px; height:12px;"></i> ${ev.time}
+                </div>
+                <div class="event-details">
+                    <span class="event-title">${escapeHtml(ev.title)}</span>
+                    <div class="event-meta">
+                        <span class="event-category-tag cat-${ev.category}">${catLabels[ev.category] || ev.category}</span>
+                        ${ev.location ? `<span><i data-lucide="map-pin" style="width:11px; height:11px;"></i> ${escapeHtml(ev.location)}</span>` : ''}
+                        ${ev.notes ? `<span><i data-lucide="align-left" style="width:11px; height:11px;"></i> ${escapeHtml(ev.notes)}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div>
+                <button class="icon-btn text-danger" onclick="deleteAgendaEvent('${ev.id}')" title="Excluir Compromisso" style="width:28px; height:28px;">
+                    <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    lucide.createIcons();
+}
+
+function toggleAgendaEvent(id) {
+    const ev = state.events.find(e => e.id === id);
+    if (ev) {
+        ev.completed = !ev.completed;
+        saveState();
+        renderAgendaEvents();
+        renderAgendaCalendar();
+        if (ev.completed) playSuccessSound();
+    }
+}
+
+function deleteAgendaEvent(id) {
+    if (confirm("Deseja realmente remover este compromisso?")) {
+        state.events = state.events.filter(e => e.id !== id);
+        saveState();
+        renderAgendaEvents();
+        renderAgendaCalendar();
+        playClickSound();
+    }
+}
+
+// Modal de Compromissos
+function openAddEventModal(defaultDateStr) {
+    const modal = document.getElementById("modal-event");
+    if (!modal) return;
+    
+    modal.classList.add("active");
+    const dateInput = document.getElementById("event-date");
+    if (dateInput) {
+        dateInput.value = defaultDateStr || selectedAgendaDate || getTodayDateString();
+    }
+    const titleInput = document.getElementById("event-title");
+    if (titleInput) {
+        titleInput.value = "";
+        titleInput.focus();
+    }
+    lucide.createIcons();
+}
+
+function closeAddEventModal() {
+    const modal = document.getElementById("modal-event");
+    if (modal) modal.classList.remove("active");
+    const form = document.getElementById("form-add-event");
+    if (form) form.reset();
+}
+
+// ==========================================================================
+// CENTRAL DE NOTIFICAÇÕES (POPOVER)
+// ==========================================================================
+function toggleNotificationPopover() {
+    const pop = document.getElementById("notification-popover");
+    if (!pop) return;
+    const isHidden = pop.style.display === "none" || !pop.style.display;
+    pop.style.display = isHidden ? "flex" : "none";
+    if (isHidden) {
+        renderNotificationPopover();
+    }
+}
+
+function renderNotificationPopover() {
+    const container = document.getElementById("notification-list-popover");
+    const badge = document.getElementById("notification-badge");
+    if (!container) return;
+    
+    const logs = state.notificationsLog || [];
+    if (badge) {
+        if (logs.length > 0) {
+            badge.style.display = "flex";
+            badge.textContent = logs.length > 9 ? "9+" : logs.length;
+        } else {
+            badge.style.display = "none";
+        }
+    }
+    
+    if (logs.length === 0) {
+        container.innerHTML = `<div class="popover-empty">Nenhuma notificação recente.</div>`;
+        return;
+    }
+    
+    container.innerHTML = logs.slice().reverse().map(item => `
+        <div class="popover-notification-item">
+            <span class="popover-notification-title">${escapeHtml(item.title)}</span>
+            <span class="popover-notification-body">${escapeHtml(item.body || '')}</span>
+            <span class="popover-notification-time">${escapeHtml(item.time || '')}</span>
+        </div>
+    `).join('');
+}
+
+function clearNotificationsLog() {
+    state.notificationsLog = [];
+    saveState();
+    renderNotificationPopover();
+}
+
+// ==========================================================================
+// LÓGICA DO TEMPORIZADOR DE FOCO (POMODORO) & STATS
+// ==========================================================================
+let pomodoroTimeLeft = 25 * 60; // 25 minutos padrão
+let pomodoroWorkMinutes = 25;
+let pomodoroBreakMinutes = 5;
 let pomodoroInterval = null;
 let pomodoroIsRunning = false;
 let pomodoroCyclesToday = 0;
+let pomodoroTotalSecondsToday = 0;
 
 function initPomodoro() {
     const todayKey = "FOCOFACIL_POMODORO_CYCLES_" + getTodayDateString();
+    const timeKey = "FOCOFACIL_POMODORO_TIME_" + getTodayDateString();
     pomodoroCyclesToday = parseInt(localStorage.getItem(todayKey)) || 0;
+    pomodoroTotalSecondsToday = parseInt(localStorage.getItem(timeKey)) || 0;
     updatePomodoroDisplay();
+    updateFocusStats();
+}
+
+function setPomodoroPreset(workMin, breakMin) {
+    if (pomodoroIsRunning) {
+        if (!confirm("O timer está em andamento. Deseja reiniciar com o novo preset?")) return;
+        resetPomodoro();
+    }
+    pomodoroWorkMinutes = workMin;
+    pomodoroBreakMinutes = breakMin;
+    pomodoroTimeLeft = workMin * 60;
+    
+    document.querySelectorAll(".pomodoro-mode-selector .tab-btn").forEach(b => b.classList.remove("active"));
+    const btnMode = document.getElementById(`pomo-mode-${workMin}`);
+    if (btnMode) btnMode.classList.add("active");
+    
+    updatePomodoroDisplay();
+    playClickSound();
+}
+
+function promptCustomPomodoro() {
+    const mins = prompt("Digite a duração do foco em minutos (ex: 45):", "45");
+    if (mins) {
+        const val = parseInt(mins);
+        if (!isNaN(val) && val > 0 && val <= 180) {
+            setPomodoroPreset(val, Math.max(5, Math.round(val / 5)));
+            document.querySelectorAll(".pomodoro-mode-selector .tab-btn").forEach(b => b.classList.remove("active"));
+            const customBtn = document.getElementById("pomo-mode-custom");
+            if (customBtn) customBtn.classList.add("active");
+        }
+    }
 }
 
 function updatePomodoroDisplay() {
@@ -2109,9 +2858,17 @@ function updatePomodoroDisplay() {
     const seconds = (pomodoroTimeLeft % 60).toString().padStart(2, '0');
     const timeEl = document.getElementById("pomodoro-time");
     if (timeEl) timeEl.textContent = `${minutes}:${seconds}`;
+}
+
+function updateFocusStats() {
+    const cyclesEl = document.getElementById("stat-completed-cycles");
+    const totalMinEl = document.getElementById("stat-total-minutes");
     
-    const countEl = document.getElementById("pomodoro-count");
-    if (countEl) countEl.textContent = pomodoroCyclesToday;
+    if (cyclesEl) cyclesEl.textContent = pomodoroCyclesToday;
+    if (totalMinEl) {
+        const totalMinutes = Math.round(pomodoroTotalSecondsToday / 60);
+        totalMinEl.textContent = `${totalMinutes} min`;
+    }
 }
 
 function togglePomodoro() {
@@ -2123,41 +2880,42 @@ function togglePomodoro() {
         clearInterval(pomodoroInterval);
         pomodoroInterval = null;
         pomodoroIsRunning = false;
-        btnToggle.innerHTML = `<i data-lucide="play" style="width:14px; height:14px;"></i> <span>Iniciar</span>`;
+        btnToggle.innerHTML = `<i data-lucide="play"></i> <span>Iniciar Foco</span>`;
         playClickSound();
     } else {
         // Iniciar
         pomodoroIsRunning = true;
-        btnToggle.innerHTML = `<i data-lucide="pause" style="width:14px; height:14px;"></i> <span>Pausar</span>`;
+        btnToggle.innerHTML = `<i data-lucide="pause"></i> <span>Pausar</span>`;
         playClickSound();
         
         pomodoroInterval = setInterval(() => {
             if (pomodoroTimeLeft > 0) {
                 pomodoroTimeLeft--;
+                pomodoroTotalSecondsToday++;
+                const timeKey = "FOCOFACIL_POMODORO_TIME_" + getTodayDateString();
+                localStorage.setItem(timeKey, pomodoroTotalSecondsToday);
                 updatePomodoroDisplay();
+                updateFocusStats();
             } else {
                 // Finalizado
                 clearInterval(pomodoroInterval);
                 pomodoroInterval = null;
                 pomodoroIsRunning = false;
-                pomodoroTimeLeft = 25 * 60;
+                pomodoroTimeLeft = pomodoroWorkMinutes * 60;
                 
                 const todayKey = "FOCOFACIL_POMODORO_CYCLES_" + getTodayDateString();
                 pomodoroCyclesToday++;
                 localStorage.setItem(todayKey, pomodoroCyclesToday);
                 
-                btnToggle.innerHTML = `<i data-lucide="play" style="width:14px; height:14px;"></i> <span>Iniciar</span>`;
+                btnToggle.innerHTML = `<i data-lucide="play"></i> <span>Iniciar Foco</span>`;
                 updatePomodoroDisplay();
+                updateFocusStats();
                 
                 playSuccessSound();
-                if ("Notification" in window && Notification.permission === "granted") {
-                    sendPushNotification("Hora de descansar!", {
-                        body: "Você concluiu um ciclo de foco de 25 minutos. Parabéns!",
-                        icon: "favicon.png"
-                    });
-                } else {
-                    alert("Ciclo de foco concluído! Faça uma pausa de 5 minutos.");
-                }
+                sendPushNotification("Ciclo de Foco Concluído! 🎯", {
+                    body: `Parabéns! Você focou por ${pomodoroWorkMinutes} minutos. Faça uma pausa de ${pomodoroBreakMinutes} minutos.`,
+                    icon: "/favicon.png"
+                });
             }
         }, 1000);
     }
@@ -2168,11 +2926,11 @@ function resetPomodoro() {
     clearInterval(pomodoroInterval);
     pomodoroInterval = null;
     pomodoroIsRunning = false;
-    pomodoroTimeLeft = 25 * 60;
+    pomodoroTimeLeft = pomodoroWorkMinutes * 60;
     
     const btnToggle = document.getElementById("btn-pomodoro-toggle");
     if (btnToggle) {
-        btnToggle.innerHTML = `<i data-lucide="play" style="width:14px; height:14px;"></i> <span>Iniciar</span>`;
+        btnToggle.innerHTML = `<i data-lucide="play"></i> <span>Iniciar Foco</span>`;
     }
     
     updatePomodoroDisplay();
@@ -2207,6 +2965,462 @@ function filterKanbanNotesByPriority(prio, btn) {
 // Vincula funções ao objeto global window para uso em eventos inline do HTML
 window.showInlineInput = showInlineInput;
 window.hideInlineInput = hideInlineInput;
+// ==========================================================================
+// MÓDULO FINANCEIRO & INVESTIMENTOS
+// ==========================================================================
+function formatCurrency(val) {
+    const num = parseFloat(val) || 0;
+    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function renderFinancialDashboard() {
+    if (!state.accounts) state.accounts = [];
+    if (!state.investments) state.investments = [];
+    if (!state.transactions) state.transactions = [];
+
+    // 1. Cálculos de Investimentos
+    const totalInvested = state.investments.reduce((acc, inv) => acc + (parseFloat(inv.currentAmount) || 0), 0);
+    const initialInvested = state.investments.reduce((acc, inv) => acc + (parseFloat(inv.initialAmount) || 0), 0);
+    const investmentYield = totalInvested - initialInvested;
+    const investmentYieldPct = initialInvested > 0 ? (investmentYield / initialInvested) * 100 : 0;
+
+    // 2. Cálculos de Saldos Bancários
+    const totalBankBalance = state.accounts.reduce((acc, a) => acc + (parseFloat(a.balance) || 0), 0);
+
+    // 3. Cálculo de Patrimônio Consolidado
+    const netWorth = totalBankBalance + totalInvested;
+
+    // 4. Cálculos Mensais de Transações
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+    const currentYearMonth = `${currentYear}-${currentMonth}`;
+
+    const monthTransactions = state.transactions.filter(tx => tx.date && tx.date.startsWith(currentYearMonth));
+    const monthIncome = monthTransactions.filter(tx => tx.type === 'income' && tx.status === 'paid')
+                                         .reduce((acc, tx) => acc + (parseFloat(tx.amount) || 0), 0);
+    const monthExpense = monthTransactions.filter(tx => tx.type === 'expense' && tx.status === 'paid')
+                                          .reduce((acc, tx) => acc + (parseFloat(tx.amount) || 0), 0);
+
+    // Atualiza indicadores superiores
+    const netWorthEl = document.getElementById("fin-net-worth");
+    const bankBalanceEl = document.getElementById("fin-bank-balance");
+    const monthIncomeEl = document.getElementById("fin-month-income");
+    const monthExpenseEl = document.getElementById("fin-month-expense");
+    const totalInvestedEl = document.getElementById("fin-total-invested");
+    const investedSubtextEl = document.getElementById("fin-invested-subtext");
+
+    if (netWorthEl) netWorthEl.textContent = formatCurrency(netWorth);
+    if (bankBalanceEl) bankBalanceEl.textContent = formatCurrency(totalBankBalance);
+    if (monthIncomeEl) monthIncomeEl.textContent = formatCurrency(monthIncome);
+    if (monthExpenseEl) monthExpenseEl.textContent = formatCurrency(monthExpense);
+    if (totalInvestedEl) totalInvestedEl.textContent = formatCurrency(totalInvested);
+    
+    if (investedSubtextEl) {
+        const prefix = investmentYield >= 0 ? "+" : "";
+        investedSubtextEl.textContent = `Rendimento: ${prefix}${formatCurrency(investmentYield)} (${prefix}${investmentYieldPct.toFixed(2)}%)`;
+        investedSubtextEl.style.color = investmentYield >= 0 ? "var(--color-success)" : "var(--color-danger)";
+    }
+
+    // Renderiza Seção de Bancos
+    renderBankAccounts();
+
+    // Renderiza Seção de Investimentos
+    renderInvestments();
+
+    // Renderiza Seção de Extrato
+    renderTransactions();
+}
+
+function renderBankAccounts() {
+    const grid = document.getElementById("bank-accounts-grid");
+    if (!grid) return;
+
+    if (!state.accounts || state.accounts.length === 0) {
+        grid.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">Nenhuma conta cadastrada.</p>`;
+        return;
+    }
+
+    grid.innerHTML = state.accounts.map(acc => `
+        <div class="bank-card" style="--bank-accent-color: ${acc.color || '#3b82f6'};">
+            <div class="bank-card-header">
+                <span class="bank-name">${escapeHtml(acc.name)}</span>
+                <i data-lucide="building-2" style="width:16px; height:16px; color:${acc.color || '#3b82f6'};"></i>
+            </div>
+            <div class="bank-balance">${formatCurrency(acc.balance)}</div>
+        </div>
+    `).join('');
+    
+    lucide.createIcons();
+}
+
+function renderInvestments() {
+    const grid = document.getElementById("investments-grid");
+    if (!grid) return;
+
+    if (!state.investments || state.investments.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: span 3; text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">
+                <i data-lucide="line-chart" style="width:28px; height:28px; opacity:0.4; margin-bottom:6px;"></i>
+                <p>Nenhum investimento cadastrado na carteira.</p>
+                <button class="btn btn-secondary-sm" onclick="openAddInvestmentModal()" style="margin-top:8px;">
+                    <i data-lucide="plus"></i> Adicionar Investimento
+                </button>
+            </div>
+        `;
+        lucide.createIcons();
+        return;
+    }
+
+    grid.innerHTML = state.investments.map(inv => {
+        const initial = parseFloat(inv.initialAmount) || 0;
+        const current = parseFloat(inv.currentAmount) || 0;
+        const yieldVal = current - initial;
+        const yieldPct = initial > 0 ? (yieldVal / initial) * 100 : 0;
+        const isPos = yieldVal >= 0;
+        const yieldPrefix = isPos ? "+" : "";
+
+        const account = state.accounts.find(a => a.id === inv.accountId);
+        const accountName = account ? account.name : "Conta Geral";
+
+        return `
+            <div class="investment-card">
+                <div class="inv-card-header">
+                    <div>
+                        <span class="inv-title">${escapeHtml(inv.name)}</span>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                            🏛️ ${escapeHtml(accountName)}
+                        </div>
+                    </div>
+                    <span class="inv-category-badge">${escapeHtml(inv.category || 'Ativo')}</span>
+                </div>
+
+                <div class="inv-values-grid">
+                    <div class="inv-val-box">
+                        <span class="inv-val-label">Valor Aplicado</span>
+                        <span class="inv-val-number" style="font-size:0.95rem; color:var(--text-muted);">${formatCurrency(initial)}</span>
+                    </div>
+                    <div class="inv-val-box">
+                        <span class="inv-val-label">Valor Atual</span>
+                        <span class="inv-val-number">${formatCurrency(current)}</span>
+                    </div>
+                </div>
+
+                <div class="inv-yield-row">
+                    <span class="yield-badge ${isPos ? 'yield-positive' : 'yield-negative'}">
+                        ${yieldPrefix}${formatCurrency(yieldVal)} (${yieldPrefix}${yieldPct.toFixed(2)}%)
+                    </span>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-update-inv" onclick="openUpdateInvestmentModal('${inv.id}')" title="Atualizar saldo atual do ativo">
+                            <i data-lucide="refresh-cw" style="width:12px; height:12px;"></i> Atualizar
+                        </button>
+                        <button class="icon-btn text-danger" onclick="deleteInvestment('${inv.id}')" title="Excluir Ativo" style="width:28px; height:28px;">
+                            <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    lucide.createIcons();
+}
+
+function renderTransactions() {
+    const container = document.getElementById("transactions-list-container");
+    const monthFilter = document.getElementById("fin-filter-month");
+    const typeFilter = document.getElementById("fin-filter-type");
+    const bankFilter = document.getElementById("fin-filter-bank");
+    if (!container) return;
+
+    populateFinancialFilters();
+
+    const selectedType = typeFilter ? typeFilter.value : "all";
+    const selectedBank = bankFilter ? bankFilter.value : "all";
+
+    const filtered = (state.transactions || []).filter(tx => {
+        const matchType = selectedType === "all" || tx.type === selectedType;
+        const matchBank = selectedBank === "all" || tx.accountId === selectedBank;
+        return matchType && matchBank;
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:12px;">Nenhum lançamento encontrado para os filtros selecionados.</div>`;
+        return;
+    }
+
+    filtered.sort((a, b) => b.date.localeCompare(a.date));
+
+    container.innerHTML = filtered.map(tx => {
+        const account = state.accounts.find(a => a.id === tx.accountId);
+        const bankName = account ? account.name : "Geral";
+        const isIncome = tx.type === 'income';
+        const sign = isIncome ? "+" : "-";
+
+        return `
+            <div class="transaction-row">
+                <div class="tx-left">
+                    <div class="tx-icon ${isIncome ? 'tx-icon-income' : 'tx-icon-expense'}">
+                        <i data-lucide="${isIncome ? 'arrow-up-right' : 'arrow-down-right'}" style="width:18px; height:18px;"></i>
+                    </div>
+                    <div class="tx-info">
+                        <span class="tx-title">${escapeHtml(tx.title)}</span>
+                        <div class="tx-meta">
+                            <span>🏛️ ${escapeHtml(bankName)}</span>
+                            <span>🏷️ ${escapeHtml(tx.category || 'Geral')}</span>
+                            <span>📅 ${tx.date}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <span class="badge-status ${tx.status === 'paid' ? 'badge-paid' : 'badge-pending'}">
+                        ${tx.status === 'paid' ? 'Pago' : 'Pendente'}
+                    </span>
+                    <span class="tx-amount ${isIncome ? 'tx-amount-income' : 'tx-amount-expense'}">
+                        ${sign} ${formatCurrency(tx.amount)}
+                    </span>
+                    <button class="icon-btn text-danger" onclick="deleteTransaction('${tx.id}')" title="Excluir Lançamento" style="width:28px; height:28px;">
+                        <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    lucide.createIcons();
+}
+
+function populateFinancialFilters() {
+    const bankFilter = document.getElementById("fin-filter-bank");
+    if (bankFilter && bankFilter.options.length <= 1) {
+        bankFilter.innerHTML = `<option value="all">Todos os Bancos</option>` +
+            (state.accounts || []).map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+    }
+
+    const txAccountSelect = document.getElementById("tx-account");
+    if (txAccountSelect) {
+        txAccountSelect.innerHTML = (state.accounts || []).map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+    }
+
+    const invAccountSelect = document.getElementById("inv-account");
+    if (invAccountSelect) {
+        invAccountSelect.innerHTML = (state.accounts || []).map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+    }
+}
+
+function openAddTransactionModal() {
+    populateFinancialFilters();
+    const modal = document.getElementById("modal-transaction");
+    if (modal) {
+        modal.classList.add("active");
+        const dateInput = document.getElementById("tx-date");
+        if (dateInput) dateInput.value = getTodayDateString();
+        const titleInput = document.getElementById("tx-title");
+        if (titleInput) {
+            titleInput.value = "";
+            titleInput.focus();
+        }
+    }
+    lucide.createIcons();
+}
+
+function closeAddTransactionModal() {
+    const modal = document.getElementById("modal-transaction");
+    if (modal) modal.classList.remove("active");
+    const form = document.getElementById("form-add-transaction");
+    if (form) form.reset();
+}
+
+function openAddInvestmentModal() {
+    populateFinancialFilters();
+    const modal = document.getElementById("modal-investment");
+    if (modal) {
+        modal.classList.add("active");
+        const nameInput = document.getElementById("inv-name");
+        if (nameInput) {
+            nameInput.value = "";
+            nameInput.focus();
+        }
+    }
+    lucide.createIcons();
+}
+
+function closeAddInvestmentModal() {
+    const modal = document.getElementById("modal-investment");
+    if (modal) modal.classList.remove("active");
+    const form = document.getElementById("form-add-investment");
+    if (form) form.reset();
+}
+
+function openUpdateInvestmentModal(invId) {
+    const inv = state.investments.find(i => i.id === invId);
+    if (!inv) return;
+
+    const modal = document.getElementById("modal-update-investment");
+    if (!modal) return;
+
+    modal.classList.add("active");
+
+    const idInput = document.getElementById("update-inv-id");
+    const nameLabel = document.getElementById("update-inv-name-label");
+    const newValInput = document.getElementById("update-inv-new-val");
+
+    if (idInput) idInput.value = inv.id;
+    if (nameLabel) nameLabel.textContent = inv.name;
+    if (newValInput) {
+        newValInput.value = inv.currentAmount;
+        newValInput.focus();
+    }
+    lucide.createIcons();
+}
+
+function closeUpdateInvestmentModal() {
+    const modal = document.getElementById("modal-update-investment");
+    if (modal) modal.classList.remove("active");
+    const form = document.getElementById("form-update-investment");
+    if (form) form.reset();
+}
+
+function openAddAccountModal() {
+    const modal = document.getElementById("modal-account");
+    if (modal) {
+        modal.classList.add("active");
+        const nameInput = document.getElementById("acc-name");
+        if (nameInput) {
+            nameInput.value = "";
+            nameInput.focus();
+        }
+    }
+    lucide.createIcons();
+}
+
+function closeAddAccountModal() {
+    const modal = document.getElementById("modal-account");
+    if (modal) modal.classList.remove("active");
+    const form = document.getElementById("form-add-account");
+    if (form) form.reset();
+}
+
+function deleteTransaction(id) {
+    if (confirm("Deseja realmente remover este lançamento?")) {
+        const tx = state.transactions.find(t => t.id === id);
+        if (tx && tx.status === 'paid') {
+            const acc = state.accounts.find(a => a.id === tx.accountId);
+            if (acc) {
+                if (tx.type === 'income') acc.balance -= parseFloat(tx.amount) || 0;
+                else if (tx.type === 'expense') acc.balance += parseFloat(tx.amount) || 0;
+            }
+        }
+        state.transactions = state.transactions.filter(t => t.id !== id);
+        saveState();
+        renderFinancialDashboard();
+        playClickSound();
+    }
+}
+
+function deleteInvestment(id) {
+    if (confirm("Deseja realmente remover este investimento da sua carteira?")) {
+        state.investments = state.investments.filter(i => i.id !== id);
+        saveState();
+        renderFinancialDashboard();
+        playClickSound();
+    }
+}
+
+// ==========================================================================
+// SISTEMA DE AUTENTICAÇÃO E SESSÃO DE USUÁRIO
+// ==========================================================================
+const REGISTERED_USERS = [
+    { username: "erick", name: "Erick", password: "clic3369" }
+];
+
+let currentUser = null;
+
+function checkAuthSession() {
+    const savedUserJson = localStorage.getItem("FOCOFACIL_AUTH_USER") || sessionStorage.getItem("FOCOFACIL_AUTH_USER");
+    const loginOverlay = document.getElementById("screen-login");
+    const appContainer = document.getElementById("app-container");
+    const userBadge = document.getElementById("user-profile-badge");
+    const userNameEl = document.getElementById("header-user-name");
+
+    if (savedUserJson) {
+        try {
+            currentUser = JSON.parse(savedUserJson);
+            if (loginOverlay) loginOverlay.classList.remove("active");
+            if (appContainer) appContainer.style.display = "flex";
+            if (userBadge) userBadge.style.display = "flex";
+            if (userNameEl) userNameEl.textContent = currentUser.name || currentUser.username;
+            renderAll();
+        } catch (e) {
+            showLoginScreen();
+        }
+    } else {
+        showLoginScreen();
+    }
+}
+
+function showLoginScreen() {
+    const loginOverlay = document.getElementById("screen-login");
+    const appContainer = document.getElementById("app-container");
+    const userBadge = document.getElementById("user-profile-badge");
+
+    if (loginOverlay) loginOverlay.classList.add("active");
+    if (appContainer) appContainer.style.display = "none";
+    if (userBadge) userBadge.style.display = "none";
+    
+    const usernameInput = document.getElementById("login-username");
+    if (usernameInput) usernameInput.focus();
+}
+
+function loginUser(username, password, rememberMe = true) {
+    const cleanUsername = (username || "").trim().toLowerCase();
+    const cleanPassword = (password || "").trim();
+
+    const matchedUser = REGISTERED_USERS.find(u => u.username.toLowerCase() === cleanUsername && u.password === cleanPassword);
+
+    const errorAlert = document.getElementById("login-error-msg");
+    const loginCard = document.querySelector(".login-card");
+
+    if (matchedUser) {
+        currentUser = { username: matchedUser.username, name: matchedUser.name };
+        const userJson = JSON.stringify(currentUser);
+        
+        if (rememberMe) {
+            localStorage.setItem("FOCOFACIL_AUTH_USER", userJson);
+        } else {
+            sessionStorage.setItem("FOCOFACIL_AUTH_USER", userJson);
+        }
+
+        if (errorAlert) errorAlert.style.display = "none";
+        
+        playSuccessSound();
+        checkAuthSession();
+        triggerConfetti(window.innerWidth / 2, window.innerHeight / 2);
+        return true;
+    } else {
+        if (errorAlert) errorAlert.style.display = "flex";
+        if (loginCard) {
+            loginCard.classList.remove("shake-anim");
+            void loginCard.offsetWidth;
+            loginCard.classList.add("shake-anim");
+        }
+        playBeep(150, 'sawtooth', 0.2, 0, 0.2);
+        return false;
+    }
+}
+
+function logoutUser() {
+    playClickSound();
+    currentUser = null;
+    localStorage.removeItem("FOCOFACIL_AUTH_USER");
+    sessionStorage.removeItem("FOCOFACIL_AUTH_USER");
+    showLoginScreen();
+}
+
+// Vincula funções ao objeto global window para uso em eventos inline do HTML
+window.showInlineInput = showInlineInput;
+window.hideInlineInput = hideInlineInput;
 window.addKanbanNoteFromInput = addKanbanNoteFromInput;
 window.deleteKanbanNote = deleteKanbanNote;
 window.editKanbanNote = editKanbanNote;
@@ -2217,8 +3431,35 @@ window.dragEnter = dragEnter;
 window.dragLeave = dragLeave;
 window.drop = drop;
 window.switchMainTab = switchMainTab;
+window.navigateMonth = navigateMonth;
+window.selectAgendaDate = selectAgendaDate;
+window.filterAgendaEvents = filterAgendaEvents;
+window.toggleAgendaEvent = toggleAgendaEvent;
+window.deleteAgendaEvent = deleteAgendaEvent;
+window.openAddEventModal = openAddEventModal;
+window.closeAddEventModal = closeAddEventModal;
+window.toggleNotificationPopover = toggleNotificationPopover;
+window.clearNotificationsLog = clearNotificationsLog;
+window.toggleAmbientSound = toggleAmbientSound;
+window.updateAmbientVolume = updateAmbientVolume;
+window.setPomodoroPreset = setPomodoroPreset;
+window.promptCustomPomodoro = promptCustomPomodoro;
 window.togglePomodoro = togglePomodoro;
 window.resetPomodoro = resetPomodoro;
 window.filterKanbanNotes = filterKanbanNotes;
 window.filterKanbanNotesByPriority = filterKanbanNotesByPriority;
 window.initPomodoro = initPomodoro;
+window.openAddTransactionModal = openAddTransactionModal;
+window.closeAddTransactionModal = closeAddTransactionModal;
+window.openAddInvestmentModal = openAddInvestmentModal;
+window.closeAddInvestmentModal = closeAddInvestmentModal;
+window.openUpdateInvestmentModal = openUpdateInvestmentModal;
+window.closeUpdateInvestmentModal = closeUpdateInvestmentModal;
+window.openAddAccountModal = openAddAccountModal;
+window.closeAddAccountModal = closeAddAccountModal;
+window.deleteTransaction = deleteTransaction;
+window.deleteInvestment = deleteInvestment;
+window.renderFinancialDashboard = renderFinancialDashboard;
+window.loginUser = loginUser;
+window.logoutUser = logoutUser;
+window.checkAuthSession = checkAuthSession;
