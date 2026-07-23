@@ -3667,6 +3667,31 @@ function renderComputers() {
     lucide.createIcons();
 }
 
+function openAlexaApp(commandText = "") {
+    if (commandText) {
+        copyTextSilent(commandText);
+    }
+    
+    playSuccessSound();
+
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isAndroid) {
+        window.location.href = "intent://com.amazon.dee.app/#Intent;scheme=alexa;package=com.amazon.dee.app;end";
+        setTimeout(() => {
+            window.location.href = "alexa://";
+        }, 1200);
+    } else if (isIOS) {
+        window.location.href = "alexa://";
+        setTimeout(() => {
+            window.open("https://alexa.amazon.com", "_blank");
+        }, 1500);
+    } else {
+        window.open("https://alexa.amazon.com", "_blank");
+    }
+}
+
 function triggerAlexaCommand(pcId) {
     const pc = state.computers ? state.computers.find(p => p.id === pcId) : null;
     const cmd = pc ? pc.alexaCommand : "Alexa, ligar o computador";
@@ -3674,9 +3699,13 @@ function triggerAlexaCommand(pcId) {
     playSuccessSound();
     triggerConfetti(window.innerWidth / 2, window.innerHeight / 2);
 
-    copyText(cmd, "Comando Alexa");
+    copyTextSilent(cmd);
+    openAlexaApp(cmd);
+}
 
-    alert(`⚡ Comando Alexa Disparado com Sucesso!\n\nFrase: "${cmd}"\n\nA frase foi copiada para a sua área de transferência e o acionamento foi direcionado para a rotina do App Alexa.`);
+function copyTextSilent(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).catch(() => {});
 }
 
 function copyText(text, label = "Texto") {
@@ -3909,6 +3938,7 @@ window.logoutUser = logoutUser;
 window.checkAuthSession = checkAuthSession;
 window.renderComputers = renderComputers;
 window.triggerAlexaCommand = triggerAlexaCommand;
+window.openAlexaApp = openAlexaApp;
 window.copyAlexaCommand = copyAlexaCommand;
 window.sendWakeOnLan = sendWakeOnLan;
 window.openAddPcModal = openAddPcModal;
