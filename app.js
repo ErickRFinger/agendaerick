@@ -3667,12 +3667,30 @@ function renderComputers() {
     lucide.createIcons();
 }
 
+function showToast(message) {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const item = document.createElement("div");
+    item.className = "toast-item";
+    item.innerHTML = `<i data-lucide="check-circle-2" style="width:16px; height:16px; color:var(--color-primary);"></i> <span>${escapeHtml(message)}</span>`;
+    container.appendChild(item);
+    lucide.createIcons();
+
+    setTimeout(() => {
+        item.style.opacity = "0";
+        item.style.transition = "opacity 0.3s";
+        setTimeout(() => item.remove(), 300);
+    }, 3000);
+}
+
 function openAlexaApp(commandText = "") {
     if (commandText) {
         copyTextSilent(commandText);
     }
     
     playSuccessSound();
+    showToast("Abrindo App da Alexa...");
 
     const isAndroid = /Android/i.test(navigator.userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -3681,12 +3699,12 @@ function openAlexaApp(commandText = "") {
         window.location.href = "intent://com.amazon.dee.app/#Intent;scheme=alexa;package=com.amazon.dee.app;end";
         setTimeout(() => {
             window.location.href = "alexa://";
-        }, 1200);
+        }, 1000);
     } else if (isIOS) {
         window.location.href = "alexa://";
         setTimeout(() => {
             window.open("https://alexa.amazon.com", "_blank");
-        }, 1500);
+        }, 1200);
     } else {
         window.open("https://alexa.amazon.com", "_blank");
     }
@@ -3712,7 +3730,7 @@ function copyText(text, label = "Texto") {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
         playClickSound();
-        alert(`📋 ${label} copiado para a área de transferência:\n"${text}"`);
+        showToast(`${label} copiado!`);
     }).catch(() => {});
 }
 
