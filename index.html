@@ -939,9 +939,79 @@
                     <input type="text" id="pc-alexa" placeholder="Ex: Alexa, ligar o i7" autocomplete="off">
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pc-anydesk">🔴 AnyDesk ID</label>
+                        <input type="text" id="pc-anydesk" placeholder="Ex: 928 341 101" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="pc-rustdesk">🦀 RustDesk ID</label>
+                        <input type="text" id="pc-rustdesk" placeholder="Ex: 104 928 411" autocomplete="off">
+                    </div>
+                </div>
+
                 <div class="modal-actions" style="margin-top: 20px;">
                     <button type="button" class="btn btn-secondary" onclick="closeAddPcModal()">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Salvar Equipamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDITAR COMPUTADOR / SERVIDOR -->
+    <div class="modal-backdrop" id="modal-edit-pc">
+        <div class="modal-card" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3><i data-lucide="edit"></i> Editar Equipamento / Acessos</h3>
+                <button class="btn-close-modal" onclick="closeEditPcModal()">&times;</button>
+            </div>
+            <form id="form-edit-pc">
+                <input type="hidden" id="edit-pc-id">
+                <div class="form-group">
+                    <label for="edit-pc-name">Nome do Equipamento / PC</label>
+                    <input type="text" id="edit-pc-name" required placeholder="Ex: PC i7, PC Ryzen, Servidor..." autocomplete="off">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-pc-type">Tipo</label>
+                        <select id="edit-pc-type">
+                            <option value="Desktop">🖥️ PC Desktop</option>
+                            <option value="Servidor">🗄️ Servidor</option>
+                            <option value="Notebook">💻 Notebook</option>
+                            <option value="Dispositivo">⚡ Dispositivo Smart</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-pc-ip">Endereço IP Local</label>
+                        <input type="text" id="edit-pc-ip" placeholder="Ex: 192.168.1.10" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-pc-mac">Endereço MAC (Wake-on-LAN)</label>
+                    <input type="text" id="edit-pc-mac" placeholder="Ex: AA:BB:CC:DD:EE:01" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-pc-alexa">Comando de Voz da Alexa</label>
+                    <input type="text" id="edit-pc-alexa" placeholder="Ex: Alexa, ligar o i7" autocomplete="off">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-pc-anydesk">🔴 AnyDesk ID</label>
+                        <input type="text" id="edit-pc-anydesk" placeholder="Ex: 928 341 101" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-pc-rustdesk">🦀 RustDesk ID</label>
+                        <input type="text" id="edit-pc-rustdesk" placeholder="Ex: 104 928 411" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditPcModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                 </div>
             </form>
         </div>

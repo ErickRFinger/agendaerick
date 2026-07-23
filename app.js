@@ -103,9 +103,9 @@ const defaultState = {
         { id: "k4", text: "Lembrar de comprar presente de aniversário.", column: "lembretes" }
     ],
     computers: [
-        { id: "pc_i7", name: "PC i7", type: "Desktop", ip: "192.168.1.10", mac: "AA:BB:CC:DD:EE:01", alexaCommand: "Alexa, ligar o i7", status: "online" },
-        { id: "pc_ryzen", name: "PC Ryzen", type: "Desktop", ip: "192.168.1.11", mac: "AA:BB:CC:DD:EE:02", alexaCommand: "Alexa, ligar o Ryzen", status: "online" },
-        { id: "pc_server", name: "Servidor", type: "Servidor", ip: "192.168.1.12", mac: "AA:BB:CC:DD:EE:03", alexaCommand: "Alexa, ligar o Servidor", status: "online" }
+        { id: "pc_i7", name: "PC i7", type: "Desktop", ip: "192.168.1.10", mac: "AA:BB:CC:DD:EE:01", alexaCommand: "Alexa, ligar o i7", anydesk: "928 341 101", rustdesk: "104 928 411", status: "online" },
+        { id: "pc_ryzen", name: "PC Ryzen", type: "Desktop", ip: "192.168.1.11", mac: "AA:BB:CC:DD:EE:02", alexaCommand: "Alexa, ligar o Ryzen", anydesk: "928 341 102", rustdesk: "104 928 412", status: "online" },
+        { id: "pc_server", name: "Servidor", type: "Servidor", ip: "192.168.1.12", mac: "AA:BB:CC:DD:EE:03", alexaCommand: "Alexa, ligar o Servidor", anydesk: "928 341 103", rustdesk: "104 928 413", status: "online" }
     ],
     dailyMood: {},
     pomodoroScratchpad: ""
@@ -1987,6 +1987,8 @@ function setupEventListeners() {
             const ip = document.getElementById("pc-ip").value.trim() || "192.168.1.X";
             const mac = document.getElementById("pc-mac").value.trim() || "00:11:22:33:44:55";
             const alexaCommand = document.getElementById("pc-alexa").value.trim() || `Alexa, ligar o ${name}`;
+            const anydesk = document.getElementById("pc-anydesk").value.trim();
+            const rustdesk = document.getElementById("pc-rustdesk").value.trim();
 
             if (!name) return;
 
@@ -1997,6 +1999,8 @@ function setupEventListeners() {
                 ip,
                 mac,
                 alexaCommand,
+                anydesk,
+                rustdesk,
                 status: "online"
             };
 
@@ -2006,6 +2010,39 @@ function setupEventListeners() {
             closeAddPcModal();
             renderComputers();
             playSuccessSound();
+        });
+    }
+
+    // --- Formulário de Edição de Computador ---
+    const formEditPc = document.getElementById("form-edit-pc");
+    if (formEditPc) {
+        formEditPc.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const id = document.getElementById("edit-pc-id").value;
+            const name = document.getElementById("edit-pc-name").value.trim();
+            const type = document.getElementById("edit-pc-type").value;
+            const ip = document.getElementById("edit-pc-ip").value.trim();
+            const mac = document.getElementById("edit-pc-mac").value.trim();
+            const alexaCommand = document.getElementById("edit-pc-alexa").value.trim();
+            const anydesk = document.getElementById("edit-pc-anydesk").value.trim();
+            const rustdesk = document.getElementById("edit-pc-rustdesk").value.trim();
+
+            if (!id || !name) return;
+
+            const pc = state.computers ? state.computers.find(p => p.id === id) : null;
+            if (pc) {
+                pc.name = name;
+                pc.type = type;
+                pc.ip = ip;
+                pc.mac = mac;
+                pc.alexaCommand = alexaCommand;
+                pc.anydesk = anydesk;
+                pc.rustdesk = rustdesk;
+                saveState();
+                closeEditPcModal();
+                renderComputers();
+                playSuccessSound();
+            }
         });
     }
 
@@ -3576,12 +3613,34 @@ function renderComputers() {
                 </div>
             </div>
 
+            <!-- Blocos de Acesso Remoto (AnyDesk & RustDesk) -->
+            <div class="pc-remote-access-grid">
+                <div class="remote-id-card">
+                    <div class="remote-id-header">
+                        <span>🔴 AnyDesk ID</span>
+                    </div>
+                    <div class="remote-id-value">
+                        <span>${escapeHtml(pc.anydesk || 'Não cadastrado')}</span>
+                        ${pc.anydesk ? `<button class="btn-bank-action" onclick="copyText('${escapeHtml(pc.anydesk)}', 'AnyDesk ID')" title="Copiar AnyDesk ID"><i data-lucide="copy" style="width:11px; height:11px;"></i></button>` : ''}
+                    </div>
+                </div>
+                <div class="remote-id-card">
+                    <div class="remote-id-header">
+                        <span>🦀 RustDesk ID</span>
+                    </div>
+                    <div class="remote-id-value">
+                        <span>${escapeHtml(pc.rustdesk || 'Não cadastrado')}</span>
+                        ${pc.rustdesk ? `<button class="btn-bank-action" onclick="copyText('${escapeHtml(pc.rustdesk)}', 'RustDesk ID')" title="Copiar RustDesk ID"><i data-lucide="copy" style="width:11px; height:11px;"></i></button>` : ''}
+                    </div>
+                </div>
+            </div>
+
             <div class="pc-alexa-command-box">
                 <div style="display:flex; align-items:center; gap:6px;">
                     <i data-lucide="mic" style="width:14px; height:14px; color:#06b6d4;"></i>
                     <span class="alexa-command-text">"${escapeHtml(pc.alexaCommand || 'Alexa, ligar o PC')}"</span>
                 </div>
-                <button class="btn-bank-action" onclick="copyAlexaCommand('${escapeHtml(pc.alexaCommand || '')}')" title="Copiar comando de voz">
+                <button class="btn-bank-action" onclick="copyText('${escapeHtml(pc.alexaCommand || '')}', 'Comando Alexa')" title="Copiar comando de voz">
                     <i data-lucide="copy" style="width:12px; height:12px;"></i> Copiar
                 </button>
             </div>
@@ -3590,9 +3649,12 @@ function renderComputers() {
                 <button class="btn-alexa-trigger" onclick="triggerAlexaCommand('${pc.id}')">
                     <i data-lucide="zap"></i> <span>⚡ ${escapeHtml(pc.alexaCommand || 'Ligar na Alexa')}</span>
                 </button>
-                <div style="display:flex; gap:8px;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="btn-wol-trigger" style="flex:1;" onclick="sendWakeOnLan('${pc.id}')" title="Enviar pacote Wake-on-LAN">
-                        <i data-lucide="wifi"></i> <span>Enviar WoL</span>
+                        <i data-lucide="wifi"></i> <span>WoL</span>
+                    </button>
+                    <button class="btn-bank-action" onclick="openEditPcModal('${pc.id}')" title="Editar dados do PC e Acessos">
+                        <i data-lucide="edit-2" style="width:12px; height:12px;"></i> Editar
                     </button>
                     <button class="btn-bank-action danger" onclick="deleteComputer('${pc.id}')" title="Excluir equipamento">
                         <i data-lucide="trash-2" style="width:12px; height:12px;"></i>
@@ -3612,16 +3674,54 @@ function triggerAlexaCommand(pcId) {
     playSuccessSound();
     triggerConfetti(window.innerWidth / 2, window.innerHeight / 2);
 
-    copyAlexaCommand(cmd);
+    copyText(cmd, "Comando Alexa");
 
     alert(`⚡ Comando Alexa Disparado com Sucesso!\n\nFrase: "${cmd}"\n\nA frase foi copiada para a sua área de transferência e o acionamento foi direcionado para a rotina do App Alexa.`);
 }
 
-function copyAlexaCommand(text) {
+function copyText(text, label = "Texto") {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
         playClickSound();
+        alert(`📋 ${label} copiado para a área de transferência:\n"${text}"`);
     }).catch(() => {});
+}
+
+function openEditPcModal(pcId) {
+    const pc = state.computers ? state.computers.find(p => p.id === pcId) : null;
+    if (!pc) return;
+
+    const modal = document.getElementById("modal-edit-pc");
+    if (!modal) return;
+
+    modal.classList.add("active");
+
+    const idInput = document.getElementById("edit-pc-id");
+    const nameInput = document.getElementById("edit-pc-name");
+    const typeInput = document.getElementById("edit-pc-type");
+    const ipInput = document.getElementById("edit-pc-ip");
+    const macInput = document.getElementById("edit-pc-mac");
+    const alexaInput = document.getElementById("edit-pc-alexa");
+    const anydeskInput = document.getElementById("edit-pc-anydesk");
+    const rustdeskInput = document.getElementById("edit-pc-rustdesk");
+
+    if (idInput) idInput.value = pc.id;
+    if (nameInput) nameInput.value = pc.name || "";
+    if (typeInput) typeInput.value = pc.type || "Desktop";
+    if (ipInput) ipInput.value = pc.ip || "";
+    if (macInput) macInput.value = pc.mac || "";
+    if (alexaInput) alexaInput.value = pc.alexaCommand || "";
+    if (anydeskInput) anydeskInput.value = pc.anydesk || "";
+    if (rustdeskInput) rustdeskInput.value = pc.rustdesk || "";
+
+    lucide.createIcons();
+}
+
+function closeEditPcModal() {
+    const modal = document.getElementById("modal-edit-pc");
+    if (modal) modal.classList.remove("active");
+    const form = document.getElementById("form-edit-pc");
+    if (form) form.reset();
 }
 
 function sendWakeOnLan(pcId) {
@@ -3813,6 +3913,9 @@ window.copyAlexaCommand = copyAlexaCommand;
 window.sendWakeOnLan = sendWakeOnLan;
 window.openAddPcModal = openAddPcModal;
 window.closeAddPcModal = closeAddPcModal;
+window.openEditPcModal = openEditPcModal;
+window.closeEditPcModal = closeEditPcModal;
+window.copyText = copyText;
 window.deleteComputer = deleteComputer;
 window.exportAgendaICS = exportAgendaICS;
 window.exportKanbanBackup = exportKanbanBackup;
