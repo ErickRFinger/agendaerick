@@ -3474,6 +3474,41 @@ textarea {
     color: var(--text-main);
 }
 
+.bank-card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-bank-action {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: var(--transition-fast);
+}
+
+.btn-bank-action:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+
+.btn-bank-action.danger:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
 /* Carteira de Investimentos */
 .investments-grid {
     display: grid;
@@ -3910,6 +3945,240 @@ textarea {
     20%, 80% { transform: translate3d(2px, 0, 0); }
     30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
     40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* ==========================================================================
+   ESTILOS DO MÓDULO 6: CENTRAL DE COMPUTADORES & ALEXA
+   ========================================================================== */
+.computers-module-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.alexa-banner-card {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15));
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.alexa-banner-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3);
+}
+
+.alexa-banner-text strong {
+    font-size: 14px;
+    color: var(--text-main);
+    display: block;
+    margin-bottom: 2px;
+}
+
+.alexa-banner-text p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.computers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.pc-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition-fast);
+}
+
+.pc-card:hover {
+    border-color: rgba(6, 182, 212, 0.4);
+    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.15);
+    transform: translateY(-2px);
+}
+
+.pc-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.pc-title-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pc-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background: rgba(6, 182, 212, 0.15);
+    color: #38bdf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pc-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.pc-type-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.pc-status-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pc-status-online {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.pc-status-standby {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.pc-details-box {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.pc-detail-row {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+}
+
+.pc-detail-row strong {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.pc-alexa-command-box {
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px dashed rgba(6, 182, 212, 0.4);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.alexa-command-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.btn-alexa-trigger {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: #fff;
+    border: none;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+.btn-alexa-trigger:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.btn-wol-trigger {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: var(--transition-fast);
+}
+
+.btn-wol-trigger:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Widget de Humor (Mood Tracker) */
+.btn-mood {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    font-size: 1.4rem;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-mood:hover {
+    transform: scale(1.15);
+    border-color: var(--color-primary);
+}
+
+.btn-mood.active {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
 }
 
 

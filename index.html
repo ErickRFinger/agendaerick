@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FocoFácil - Agenda, Diário, Foco, Kanban & Financeiro</title>
+    <title>FocoFácil - Agenda, Diário, Foco, Kanban, Financeiro & PCs</title>
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#f59e0b">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -153,7 +153,7 @@
             </div>
         </header>
 
-        <!-- NAVEGAÇÃO PRINCIPAL DO SISTEMA (5 MÓDULOS) -->
+        <!-- NAVEGAÇÃO PRINCIPAL DO SISTEMA (6 MÓDULOS) -->
         <nav class="main-nav-tabs">
             <button class="main-tab-btn active" id="btn-tab-agenda" onclick="switchMainTab('agenda')">
                 <i data-lucide="calendar"></i>
@@ -175,6 +175,10 @@
                 <i data-lucide="wallet"></i>
                 <span>Financeiro</span>
             </button>
+            <button class="main-tab-btn" id="btn-tab-pcs" onclick="switchMainTab('pcs')">
+                <i data-lucide="monitor"></i>
+                <span>Computadores</span>
+            </button>
         </nav>
 
         <!-- MÓDULO 1: AGENDA SEPARADA -->
@@ -189,7 +193,10 @@
                         <span style="font-size: 12px; color: var(--text-muted);">Organize seus eventos, reuniões e datas importantes</span>
                     </div>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button class="btn btn-secondary-sm" onclick="exportAgendaICS()" title="Exportar calendário para Google/Apple Calendar">
+                        <i data-lucide="download"></i> <span>Exportar .ics</span>
+                    </button>
                     <button class="btn btn-primary" id="btn-add-event-trigger">
                         <i data-lucide="plus"></i>
                         <span>Novo Compromisso</span>
@@ -279,8 +286,24 @@
                 </div>
             </section>
 
-            <!-- COLUNA DIREITA: REMÉDIOS E ÁGUA -->
+            <!-- COLUNA DIREITA: MOOD TRACKER, REMÉDIOS E ÁGUA -->
             <div class="side-column">
+                <!-- WIDGET DE HUMOR E ENERGIA DO DIA -->
+                <section class="panel mood-panel" style="padding: 14px 18px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 13px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="smile"></i> Como está seu dia?
+                        </span>
+                        <span id="current-mood-label" style="font-size: 11px; color: var(--text-muted);">Não registrado</span>
+                    </div>
+                    <div class="mood-selector-bar" style="display: flex; justify-content: space-between; gap: 6px;">
+                        <button class="btn-mood" onclick="setDailyMood('great', '😄 Ótimo')" title="Excelente">😄</button>
+                        <button class="btn-mood" onclick="setDailyMood('good', '🙂 Produtivo')" title="Bom / Produtivo">🙂</button>
+                        <button class="btn-mood" onclick="setDailyMood('neutral', '😐 Normal')" title="Neutro">😐</button>
+                        <button class="btn-mood" onclick="setDailyMood('tired', '😫 Cansado')" title="Cansado">😫</button>
+                        <button class="btn-mood" onclick="setDailyMood('stressed', '😤 Estressado')" title="Estressado">😤</button>
+                    </div>
+                </section>
                 
                 <!-- BLOCO MEDICAMENTOS -->
                 <section class="panel meds-panel">
@@ -416,7 +439,7 @@
                     </div>
                     <div>
                         <h2>Estúdio de Foco & Concentração</h2>
-                        <span style="font-size: 12px; color: var(--text-muted);">Técnica Pomodoro, Ruído Branco e Métricas de Produtividade</span>
+                        <span style="font-size: 12px; color: var(--text-muted);">Técnica Pomodoro, Ruído Branco e Bloco de Notas Rápidas</span>
                     </div>
                 </div>
             </div>
@@ -443,6 +466,14 @@
                         <button class="btn btn-secondary" id="btn-pomodoro-reset" onclick="resetPomodoro()" title="Resetar">
                             <i data-lucide="rotate-ccw"></i>
                         </button>
+                    </div>
+
+                    <!-- Scratchpad de Notas da Sessão -->
+                    <div style="margin-top: 16px; width: 100%;">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="file-text" style="width: 14px; height: 14px;"></i> Bloco de Ideias da Sessão
+                        </div>
+                        <textarea id="pomodoro-scratchpad" placeholder="Anote pensamentos para não perder o foco..." rows="2" style="width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); font-size: 12px; padding: 8px; outline: none; resize: vertical;" oninput="savePomodoroScratchpad()"></textarea>
                     </div>
                 </div>
 
@@ -525,8 +556,10 @@
                         </div>
                         <h2>Quadro de Anotações Kanban</h2>
                     </div>
-                    <div style="font-size: 12px; color: var(--text-muted); font-weight: 500;">
-                        Arraste os cards ou use os botões para organizar
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button class="btn btn-secondary-sm" onclick="exportKanbanBackup()" title="Fazer backup das notas">
+                            <i data-lucide="download"></i> <span>Backup Kanban</span>
+                        </button>
                     </div>
                 </div>
                 <!-- BARRA DE BUSCA E FILTROS DO KANBAN -->
@@ -828,6 +861,90 @@
             </div>
         </section>
 
+        <!-- MÓDULO 6: CENTRAL DE COMPUTADORES & ALEXA -->
+        <section class="panel computers-module-panel" id="panel-pcs" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title-area">
+                    <div class="panel-icon pcs-icon" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">
+                        <i data-lucide="monitor"></i>
+                    </div>
+                    <div>
+                        <h2>Central de Computadores & Automação Alexa</h2>
+                        <span style="font-size: 12px; color: var(--text-muted);">Comandos de voz Alexa, acionamento Wake-on-LAN e controle dos seus computadores</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <a href="alexa://" class="btn btn-secondary-sm" target="_blank" title="Abrir App da Alexa no Celular">
+                        <i data-lucide="mic"></i> <span>Abrir App Alexa</span>
+                    </a>
+                    <button class="btn btn-primary" id="btn-add-pc-trigger" onclick="openAddPcModal()">
+                        <i data-lucide="plus"></i> <span>Adicionar Equipamento</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Banner Informativo da Integração -->
+            <div class="alexa-banner-card">
+                <div class="alexa-banner-icon"><i data-lucide="zap"></i></div>
+                <div class="alexa-banner-text">
+                    <strong>Integração com Comandos de Voz Alexa & Wake-on-LAN (WoL)</strong>
+                    <p>Clique em qualquer botão abaixo para executar a rotina no aplicativo da Alexa, enviar o pacote de rede Wake-on-LAN ou copiar o comando de voz exato!</p>
+                </div>
+            </div>
+
+            <!-- Grid dos Computadores -->
+            <div class="computers-grid" id="computers-grid">
+                <!-- Gerado via JS (PC i7, PC Ryzen, Servidor) -->
+            </div>
+        </section>
+
+    </div>
+
+    <!-- MODAL DE CADASTRAR COMPUTADOR / SERVIDOR -->
+    <div class="modal-backdrop" id="modal-pc">
+        <div class="modal-card" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i data-lucide="monitor"></i> Cadastrar Computador / Equipamento</h3>
+                <button class="btn-close-modal" onclick="closeAddPcModal()">&times;</button>
+            </div>
+            <form id="form-add-pc">
+                <div class="form-group">
+                    <label for="pc-name">Nome do Equipamento / PC</label>
+                    <input type="text" id="pc-name" required placeholder="Ex: PC i7, PC Ryzen, Servidor, Notebook..." autocomplete="off">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pc-type">Tipo</label>
+                        <select id="pc-type">
+                            <option value="Desktop">🖥️ PC Desktop</option>
+                            <option value="Servidor">🗄️ Servidor</option>
+                            <option value="Notebook">💻 Notebook</option>
+                            <option value="Dispositivo">⚡ Dispositivo Smart</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pc-ip">Endereço IP Local</label>
+                        <input type="text" id="pc-ip" placeholder="Ex: 192.168.1.10" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="pc-mac">Endereço MAC (Wake-on-LAN)</label>
+                    <input type="text" id="pc-mac" placeholder="Ex: AA:BB:CC:DD:EE:01" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="pc-alexa">Comando de Voz da Alexa</label>
+                    <input type="text" id="pc-alexa" placeholder="Ex: Alexa, ligar o i7" autocomplete="off">
+                </div>
+
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddPcModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Equipamento</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- MODAL DE NOVO COMPROMISSO NA AGENDA -->
@@ -1067,6 +1184,33 @@
                 <div class="modal-actions" style="margin-top: 20px;">
                     <button type="button" class="btn btn-secondary" onclick="closeAddAccountModal()">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Cadastrar Banco</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDITAR CONTA / BANCO -->
+    <div class="modal-backdrop" id="modal-edit-account">
+        <div class="modal-card" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3><i data-lucide="building-2"></i> Editar Banco / Saldo</h3>
+                <button class="btn-close-modal" onclick="closeEditAccountModal()">&times;</button>
+            </div>
+            <form id="form-edit-account">
+                <input type="hidden" id="edit-acc-id">
+                <div class="form-group">
+                    <label for="edit-acc-name">Nome do Banco / Instituição</label>
+                    <input type="text" id="edit-acc-name" required placeholder="Ex: Banco Inter, BTG..." autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-acc-balance">Saldo Atual em Conta (R$)</label>
+                    <input type="number" step="0.01" id="edit-acc-balance" required placeholder="0.00" style="font-size: 1.1rem; font-weight: 700;">
+                </div>
+
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditAccountModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                 </div>
             </form>
         </div>
