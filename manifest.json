@@ -1,18 +1,35 @@
 {
   "name": "FocoFácil - Sua Agenda de Foco Simplificado",
   "short_name": "FocoFácil",
-  "description": "Agenda inteligente e dinâmica planejada sob medida para TDAH.",
+  "description": "Agenda inteligente, dinâmica e produtiva planejada sob medida para foco e rotina.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#121118",
+  "background_color": "#0d0f17",
   "theme_color": "#f59e0b",
   "orientation": "any",
   "icons": [
     {
-      "src": "favicon.png",
-      "type": "image/jpeg",
+      "src": "favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
       "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
     }
   ]
 }

@@ -3333,370 +3333,6 @@ textarea {
 }
 
 /* ==========================================================================
-   ESTILOS DO MÓDULO FINANCEIRO
-   ========================================================================== */
-.financial-module-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.financial-summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-}
-
-.fin-card {
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    backdrop-filter: blur(12px);
-    transition: var(--transition-fast);
-}
-
-.fin-card:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-}
-
-.fin-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.fin-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
-}
-
-.fin-value {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--text-main);
-    letter-spacing: -0.5px;
-}
-
-.fin-subtext {
-    font-size: 11px;
-    color: var(--text-dimmed);
-}
-
-.fin-icon-accent { color: var(--color-primary); }
-.fin-icon-blue { color: #3b82f6; }
-.fin-icon-green { color: #10b981; }
-.fin-icon-red { color: #ef4444; }
-.fin-icon-purple { color: #a855f7; }
-
-.fin-section-card {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.fin-section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.fin-section-header h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* Bancos */
-.bank-accounts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
-}
-
-.bank-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    overflow: hidden;
-    transition: var(--transition-fast);
-}
-
-.bank-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--bank-accent-color, var(--color-primary));
-}
-
-.bank-card:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-}
-
-.bank-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.bank-name {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-main);
-}
-
-.bank-balance {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: var(--text-main);
-}
-
-.bank-card-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 4px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.btn-bank-action {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: var(--transition-fast);
-}
-
-.btn-bank-action:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-main);
-}
-
-.btn-bank-action.danger:hover {
-    background: rgba(239, 68, 68, 0.15);
-    color: #f87171;
-    border-color: rgba(239, 68, 68, 0.3);
-}
-
-/* Carteira de Investimentos */
-.investments-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-}
-
-.investment-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    transition: var(--transition-fast);
-}
-
-.investment-card:hover {
-    border-color: rgba(168, 85, 247, 0.4);
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
-}
-
-.inv-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.inv-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-main);
-}
-
-.inv-category-badge {
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: 700;
-    background: rgba(168, 85, 247, 0.2);
-    color: #c084fc;
-    border: 1px solid rgba(168, 85, 247, 0.3);
-}
-
-.inv-values-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-color);
-}
-
-.inv-val-box {
-    display: flex;
-    flex-direction: column;
-}
-
-.inv-val-label {
-    font-size: 10px;
-    color: var(--text-muted);
-}
-
-.inv-val-number {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-main);
-}
-
-.inv-yield-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.yield-badge {
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.yield-positive { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-.yield-negative { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-
-.btn-update-inv {
-    background: linear-gradient(135deg, #a855f7, #6366f1);
-    color: #fff;
-    border: none;
-    padding: 8px 14px;
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: var(--transition-fast);
-}
-
-.btn-update-inv:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-}
-
-/* Extrato de Lançamentos */
-.transactions-list-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-height: 150px;
-}
-
-.transaction-row {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    transition: var(--transition-fast);
-}
-
-.transaction-row:hover {
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-.tx-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.tx-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.tx-icon-income { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-.tx-icon-expense { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-
-.tx-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.tx-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-main);
-}
-
-.tx-meta {
-    font-size: 11px;
-    color: var(--text-muted);
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.tx-amount {
-    font-size: 1.1rem;
-    font-weight: 800;
-}
-
-.tx-amount-income { color: #34d399; }
-.tx-amount-expense { color: #f87171; }
-
-.badge-status {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-.badge-paid { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-.badge-pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-
-/* ==========================================================================
    ESTILOS DO SISTEMA DE AUTENTICAÇÃO E LOGIN
    ========================================================================== */
 .login-screen-overlay {
@@ -3947,277 +3583,6 @@ textarea {
     40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
-/* ==========================================================================
-   ESTILOS DO MÓDULO 6: CENTRAL DE COMPUTADORES & ALEXA
-   ========================================================================== */
-.computers-module-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.alexa-banner-card {
-    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15));
-    border: 1px solid rgba(6, 182, 212, 0.3);
-    border-radius: var(--radius-md);
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.alexa-banner-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #06b6d4, #3b82f6);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-    box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3);
-}
-
-.alexa-banner-text strong {
-    font-size: 14px;
-    color: var(--text-main);
-    display: block;
-    margin-bottom: 2px;
-}
-
-.alexa-banner-text p {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin: 0;
-}
-
-.computers-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.pc-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    position: relative;
-    overflow: hidden;
-    transition: var(--transition-fast);
-}
-
-.pc-card:hover {
-    border-color: rgba(6, 182, 212, 0.4);
-    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.15);
-    transform: translateY(-2px);
-}
-
-.pc-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.pc-title-area {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.pc-icon-box {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-sm);
-    background: rgba(6, 182, 212, 0.15);
-    color: #38bdf8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.pc-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-main);
-}
-
-.pc-type-tag {
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-.pc-status-badge {
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.pc-status-online {
-    background: rgba(16, 185, 129, 0.15);
-    color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.pc-status-standby {
-    background: rgba(245, 158, 11, 0.15);
-    color: #fbbf24;
-    border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.pc-details-box {
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 12px;
-}
-
-.pc-detail-row {
-    display: flex;
-    justify-content: space-between;
-    color: var(--text-muted);
-}
-
-.pc-detail-row strong {
-    color: var(--text-main);
-    font-weight: 600;
-}
-
-.pc-alexa-command-box {
-    background: rgba(6, 182, 212, 0.1);
-    border: 1px dashed rgba(6, 182, 212, 0.4);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.alexa-command-text {
-    font-size: 12px;
-    font-weight: 700;
-    color: #38bdf8;
-}
-
-.btn-alexa-trigger {
-    background: linear-gradient(135deg, #06b6d4, #3b82f6);
-    color: #fff;
-    border: none;
-    padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: var(--transition-fast);
-    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-}
-
-.btn-alexa-trigger:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-}
-
-.btn-wol-trigger {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: var(--transition-fast);
-}
-
-.btn-wol-trigger:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-/* Widget de Humor (Mood Tracker) */
-.btn-mood {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border-color);
-    font-size: 1.4rem;
-    padding: 6px 12px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.btn-mood:hover {
-    transform: scale(1.15);
-    border-color: var(--color-primary);
-}
-
-.btn-mood.active {
-    background: rgba(245, 158, 11, 0.2);
-    border-color: var(--color-primary);
-    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
-}
-
-/* ==========================================================================
-   ESTILOS DO ACESSO REMOTO (ANYDESK & RUSTDESK) & RESPONSIVIDADE MOBILE
-   ========================================================================== */
-.pc-remote-access-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.remote-id-card {
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.remote-id-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-.remote-id-value {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-main);
-    letter-spacing: 0.5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 /* OTIMIZAÇÕES MOBILE E ADAPTAÇÃO DE ENQUADRAMENTO */
 @media (max-width: 768px) {
     .main-nav-tabs {
@@ -4257,23 +3622,6 @@ textarea {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
-    }
-
-    .computers-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .pc-card {
-        padding: 16px;
-    }
-
-    .pc-remote-access-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .bank-accounts-grid,
-    .investments-grid {
-        grid-template-columns: 1fr;
     }
 
     .agenda-layout-grid {
@@ -4332,3 +3680,122 @@ textarea {
 }
 
 
+
+
+/* ==========================================================================
+   IDENTIDADE VISUAL & LOGOTIPO FOCOFÁCIL
+   ========================================================================== */
+.brand-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: inherit;
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+}
+
+.logo-area:hover .brand-logo-img,
+.login-header:hover .brand-logo-img {
+    transform: scale(1.06) rotate(2deg);
+    filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.75));
+}
+
+.logo-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: transparent !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-logo-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: transparent !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+/* ==========================================================================
+   NAVEGAÇÃO REFINADA (4 MÓDULOS DE ALTA PERFORMANCE)
+   ========================================================================== */
+.main-nav-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 860px;
+    margin: 18px auto;
+    padding: 6px;
+    background: rgba(18, 20, 30, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    gap: 8px;
+}
+
+.main-tab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-tab-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.main-tab-btn.active {
+    color: #0b0d14;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border-color: rgba(251, 191, 36, 0.5);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.45);
+}
+
+.main-tab-btn.active i {
+    color: #0b0d14;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+@media (max-width: 768px) {
+    .main-nav-tabs {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 100%;
+        margin: 12px 14px;
+        gap: 6px;
+        padding: 5px;
+    }
+    
+    .main-tab-btn {
+        padding: 9px 12px;
+        font-size: 13px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 420px) {
+    .main-tab-btn span {
+        font-size: 12px;
+    }
+    .main-tab-btn {
+        gap: 6px;
+        padding: 8px 6px;
+    }
+}

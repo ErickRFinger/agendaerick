@@ -12,11 +12,10 @@ let state = {
     events: [],
     notificationsLog: [],
     focusSessions: [],
-    accounts: [],
-    investments: [],
-    transactions: [],
     lastUpdatedDate: "",
-    kanbanNotes: []
+    kanbanNotes: [],
+    dailyMood: {},
+    pomodoroScratchpad: ""
 };
 
 // Data Ativa no Calendário (Padrão: Hoje)
@@ -654,7 +653,6 @@ function renderAll() {
     renderWater();
     renderOtherLiquids();
     renderKanban();
-    renderFinancialDashboard();
     updateGeneralProgress();
     renderNotificationPopover();
     updateFocusStats();
@@ -1834,218 +1832,6 @@ function setupEventListeners() {
         });
     }
 
-    // --- Formulários do Módulo Financeiro ---
-    const formTx = document.getElementById("form-add-transaction");
-    if (formTx) {
-        formTx.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const title = document.getElementById("tx-title").value.trim();
-            const amount = parseFloat(document.getElementById("tx-amount").value);
-            const type = document.getElementById("tx-type").value;
-            const accountId = document.getElementById("tx-account").value;
-            const category = document.getElementById("tx-category").value;
-            const date = document.getElementById("tx-date").value;
-            const status = document.getElementById("tx-status").value;
-
-            if (!title || isNaN(amount) || !date || !accountId) return;
-
-            const newTx = {
-                id: "tx_" + Date.now(),
-                title,
-                amount,
-                type,
-                accountId,
-                category,
-                date,
-                status
-            };
-
-            if (!state.transactions) state.transactions = [];
-            state.transactions.push(newTx);
-
-            if (status === 'paid') {
-                const acc = state.accounts.find(a => a.id === accountId);
-                if (acc) {
-                    if (type === 'income') acc.balance += amount;
-                    else if (type === 'expense') acc.balance -= amount;
-                }
-            }
-
-            saveState();
-            closeAddTransactionModal();
-            renderFinancialDashboard();
-            playSuccessSound();
-        });
-    }
-
-    const formInv = document.getElementById("form-add-investment");
-    if (formInv) {
-        formInv.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const name = document.getElementById("inv-name").value.trim();
-            const category = document.getElementById("inv-category").value;
-            const accountId = document.getElementById("inv-account").value;
-            const initialAmount = parseFloat(document.getElementById("inv-initial").value);
-            const currentAmount = parseFloat(document.getElementById("inv-current").value);
-
-            if (!name || isNaN(initialAmount) || isNaN(currentAmount)) return;
-
-            const newInv = {
-                id: "inv_" + Date.now(),
-                name,
-                category,
-                accountId,
-                initialAmount,
-                currentAmount,
-                lastUpdated: getTodayDateString()
-            };
-
-            if (!state.investments) state.investments = [];
-            state.investments.push(newInv);
-            saveState();
-            closeAddInvestmentModal();
-            renderFinancialDashboard();
-            playSuccessSound();
-        });
-    }
-
-    const formUpdateInv = document.getElementById("form-update-investment");
-    if (formUpdateInv) {
-        formUpdateInv.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const id = document.getElementById("update-inv-id").value;
-            const newCurrent = parseFloat(document.getElementById("update-inv-new-val").value);
-
-            if (!id || isNaN(newCurrent)) return;
-
-            const inv = state.investments.find(i => i.id === id);
-            if (inv) {
-                inv.currentAmount = newCurrent;
-                inv.lastUpdated = getTodayDateString();
-                saveState();
-                closeUpdateInvestmentModal();
-                renderFinancialDashboard();
-                playSuccessSound();
-            }
-        });
-    }
-
-    const formAcc = document.getElementById("form-add-account");
-    if (formAcc) {
-        formAcc.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const name = document.getElementById("acc-name").value.trim();
-            const balance = parseFloat(document.getElementById("acc-initial-balance").value) || 0;
-
-            if (!name) return;
-
-            const newAcc = {
-                id: "acc_" + Date.now(),
-                name,
-                color: "#6366f1",
-                balance
-            };
-
-            if (!state.accounts) state.accounts = [];
-            state.accounts.push(newAcc);
-            saveState();
-            closeAddAccountModal();
-            renderFinancialDashboard();
-            playSuccessSound();
-        });
-    }
-
-    const formEditAcc = document.getElementById("form-edit-account");
-    if (formEditAcc) {
-        formEditAcc.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const id = document.getElementById("edit-acc-id").value;
-            const name = document.getElementById("edit-acc-name").value.trim();
-            const newBalance = parseFloat(document.getElementById("edit-acc-balance").value);
-
-            if (!id || !name || isNaN(newBalance)) return;
-
-            const acc = state.accounts.find(a => a.id === id);
-            if (acc) {
-                acc.name = name;
-                acc.balance = newBalance;
-                saveState();
-                closeEditAccountModal();
-                renderFinancialDashboard();
-                playSuccessSound();
-            }
-        });
-    }
-
-    // --- Formulário de Cadastro de Computador ---
-    const formAddPc = document.getElementById("form-add-pc");
-    if (formAddPc) {
-        formAddPc.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const name = document.getElementById("pc-name").value.trim();
-            const type = document.getElementById("pc-type").value;
-            const ip = document.getElementById("pc-ip").value.trim() || "192.168.1.X";
-            const mac = document.getElementById("pc-mac").value.trim() || "00:11:22:33:44:55";
-            const alexaCommand = document.getElementById("pc-alexa").value.trim() || `Alexa, ligar o ${name}`;
-            const anydesk = document.getElementById("pc-anydesk").value.trim();
-            const rustdesk = document.getElementById("pc-rustdesk").value.trim();
-
-            if (!name) return;
-
-            const newPc = {
-                id: "pc_" + Date.now(),
-                name,
-                type,
-                ip,
-                mac,
-                alexaCommand,
-                anydesk,
-                rustdesk,
-                status: "online"
-            };
-
-            if (!state.computers) state.computers = [];
-            state.computers.push(newPc);
-            saveState();
-            closeAddPcModal();
-            renderComputers();
-            playSuccessSound();
-        });
-    }
-
-    // --- Formulário de Edição de Computador ---
-    const formEditPc = document.getElementById("form-edit-pc");
-    if (formEditPc) {
-        formEditPc.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const id = document.getElementById("edit-pc-id").value;
-            const name = document.getElementById("edit-pc-name").value.trim();
-            const type = document.getElementById("edit-pc-type").value;
-            const ip = document.getElementById("edit-pc-ip").value.trim();
-            const mac = document.getElementById("edit-pc-mac").value.trim();
-            const alexaCommand = document.getElementById("edit-pc-alexa").value.trim();
-            const anydesk = document.getElementById("edit-pc-anydesk").value.trim();
-            const rustdesk = document.getElementById("edit-pc-rustdesk").value.trim();
-
-            if (!id || !name) return;
-
-            const pc = state.computers ? state.computers.find(p => p.id === id) : null;
-            if (pc) {
-                pc.name = name;
-                pc.type = type;
-                pc.ip = ip;
-                pc.mac = mac;
-                pc.alexaCommand = alexaCommand;
-                pc.anydesk = anydesk;
-                pc.rustdesk = rustdesk;
-                saveState();
-                closeEditPcModal();
-                renderComputers();
-                playSuccessSound();
-            }
-        });
-    }
-
     // --- Formulário de Login ---
     const formLogin = document.getElementById("form-login");
     if (formLogin) {
@@ -2612,55 +2398,38 @@ function drop(ev) {
 // ABAS DE NAVEGAÇÃO PRINCIPAL (AGENDA, DIÁRIO, FOCO, KANBAN)
 // ==========================================================================
 function switchMainTab(tab) {
-    const btnAgenda = document.getElementById("btn-tab-agenda");
-    const btnDiario = document.getElementById("btn-tab-diario");
-    const btnFoco = document.getElementById("btn-tab-foco");
-    const btnKanban = document.getElementById("btn-tab-kanban");
-    const btnFinanceiro = document.getElementById("btn-tab-financeiro");
-    const btnPcs = document.getElementById("btn-tab-pcs");
-    
-    const panelAgenda = document.getElementById("panel-agenda");
-    const panelDiario = document.getElementById("panel-diario");
-    const panelFoco = document.getElementById("panel-foco");
-    const panelKanban = document.getElementById("panel-kanban");
-    const panelFinanceiro = document.getElementById("panel-financeiro");
-    const panelPcs = document.getElementById("panel-pcs");
-    
-    // Reset active buttons
-    [btnAgenda, btnDiario, btnFoco, btnKanban, btnFinanceiro, btnPcs].forEach(b => b && b.classList.remove("active"));
-    
-    // Hide panels
-    [panelAgenda, panelDiario, panelFoco, panelKanban, panelFinanceiro, panelPcs].forEach(p => p && (p.style.display = "none"));
-    
-    if (tab === 'agenda') {
-        if (btnAgenda) btnAgenda.classList.add("active");
-        if (panelAgenda) panelAgenda.style.display = "flex";
+    const validTabs = ['agenda', 'diario', 'foco', 'kanban'];
+    const activeTab = validTabs.includes(tab) ? tab : 'agenda';
+
+    validTabs.forEach(t => {
+        const btn = document.getElementById(`btn-tab-${t}`);
+        const panel = document.getElementById(`panel-${t}`);
+        if (btn) btn.classList.remove("active");
+        if (panel) panel.style.display = "none";
+    });
+
+    const activeBtn = document.getElementById(`btn-tab-${activeTab}`);
+    const activePanel = document.getElementById(`panel-${activeTab}`);
+
+    if (activeBtn) activeBtn.classList.add("active");
+
+    if (activeTab === 'agenda') {
+        if (activePanel) activePanel.style.display = "flex";
         if (!selectedAgendaDate) selectedAgendaDate = getTodayDateString();
         renderAgendaCalendar();
         renderAgendaEvents();
-    } else if (tab === 'diario') {
-        if (btnDiario) btnDiario.classList.add("active");
-        if (panelDiario) panelDiario.style.display = "grid";
+    } else if (activeTab === 'diario') {
+        if (activePanel) activePanel.style.display = "grid";
         renderMoodTracker();
-    } else if (tab === 'foco') {
-        if (btnFoco) btnFoco.classList.add("active");
-        if (panelFoco) panelFoco.style.display = "flex";
+    } else if (activeTab === 'foco') {
+        if (activePanel) activePanel.style.display = "flex";
         updateFocusStats();
         loadPomodoroScratchpad();
-    } else if (tab === 'kanban') {
-        if (btnKanban) btnKanban.classList.add("active");
-        if (panelKanban) panelKanban.style.display = "flex";
+    } else if (activeTab === 'kanban') {
+        if (activePanel) activePanel.style.display = "flex";
         renderKanban();
-    } else if (tab === 'financeiro') {
-        if (btnFinanceiro) btnFinanceiro.classList.add("active");
-        if (panelFinanceiro) panelFinanceiro.style.display = "flex";
-        renderFinancialDashboard();
-    } else if (tab === 'pcs') {
-        if (btnPcs) btnPcs.classList.add("active");
-        if (panelPcs) panelPcs.style.display = "flex";
-        renderComputers();
     }
-    
+
     lucide.createIcons();
 }
 
@@ -2964,6 +2733,12 @@ function updatePomodoroDisplay() {
     const seconds = (pomodoroTimeLeft % 60).toString().padStart(2, '0');
     const timeEl = document.getElementById("pomodoro-time");
     if (timeEl) timeEl.textContent = `${minutes}:${seconds}`;
+
+    if (pomodoroIsRunning) {
+        document.title = `(${minutes}:${seconds}) 🎯 Foco | FocoFácil`;
+    } else {
+        document.title = 'FocoFácil - Agenda, Rotina, Foco & Kanban';
+    }
 }
 
 function updateFocusStats() {
@@ -3071,844 +2846,6 @@ function filterKanbanNotesByPriority(prio, btn) {
 // Vincula funções ao objeto global window para uso em eventos inline do HTML
 window.showInlineInput = showInlineInput;
 window.hideInlineInput = hideInlineInput;
-// ==========================================================================
-// MÓDULO FINANCEIRO & INVESTIMENTOS
-// ==========================================================================
-function formatCurrency(val) {
-    const num = parseFloat(val) || 0;
-    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function renderFinancialDashboard() {
-    if (!state.accounts) state.accounts = [];
-    if (!state.investments) state.investments = [];
-    if (!state.transactions) state.transactions = [];
-
-    // 1. Cálculos de Investimentos
-    const totalInvested = state.investments.reduce((acc, inv) => acc + (parseFloat(inv.currentAmount) || 0), 0);
-    const initialInvested = state.investments.reduce((acc, inv) => acc + (parseFloat(inv.initialAmount) || 0), 0);
-    const investmentYield = totalInvested - initialInvested;
-    const investmentYieldPct = initialInvested > 0 ? (investmentYield / initialInvested) * 100 : 0;
-
-    // 2. Cálculos de Saldos Bancários
-    const totalBankBalance = state.accounts.reduce((acc, a) => acc + (parseFloat(a.balance) || 0), 0);
-
-    // 3. Cálculo de Patrimônio Consolidado
-    const netWorth = totalBankBalance + totalInvested;
-
-    // 4. Cálculos Mensais de Transações
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
-    const currentYearMonth = `${currentYear}-${currentMonth}`;
-
-    const monthTransactions = state.transactions.filter(tx => tx.date && tx.date.startsWith(currentYearMonth));
-    const monthIncome = monthTransactions.filter(tx => tx.type === 'income' && tx.status === 'paid')
-                                         .reduce((acc, tx) => acc + (parseFloat(tx.amount) || 0), 0);
-    const monthExpense = monthTransactions.filter(tx => tx.type === 'expense' && tx.status === 'paid')
-                                          .reduce((acc, tx) => acc + (parseFloat(tx.amount) || 0), 0);
-
-    // Atualiza indicadores superiores
-    const netWorthEl = document.getElementById("fin-net-worth");
-    const bankBalanceEl = document.getElementById("fin-bank-balance");
-    const monthIncomeEl = document.getElementById("fin-month-income");
-    const monthExpenseEl = document.getElementById("fin-month-expense");
-    const totalInvestedEl = document.getElementById("fin-total-invested");
-    const investedSubtextEl = document.getElementById("fin-invested-subtext");
-
-    if (netWorthEl) netWorthEl.textContent = formatCurrency(netWorth);
-    if (bankBalanceEl) bankBalanceEl.textContent = formatCurrency(totalBankBalance);
-    if (monthIncomeEl) monthIncomeEl.textContent = formatCurrency(monthIncome);
-    if (monthExpenseEl) monthExpenseEl.textContent = formatCurrency(monthExpense);
-    if (totalInvestedEl) totalInvestedEl.textContent = formatCurrency(totalInvested);
-    
-    if (investedSubtextEl) {
-        const prefix = investmentYield >= 0 ? "+" : "";
-        investedSubtextEl.textContent = `Rendimento: ${prefix}${formatCurrency(investmentYield)} (${prefix}${investmentYieldPct.toFixed(2)}%)`;
-        investedSubtextEl.style.color = investmentYield >= 0 ? "var(--color-success)" : "var(--color-danger)";
-    }
-
-    // Renderiza Seção de Bancos
-    renderBankAccounts();
-
-    // Renderiza Seção de Investimentos
-    renderInvestments();
-
-    // Renderiza Seção de Extrato
-    renderTransactions();
-}
-
-function renderBankAccounts() {
-    const grid = document.getElementById("bank-accounts-grid");
-    if (!grid) return;
-
-    if (!state.accounts || state.accounts.length === 0) {
-        grid.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">Nenhuma conta cadastrada.</p>`;
-        return;
-    }
-
-    grid.innerHTML = state.accounts.map(acc => `
-        <div class="bank-card" style="--bank-accent-color: ${acc.color || '#3b82f6'};">
-            <div class="bank-card-header">
-                <span class="bank-name">${escapeHtml(acc.name)}</span>
-                <i data-lucide="building-2" style="width:16px; height:16px; color:${acc.color || '#3b82f6'};"></i>
-            </div>
-            <div class="bank-balance">${formatCurrency(acc.balance)}</div>
-            <div class="bank-card-actions">
-                <button class="btn-bank-action" onclick="openEditAccountModal('${acc.id}')" title="Editar nome ou saldo do banco">
-                    <i data-lucide="edit-2" style="width:12px; height:12px;"></i> Editar Saldo
-                </button>
-                <button class="btn-bank-action danger" onclick="deleteAccount('${acc.id}')" title="Excluir Banco">
-                    <i data-lucide="trash-2" style="width:12px; height:12px;"></i> Excluir
-                </button>
-            </div>
-        </div>
-    `).join('');
-    
-    lucide.createIcons();
-}
-
-function renderInvestments() {
-    const grid = document.getElementById("investments-grid");
-    if (!grid) return;
-
-    if (!state.investments || state.investments.length === 0) {
-        grid.innerHTML = `
-            <div style="grid-column: span 3; text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">
-                <i data-lucide="line-chart" style="width:28px; height:28px; opacity:0.4; margin-bottom:6px;"></i>
-                <p>Nenhum investimento cadastrado na carteira.</p>
-                <button class="btn btn-secondary-sm" onclick="openAddInvestmentModal()" style="margin-top:8px;">
-                    <i data-lucide="plus"></i> Adicionar Investimento
-                </button>
-            </div>
-        `;
-        lucide.createIcons();
-        return;
-    }
-
-    grid.innerHTML = state.investments.map(inv => {
-        const initial = parseFloat(inv.initialAmount) || 0;
-        const current = parseFloat(inv.currentAmount) || 0;
-        const yieldVal = current - initial;
-        const yieldPct = initial > 0 ? (yieldVal / initial) * 100 : 0;
-        const isPos = yieldVal >= 0;
-        const yieldPrefix = isPos ? "+" : "";
-
-        const account = state.accounts.find(a => a.id === inv.accountId);
-        const accountName = account ? account.name : "Conta Geral";
-
-        return `
-            <div class="investment-card">
-                <div class="inv-card-header">
-                    <div>
-                        <span class="inv-title">${escapeHtml(inv.name)}</span>
-                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
-                            🏛️ ${escapeHtml(accountName)}
-                        </div>
-                    </div>
-                    <span class="inv-category-badge">${escapeHtml(inv.category || 'Ativo')}</span>
-                </div>
-
-                <div class="inv-values-grid">
-                    <div class="inv-val-box">
-                        <span class="inv-val-label">Valor Aplicado</span>
-                        <span class="inv-val-number" style="font-size:0.95rem; color:var(--text-muted);">${formatCurrency(initial)}</span>
-                    </div>
-                    <div class="inv-val-box">
-                        <span class="inv-val-label">Valor Atual</span>
-                        <span class="inv-val-number">${formatCurrency(current)}</span>
-                    </div>
-                </div>
-
-                <div class="inv-yield-row">
-                    <span class="yield-badge ${isPos ? 'yield-positive' : 'yield-negative'}">
-                        ${yieldPrefix}${formatCurrency(yieldVal)} (${yieldPrefix}${yieldPct.toFixed(2)}%)
-                    </span>
-                    <div style="display:flex; gap:6px;">
-                        <button class="btn-update-inv" onclick="openUpdateInvestmentModal('${inv.id}')" title="Atualizar saldo atual do ativo">
-                            <i data-lucide="refresh-cw" style="width:12px; height:12px;"></i> Atualizar
-                        </button>
-                        <button class="icon-btn text-danger" onclick="deleteInvestment('${inv.id}')" title="Excluir Ativo" style="width:28px; height:28px;">
-                            <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    lucide.createIcons();
-}
-
-function renderTransactions() {
-    const container = document.getElementById("transactions-list-container");
-    const monthFilter = document.getElementById("fin-filter-month");
-    const typeFilter = document.getElementById("fin-filter-type");
-    const bankFilter = document.getElementById("fin-filter-bank");
-    if (!container) return;
-
-    populateFinancialFilters();
-
-    const selectedType = typeFilter ? typeFilter.value : "all";
-    const selectedBank = bankFilter ? bankFilter.value : "all";
-
-    const filtered = (state.transactions || []).filter(tx => {
-        const matchType = selectedType === "all" || tx.type === selectedType;
-        const matchBank = selectedBank === "all" || tx.accountId === selectedBank;
-        return matchType && matchBank;
-    });
-
-    if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:12px;">Nenhum lançamento encontrado para os filtros selecionados.</div>`;
-        return;
-    }
-
-    filtered.sort((a, b) => b.date.localeCompare(a.date));
-
-    container.innerHTML = filtered.map(tx => {
-        const account = state.accounts.find(a => a.id === tx.accountId);
-        const bankName = account ? account.name : "Geral";
-        const isIncome = tx.type === 'income';
-        const sign = isIncome ? "+" : "-";
-
-        return `
-            <div class="transaction-row">
-                <div class="tx-left">
-                    <div class="tx-icon ${isIncome ? 'tx-icon-income' : 'tx-icon-expense'}">
-                        <i data-lucide="${isIncome ? 'arrow-up-right' : 'arrow-down-right'}" style="width:18px; height:18px;"></i>
-                    </div>
-                    <div class="tx-info">
-                        <span class="tx-title">${escapeHtml(tx.title)}</span>
-                        <div class="tx-meta">
-                            <span>🏛️ ${escapeHtml(bankName)}</span>
-                            <span>🏷️ ${escapeHtml(tx.category || 'Geral')}</span>
-                            <span>📅 ${tx.date}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:16px;">
-                    <span class="badge-status ${tx.status === 'paid' ? 'badge-paid' : 'badge-pending'}">
-                        ${tx.status === 'paid' ? 'Pago' : 'Pendente'}
-                    </span>
-                    <span class="tx-amount ${isIncome ? 'tx-amount-income' : 'tx-amount-expense'}">
-                        ${sign} ${formatCurrency(tx.amount)}
-                    </span>
-                    <button class="icon-btn text-danger" onclick="deleteTransaction('${tx.id}')" title="Excluir Lançamento" style="width:28px; height:28px;">
-                        <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    lucide.createIcons();
-}
-
-function populateFinancialFilters() {
-    const bankFilter = document.getElementById("fin-filter-bank");
-    if (bankFilter && bankFilter.options.length <= 1) {
-        bankFilter.innerHTML = `<option value="all">Todos os Bancos</option>` +
-            (state.accounts || []).map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
-    }
-
-    const txAccountSelect = document.getElementById("tx-account");
-    if (txAccountSelect) {
-        txAccountSelect.innerHTML = (state.accounts || []).map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
-    }
-
-    const invAccountSelect = document.getElementById("inv-account");
-    if (invAccountSelect) {
-        invAccountSelect.innerHTML = (state.accounts || []).map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
-    }
-}
-
-function openAddTransactionModal() {
-    populateFinancialFilters();
-    const modal = document.getElementById("modal-transaction");
-    if (modal) {
-        modal.classList.add("active");
-        const dateInput = document.getElementById("tx-date");
-        if (dateInput) dateInput.value = getTodayDateString();
-        const titleInput = document.getElementById("tx-title");
-        if (titleInput) {
-            titleInput.value = "";
-            titleInput.focus();
-        }
-    }
-    lucide.createIcons();
-}
-
-function closeAddTransactionModal() {
-    const modal = document.getElementById("modal-transaction");
-    if (modal) modal.classList.remove("active");
-    const form = document.getElementById("form-add-transaction");
-    if (form) form.reset();
-}
-
-function openAddInvestmentModal() {
-    populateFinancialFilters();
-    const modal = document.getElementById("modal-investment");
-    if (modal) {
-        modal.classList.add("active");
-        const nameInput = document.getElementById("inv-name");
-        if (nameInput) {
-            nameInput.value = "";
-            nameInput.focus();
-        }
-    }
-    lucide.createIcons();
-}
-
-function closeAddInvestmentModal() {
-    const modal = document.getElementById("modal-investment");
-    if (modal) modal.classList.remove("active");
-    const form = document.getElementById("form-add-investment");
-    if (form) form.reset();
-}
-
-function openUpdateInvestmentModal(invId) {
-    const inv = state.investments.find(i => i.id === invId);
-    if (!inv) return;
-
-    const modal = document.getElementById("modal-update-investment");
-    if (!modal) return;
-
-    modal.classList.add("active");
-
-    const idInput = document.getElementById("update-inv-id");
-    const nameLabel = document.getElementById("update-inv-name-label");
-    const newValInput = document.getElementById("update-inv-new-val");
-
-    if (idInput) idInput.value = inv.id;
-    if (nameLabel) nameLabel.textContent = inv.name;
-    if (newValInput) {
-        newValInput.value = inv.currentAmount;
-        newValInput.focus();
-    }
-    lucide.createIcons();
-}
-
-function closeUpdateInvestmentModal() {
-    const modal = document.getElementById("modal-update-investment");
-    if (modal) modal.classList.remove("active");
-    const form = document.getElementById("form-update-investment");
-    if (form) form.reset();
-}
-
-function openAddAccountModal() {
-    const modal = document.getElementById("modal-account");
-    if (modal) {
-        modal.classList.add("active");
-        const nameInput = document.getElementById("acc-name");
-        if (nameInput) {
-            nameInput.value = "";
-            nameInput.focus();
-        }
-    }
-    lucide.createIcons();
-}
-
-function closeAddAccountModal() {
-    const modal = document.getElementById("modal-account");
-    if (modal) modal.classList.remove("active");
-    const form = document.getElementById("form-add-account");
-    if (form) form.reset();
-}
-
-function openEditAccountModal(accId) {
-    const acc = state.accounts.find(a => a.id === accId);
-    if (!acc) return;
-
-    const modal = document.getElementById("modal-edit-account");
-    if (!modal) return;
-
-    modal.classList.add("active");
-    const idInput = document.getElementById("edit-acc-id");
-    const nameInput = document.getElementById("edit-acc-name");
-    const balanceInput = document.getElementById("edit-acc-balance");
-
-    if (idInput) idInput.value = acc.id;
-    if (nameInput) nameInput.value = acc.name;
-    if (balanceInput) {
-        balanceInput.value = acc.balance;
-        balanceInput.focus();
-    }
-    lucide.createIcons();
-}
-
-function closeEditAccountModal() {
-    const modal = document.getElementById("modal-edit-account");
-    if (modal) modal.classList.remove("active");
-    const form = document.getElementById("form-edit-account");
-    if (form) form.reset();
-}
-
-function deleteAccount(accId) {
-    const acc = state.accounts.find(a => a.id === accId);
-    if (!acc) return;
-
-    if (confirm(`Deseja realmente excluir a conta "${acc.name}"?`)) {
-        state.accounts = state.accounts.filter(a => a.id !== accId);
-        saveState();
-        renderFinancialDashboard();
-        playClickSound();
-    }
-}
-
-function deleteTransaction(id) {
-    if (confirm("Deseja realmente remover este lançamento?")) {
-        const tx = state.transactions.find(t => t.id === id);
-        if (tx && tx.status === 'paid') {
-            const acc = state.accounts.find(a => a.id === tx.accountId);
-            if (acc) {
-                if (tx.type === 'income') acc.balance -= parseFloat(tx.amount) || 0;
-                else if (tx.type === 'expense') acc.balance += parseFloat(tx.amount) || 0;
-            }
-        }
-        state.transactions = state.transactions.filter(t => t.id !== id);
-        saveState();
-        renderFinancialDashboard();
-        playClickSound();
-    }
-}
-
-function deleteInvestment(id) {
-    if (confirm("Deseja realmente remover este investimento da sua carteira?")) {
-        state.investments = state.investments.filter(i => i.id !== id);
-        saveState();
-        renderFinancialDashboard();
-        playClickSound();
-    }
-}
-
-// ==========================================================================
-// SISTEMA DE AUTENTICAÇÃO E SESSÃO DE USUÁRIO
-// ==========================================================================
-const REGISTERED_USERS = [
-    { username: "erick", name: "Erick", password: "clic3369" }
-];
-
-let currentUser = null;
-
-function checkAuthSession() {
-    const savedUserJson = localStorage.getItem("FOCOFACIL_AUTH_USER") || sessionStorage.getItem("FOCOFACIL_AUTH_USER");
-    const loginOverlay = document.getElementById("screen-login");
-    const appContainer = document.getElementById("app-container");
-    const userBadge = document.getElementById("user-profile-badge");
-    const userNameEl = document.getElementById("header-user-name");
-
-    if (savedUserJson) {
-        try {
-            currentUser = JSON.parse(savedUserJson);
-            if (loginOverlay) loginOverlay.classList.remove("active");
-            if (appContainer) appContainer.style.display = "flex";
-            if (userBadge) userBadge.style.display = "flex";
-            if (userNameEl) userNameEl.textContent = currentUser.name || currentUser.username;
-            renderAll();
-        } catch (e) {
-            showLoginScreen();
-        }
-    } else {
-        showLoginScreen();
-    }
-}
-
-function showLoginScreen() {
-    const loginOverlay = document.getElementById("screen-login");
-    const appContainer = document.getElementById("app-container");
-    const userBadge = document.getElementById("user-profile-badge");
-
-    if (loginOverlay) loginOverlay.classList.add("active");
-    if (appContainer) appContainer.style.display = "none";
-    if (userBadge) userBadge.style.display = "none";
-    
-    const usernameInput = document.getElementById("login-username");
-    if (usernameInput) usernameInput.focus();
-}
-
-function loginUser(username, password, rememberMe = true) {
-    const cleanUsername = (username || "").trim().toLowerCase();
-    const cleanPassword = (password || "").trim();
-
-    const matchedUser = REGISTERED_USERS.find(u => u.username.toLowerCase() === cleanUsername && u.password === cleanPassword);
-
-    const errorAlert = document.getElementById("login-error-msg");
-    const loginCard = document.querySelector(".login-card");
-
-    if (matchedUser) {
-        currentUser = { username: matchedUser.username, name: matchedUser.name };
-        const userJson = JSON.stringify(currentUser);
-        
-        if (rememberMe) {
-            localStorage.setItem("FOCOFACIL_AUTH_USER", userJson);
-        } else {
-            sessionStorage.setItem("FOCOFACIL_AUTH_USER", userJson);
-        }
-
-        if (errorAlert) errorAlert.style.display = "none";
-        
-        playSuccessSound();
-        checkAuthSession();
-        triggerConfetti(window.innerWidth / 2, window.innerHeight / 2);
-        return true;
-    } else {
-        if (errorAlert) errorAlert.style.display = "flex";
-        if (loginCard) {
-            loginCard.classList.remove("shake-anim");
-            void loginCard.offsetWidth;
-            loginCard.classList.add("shake-anim");
-        }
-        playBeep(150, 'sawtooth', 0.2, 0, 0.2);
-        return false;
-    }
-}
-
-function logoutUser() {
-    playClickSound();
-    currentUser = null;
-    localStorage.removeItem("FOCOFACIL_AUTH_USER");
-    sessionStorage.removeItem("FOCOFACIL_AUTH_USER");
-    showLoginScreen();
-}
-
-/* ==========================================================================
-   MÓDULO 6: CENTRAL DE COMPUTADORES & AUTOMAÇÃO ALEXA
-   ========================================================================== */
-function renderComputers() {
-    const grid = document.getElementById("computers-grid");
-    if (!grid) return;
-
-    if (!state.computers || state.computers.length === 0) {
-        grid.innerHTML = `<p style="font-size:13px; color:var(--text-muted); grid-column: span 3; text-align:center; padding: 24px;">Nenhum computador ou equipamento cadastrado.</p>`;
-        return;
-    }
-
-    grid.innerHTML = state.computers.map(pc => `
-        <div class="pc-card">
-            <div class="pc-card-header">
-                <div class="pc-title-area">
-                    <div class="pc-icon-box">
-                        <i data-lucide="${pc.type === 'Servidor' ? 'server' : (pc.type === 'Notebook' ? 'laptop' : 'monitor')}"></i>
-                    </div>
-                    <div>
-                        <div class="pc-title">${escapeHtml(pc.name)}</div>
-                        <span class="pc-type-tag">${escapeHtml(pc.type || 'Desktop')}</span>
-                    </div>
-                </div>
-                <div class="pc-status-badge pc-status-${pc.status || 'online'}">
-                    <span style="width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
-                    ${(pc.status || 'online').toUpperCase()}
-                </div>
-            </div>
-
-            <div class="pc-details-box">
-                <div class="pc-detail-row">
-                    <span>Endereço IP:</span>
-                    <strong>${escapeHtml(pc.ip || '192.168.1.X')}</strong>
-                </div>
-                <div class="pc-detail-row">
-                    <span>Endereço MAC:</span>
-                    <strong>${escapeHtml(pc.mac || '00:11:22:33:44:55')}</strong>
-                </div>
-            </div>
-
-            <!-- Blocos de Acesso Remoto (AnyDesk & RustDesk) -->
-            <div class="pc-remote-access-grid">
-                <div class="remote-id-card">
-                    <div class="remote-id-header">
-                        <span>🔴 AnyDesk ID</span>
-                    </div>
-                    <div class="remote-id-value">
-                        <span>${escapeHtml(pc.anydesk || 'Não cadastrado')}</span>
-                        ${pc.anydesk ? `<button class="btn-bank-action" onclick="copyText('${escapeHtml(pc.anydesk)}', 'AnyDesk ID')" title="Copiar AnyDesk ID"><i data-lucide="copy" style="width:11px; height:11px;"></i></button>` : ''}
-                    </div>
-                </div>
-                <div class="remote-id-card">
-                    <div class="remote-id-header">
-                        <span>🦀 RustDesk ID</span>
-                    </div>
-                    <div class="remote-id-value">
-                        <span>${escapeHtml(pc.rustdesk || 'Não cadastrado')}</span>
-                        ${pc.rustdesk ? `<button class="btn-bank-action" onclick="copyText('${escapeHtml(pc.rustdesk)}', 'RustDesk ID')" title="Copiar RustDesk ID"><i data-lucide="copy" style="width:11px; height:11px;"></i></button>` : ''}
-                    </div>
-                </div>
-            </div>
-
-            <div class="pc-alexa-command-box">
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <i data-lucide="mic" style="width:14px; height:14px; color:#06b6d4;"></i>
-                    <span class="alexa-command-text">"${escapeHtml(pc.alexaCommand || 'Alexa, ligar o PC')}"</span>
-                </div>
-                <button class="btn-bank-action" onclick="copyText('${escapeHtml(pc.alexaCommand || '')}', 'Comando Alexa')" title="Copiar comando de voz">
-                    <i data-lucide="copy" style="width:12px; height:12px;"></i> Copiar
-                </button>
-            </div>
-
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <button class="btn-alexa-trigger" onclick="triggerAlexaCommand('${pc.id}')">
-                    <i data-lucide="zap"></i> <span>⚡ ${escapeHtml(pc.alexaCommand || 'Ligar na Alexa')}</span>
-                </button>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button class="btn-wol-trigger" style="flex:1;" onclick="sendWakeOnLan('${pc.id}')" title="Enviar pacote Wake-on-LAN">
-                        <i data-lucide="wifi"></i> <span>WoL</span>
-                    </button>
-                    <button class="btn-bank-action" onclick="openEditPcModal('${pc.id}')" title="Editar dados do PC e Acessos">
-                        <i data-lucide="edit-2" style="width:12px; height:12px;"></i> Editar
-                    </button>
-                    <button class="btn-bank-action danger" onclick="deleteComputer('${pc.id}')" title="Excluir equipamento">
-                        <i data-lucide="trash-2" style="width:12px; height:12px;"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    lucide.createIcons();
-}
-
-function showToast(message) {
-    const container = document.getElementById("toast-container");
-    if (!container) return;
-
-    const item = document.createElement("div");
-    item.className = "toast-item";
-    item.innerHTML = `<i data-lucide="check-circle-2" style="width:16px; height:16px; color:var(--color-primary);"></i> <span>${escapeHtml(message)}</span>`;
-    container.appendChild(item);
-    lucide.createIcons();
-
-    setTimeout(() => {
-        item.style.opacity = "0";
-        item.style.transition = "opacity 0.3s";
-        setTimeout(() => item.remove(), 300);
-    }, 3000);
-}
-
-function openAlexaApp(commandText = "") {
-    if (commandText) {
-        copyTextSilent(commandText);
-    }
-    
-    playSuccessSound();
-    showToast("Abrindo App da Alexa...");
-
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (isAndroid) {
-        window.location.href = "intent://com.amazon.dee.app/#Intent;scheme=alexa;package=com.amazon.dee.app;end";
-        setTimeout(() => {
-            window.location.href = "alexa://";
-        }, 1000);
-    } else if (isIOS) {
-        window.location.href = "alexa://";
-        setTimeout(() => {
-            window.open("https://alexa.amazon.com", "_blank");
-        }, 1200);
-    } else {
-        window.open("https://alexa.amazon.com", "_blank");
-    }
-}
-
-function triggerAlexaCommand(pcId) {
-    const pc = state.computers ? state.computers.find(p => p.id === pcId) : null;
-    const cmd = pc ? pc.alexaCommand : "Alexa, ligar o computador";
-
-    playSuccessSound();
-    triggerConfetti(window.innerWidth / 2, window.innerHeight / 2);
-
-    copyTextSilent(cmd);
-    openAlexaApp(cmd);
-}
-
-function copyTextSilent(text) {
-    if (!text) return;
-    navigator.clipboard.writeText(text).catch(() => {});
-}
-
-function copyText(text, label = "Texto") {
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-        playClickSound();
-        showToast(`${label} copiado!`);
-    }).catch(() => {});
-}
-
-function openEditPcModal(pcId) {
-    const pc = state.computers ? state.computers.find(p => p.id === pcId) : null;
-    if (!pc) return;
-
-    const modal = document.getElementById("modal-edit-pc");
-    if (!modal) return;
-
-    modal.classList.add("active");
-
-    const idInput = document.getElementById("edit-pc-id");
-    const nameInput = document.getElementById("edit-pc-name");
-    const typeInput = document.getElementById("edit-pc-type");
-    const ipInput = document.getElementById("edit-pc-ip");
-    const macInput = document.getElementById("edit-pc-mac");
-    const alexaInput = document.getElementById("edit-pc-alexa");
-    const anydeskInput = document.getElementById("edit-pc-anydesk");
-    const rustdeskInput = document.getElementById("edit-pc-rustdesk");
-
-    if (idInput) idInput.value = pc.id;
-    if (nameInput) nameInput.value = pc.name || "";
-    if (typeInput) typeInput.value = pc.type || "Desktop";
-    if (ipInput) ipInput.value = pc.ip || "";
-    if (macInput) macInput.value = pc.mac || "";
-    if (alexaInput) alexaInput.value = pc.alexaCommand || "";
-    if (anydeskInput) anydeskInput.value = pc.anydesk || "";
-    if (rustdeskInput) rustdeskInput.value = pc.rustdesk || "";
-
-    lucide.createIcons();
-}
-
-function closeEditPcModal() {
-    const modal = document.getElementById("modal-edit-pc");
-    if (modal) modal.classList.remove("active");
-    const form = document.getElementById("form-edit-pc");
-    if (form) form.reset();
-}
-
-function sendWakeOnLan(pcId) {
-    const pc = state.computers ? state.computers.find(p => p.id === pcId) : null;
-    if (!pc) return;
-
-    playSuccessSound();
-    alert(`📡 Pacote Mágico Wake-on-LAN (WoL) enviado com sucesso para ${pc.name}!\n\nIP Local: ${pc.ip || '192.168.1.10'}\nMAC Address: ${pc.mac || '00:11:22:33:44:55'}`);
-}
-
-function openAddPcModal() {
-    const modal = document.getElementById("modal-pc");
-    if (modal) {
-        modal.classList.add("active");
-        const nameInput = document.getElementById("pc-name");
-        if (nameInput) {
-            nameInput.value = "";
-            nameInput.focus();
-        }
-    }
-    lucide.createIcons();
-}
-
-function closeAddPcModal() {
-    const modal = document.getElementById("modal-pc");
-    if (modal) modal.classList.remove("active");
-    const form = document.getElementById("form-add-pc");
-    if (form) form.reset();
-}
-
-function deleteComputer(pcId) {
-    const pc = state.computers ? state.computers.find(p => p.id === pcId) : null;
-    if (!pc) return;
-
-    if (confirm(`Deseja realmente remover o equipamento "${pc.name}"?`)) {
-        state.computers = state.computers.filter(p => p.id !== pcId);
-        saveState();
-        renderComputers();
-        playClickSound();
-    }
-}
-
-/* ==========================================================================
-   FUNÇÕES ADICIONAIS DE EXPORTAÇÃO, MOOD TRACKER E SCRATCHPAD
-   ========================================================================== */
-function exportAgendaICS() {
-    if (!state.events || state.events.length === 0) {
-        alert("Nenhum compromisso cadastrado para exportar!");
-        return;
-    }
-
-    let icsContent = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//FocoFacil Agenda//PT-BR\r\n";
-
-    state.events.forEach(evt => {
-        const dateStr = (evt.date || getTodayDateString()).replace(/-/g, '');
-        const timeStr = (evt.time || "09:00").replace(':', '') + "00";
-        const dtStamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-        icsContent += "BEGIN:VEVENT\r\n";
-        icsContent += `SUMMARY:${evt.title}\r\n`;
-        icsContent += `DTSTART:${dateStr}T${timeStr}\r\n`;
-        icsContent += `DESCRIPTION:${evt.notes || evt.category || ''}\r\n`;
-        if (evt.location) icsContent += `LOCATION:${evt.location}\r\n`;
-        icsContent += `DTSTAMP:${dtStamp}\r\n`;
-        icsContent += `UID:event_${evt.id}@focofacil\r\n`;
-        icsContent += "END:VEVENT\r\n";
-    });
-
-    icsContent += "END:VCALENDAR\r\n";
-
-    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `focofacil_agenda_${getTodayDateString()}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    playSuccessSound();
-}
-
-function exportKanbanBackup() {
-    if (!state.kanbanNotes || state.kanbanNotes.length === 0) {
-        alert("Nenhuma anotação no Kanban para exportar!");
-        return;
-    }
-
-    const jsonStr = JSON.stringify(state.kanbanNotes, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `focofacil_kanban_backup_${getTodayDateString()}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    playSuccessSound();
-}
-
-function setDailyMood(moodKey, moodLabel) {
-    if (!state.dailyMood) state.dailyMood = {};
-    state.dailyMood[selectedDate || getTodayDateString()] = { key: moodKey, label: moodLabel };
-    saveState();
-    renderMoodTracker();
-    playClickSound();
-}
-
-function renderMoodTracker() {
-    const moodObj = state.dailyMood ? state.dailyMood[selectedDate || getTodayDateString()] : null;
-    const labelEl = document.getElementById("current-mood-label");
-    if (labelEl) {
-        labelEl.textContent = moodObj ? moodObj.label : "Não registrado";
-    }
-
-    document.querySelectorAll(".btn-mood").forEach(btn => {
-        btn.classList.remove("active");
-        if (moodObj && btn.getAttribute("onclick").includes(`'${moodObj.key}'`)) {
-            btn.classList.add("active");
-        }
-    });
-}
-
-function savePomodoroScratchpad() {
-    const textarea = document.getElementById("pomodoro-scratchpad");
-    if (textarea) {
-        state.pomodoroScratchpad = textarea.value;
-        saveState();
-    }
-}
-
-function loadPomodoroScratchpad() {
-    const textarea = document.getElementById("pomodoro-scratchpad");
-    if (textarea && state.pomodoroScratchpad !== undefined) {
-        textarea.value = state.pomodoroScratchpad || "";
-    }
-}
-
-// Vincula funções ao objeto global window para uso em eventos inline do HTML
-window.showInlineInput = showInlineInput;
-window.hideInlineInput = hideInlineInput;
 window.addKanbanNoteFromInput = addKanbanNoteFromInput;
 window.deleteKanbanNote = deleteKanbanNote;
 window.editKanbanNote = editKanbanNote;
@@ -3937,36 +2874,72 @@ window.resetPomodoro = resetPomodoro;
 window.filterKanbanNotes = filterKanbanNotes;
 window.filterKanbanNotesByPriority = filterKanbanNotesByPriority;
 window.initPomodoro = initPomodoro;
-window.openAddTransactionModal = openAddTransactionModal;
-window.closeAddTransactionModal = closeAddTransactionModal;
-window.openAddInvestmentModal = openAddInvestmentModal;
-window.closeAddInvestmentModal = closeAddInvestmentModal;
-window.openUpdateInvestmentModal = openUpdateInvestmentModal;
-window.closeUpdateInvestmentModal = closeUpdateInvestmentModal;
-window.openAddAccountModal = openAddAccountModal;
-window.closeAddAccountModal = closeAddAccountModal;
-window.openEditAccountModal = openEditAccountModal;
-window.closeEditAccountModal = closeEditAccountModal;
-window.deleteAccount = deleteAccount;
-window.deleteTransaction = deleteTransaction;
-window.deleteInvestment = deleteInvestment;
-window.renderFinancialDashboard = renderFinancialDashboard;
 window.loginUser = loginUser;
 window.logoutUser = logoutUser;
 window.checkAuthSession = checkAuthSession;
-window.renderComputers = renderComputers;
-window.triggerAlexaCommand = triggerAlexaCommand;
-window.openAlexaApp = openAlexaApp;
-window.copyAlexaCommand = copyAlexaCommand;
-window.sendWakeOnLan = sendWakeOnLan;
-window.openAddPcModal = openAddPcModal;
-window.closeAddPcModal = closeAddPcModal;
-window.openEditPcModal = openEditPcModal;
-window.closeEditPcModal = closeEditPcModal;
+window.showToast = showToast;
 window.copyText = copyText;
-window.deleteComputer = deleteComputer;
 window.exportAgendaICS = exportAgendaICS;
 window.exportKanbanBackup = exportKanbanBackup;
 window.setDailyMood = setDailyMood;
 window.renderMoodTracker = renderMoodTracker;
 window.savePomodoroScratchpad = savePomodoroScratchpad;
+
+/* ==========================================================================
+   ATALHOS DE TECLADO E EXPERIÊNCIA DE ALTA PRODUTIVIDADE
+   ========================================================================== */
+window.addEventListener('keydown', (e) => {
+    const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+    const isInput = activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select' || document.activeElement.isContentEditable;
+
+    // Tecla Escape: Fecha qualquer modal aberto
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-backdrop.active').forEach(m => m.classList.remove('active'));
+        const popover = document.getElementById('notification-popover');
+        if (popover) popover.style.display = 'none';
+        return;
+    }
+
+    // Se estiver digitando num input, não executa atalhos de navegação
+    if (isInput) return;
+
+    // Atalhos 1, 2, 3, 4 para alternar abas
+    if (e.key === '1') {
+        e.preventDefault();
+        switchMainTab('agenda');
+        showToast('Aba: Agenda');
+    } else if (e.key === '2') {
+        e.preventDefault();
+        switchMainTab('diario');
+        showToast('Aba: Diário & Rotina');
+    } else if (e.key === '3') {
+        e.preventDefault();
+        switchMainTab('foco');
+        showToast('Aba: Foco & Pomodoro');
+    } else if (e.key === '4') {
+        e.preventDefault();
+        switchMainTab('kanban');
+        showToast('Aba: Quadro Kanban');
+    } else if (e.code === 'Space') {
+        // Barra de espaço aciona ou pausa o Pomodoro
+        const panelFoco = document.getElementById('panel-foco');
+        if (panelFoco && panelFoco.style.display !== 'none') {
+            e.preventDefault();
+            togglePomodoro();
+        }
+    } else if (e.key.toLowerCase() === 'n') {
+        // Atalho N para Nova Tarefa ou Novo Compromisso
+        e.preventDefault();
+        const panelAgenda = document.getElementById('panel-agenda');
+        if (panelAgenda && panelAgenda.style.display !== 'none') {
+            openAddEventModal();
+        } else {
+            const modalTask = document.getElementById('modal-task');
+            if (modalTask) {
+                modalTask.classList.add('active');
+                const tInput = document.getElementById('task-title');
+                if (tInput) tInput.focus();
+            }
+        }
+    }
+});

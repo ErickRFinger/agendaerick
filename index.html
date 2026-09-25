@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FocoFácil - Agenda, Diário, Foco, Kanban, Financeiro & PCs</title>
-    <!-- PWA Meta Tags -->
+    <title>FocoFácil - Agenda, Rotina, Foco &amp; Kanban</title>
+    <!-- PWA & Mobile Meta Tags -->
     <meta name="theme-color" content="#f59e0b">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FocoFácil">
     <link rel="manifest" href="manifest.json">
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="favicon.png">
+    <!-- Favicon & App Icons (Multirresolução ICO + PNG + SVG + Apple Touch) -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
     <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,7 +33,7 @@
         <div class="login-card">
             <div class="login-header">
                 <div class="login-logo-icon">
-                    <i data-lucide="sparkles"></i>
+                    <img src="logo.svg" alt="FocoFácil" class="brand-logo-img">
                 </div>
                 <h2>Foco<span>Fácil</span></h2>
                 <p>Acesse sua conta para continuar</p>
@@ -84,7 +88,7 @@
             <div class="header-left">
                 <div class="logo-area">
                     <div class="logo-icon">
-                        <i data-lucide="sparkles"></i>
+                        <img src="logo.svg" alt="FocoFácil" class="brand-logo-img">
                     </div>
                     <h1>Foco<span>Fácil</span></h1>
                     <div class="discreet-sync-indicator" id="discreet-sync" title="Conectando à nuvem...">
@@ -153,31 +157,23 @@
             </div>
         </header>
 
-        <!-- NAVEGAÇÃO PRINCIPAL DO SISTEMA (6 MÓDULOS) -->
+        <!-- NAVEGAÇÃO PRINCIPAL DO SISTEMA (4 MÓDULOS DE PRODUTIVIDADE) -->
         <nav class="main-nav-tabs">
-            <button class="main-tab-btn active" id="btn-tab-agenda" onclick="switchMainTab('agenda')">
+            <button class="main-tab-btn active" id="btn-tab-agenda" onclick="switchMainTab('agenda')" title="Pressione [1] no teclado">
                 <i data-lucide="calendar"></i>
                 <span>Agenda</span>
             </button>
-            <button class="main-tab-btn" id="btn-tab-diario" onclick="switchMainTab('diario')">
+            <button class="main-tab-btn" id="btn-tab-diario" onclick="switchMainTab('diario')" title="Pressione [2] no teclado">
                 <i data-lucide="book-open"></i>
-                <span>Diário & Rotina</span>
+                <span>Diário &amp; Rotina</span>
             </button>
-            <button class="main-tab-btn" id="btn-tab-foco" onclick="switchMainTab('foco')">
+            <button class="main-tab-btn" id="btn-tab-foco" onclick="switchMainTab('foco')" title="Pressione [3] no teclado">
                 <i data-lucide="timer"></i>
-                <span>Foco & Produtividade</span>
+                <span>Foco &amp; Produtividade</span>
             </button>
-            <button class="main-tab-btn" id="btn-tab-kanban" onclick="switchMainTab('kanban')">
+            <button class="main-tab-btn" id="btn-tab-kanban" onclick="switchMainTab('kanban')" title="Pressione [4] no teclado">
                 <i data-lucide="kanban-square"></i>
-                <span>Kanban</span>
-            </button>
-            <button class="main-tab-btn" id="btn-tab-financeiro" onclick="switchMainTab('financeiro')">
-                <i data-lucide="wallet"></i>
-                <span>Financeiro</span>
-            </button>
-            <button class="main-tab-btn" id="btn-tab-pcs" onclick="switchMainTab('pcs')">
-                <i data-lucide="monitor"></i>
-                <span>Computadores</span>
+                <span>Quadro Kanban</span>
             </button>
         </nav>
 
@@ -741,280 +737,6 @@
             </div>
         </section>
 
-        <!-- MÓDULO 5: GESTÃO FINANCEIRA -->
-        <section class="panel financial-module-panel" id="panel-financeiro" style="display: none;">
-            <div class="panel-header">
-                <div class="panel-title-area">
-                    <div class="panel-icon financial-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-                        <i data-lucide="wallet"></i>
-                    </div>
-                    <div>
-                        <h2>Gestão Financeira & Investimentos</h2>
-                        <span style="font-size: 12px; color: var(--text-muted);">Controle de saldos, lançamentos e carteira de investimentos</span>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button class="btn btn-secondary-sm" id="btn-add-account-trigger" onclick="openAddAccountModal()">
-                        <i data-lucide="building-2"></i> <span>+ Banco</span>
-                    </button>
-                    <button class="btn btn-secondary-sm" id="btn-add-investment-trigger" onclick="openAddInvestmentModal()">
-                        <i data-lucide="trending-up"></i> <span>+ Investimento</span>
-                    </button>
-                    <button class="btn btn-primary" id="btn-add-transaction-trigger" onclick="openAddTransactionModal()">
-                        <i data-lucide="plus-circle"></i> <span>Novo Lançamento</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Dashboard de Indicadores Superiores -->
-            <div class="financial-summary-grid">
-                <div class="fin-card">
-                    <div class="fin-card-header">
-                        <span class="fin-label">Patrimônio Consolidado</span>
-                        <i data-lucide="coins" class="fin-icon-accent"></i>
-                    </div>
-                    <div class="fin-value" id="fin-net-worth">R$ 0,00</div>
-                    <span class="fin-subtext">Bancos + Investimentos</span>
-                </div>
-                <div class="fin-card">
-                    <div class="fin-card-header">
-                        <span class="fin-label">Saldos Bancários</span>
-                        <i data-lucide="landmark" class="fin-icon-blue"></i>
-                    </div>
-                    <div class="fin-value" id="fin-bank-balance">R$ 0,00</div>
-                    <span class="fin-subtext">Disponível em contas</span>
-                </div>
-                <div class="fin-card">
-                    <div class="fin-card-header">
-                        <span class="fin-label">Receitas do Mês</span>
-                        <i data-lucide="arrow-up-right" class="fin-icon-green"></i>
-                    </div>
-                    <div class="fin-value text-success" id="fin-month-income">R$ 0,00</div>
-                    <span class="fin-subtext">Entradas confirmadas</span>
-                </div>
-                <div class="fin-card">
-                    <div class="fin-card-header">
-                        <span class="fin-label">Despesas do Mês</span>
-                        <i data-lucide="arrow-down-right" class="fin-icon-red"></i>
-                    </div>
-                    <div class="fin-value text-danger" id="fin-month-expense">R$ 0,00</div>
-                    <span class="fin-subtext">Saídas e gastos</span>
-                </div>
-                <div class="fin-card">
-                    <div class="fin-card-header">
-                        <span class="fin-label">Investimentos Total</span>
-                        <i data-lucide="line-chart" class="fin-icon-purple"></i>
-                    </div>
-                    <div class="fin-value" id="fin-total-invested">R$ 0,00</div>
-                    <span class="fin-subtext" id="fin-invested-subtext">Rendimento acumulado</span>
-                </div>
-            </div>
-
-            <!-- Seção 1: Minhas Contas & Bancos -->
-            <div class="fin-section-card">
-                <div class="fin-section-header">
-                    <h3><i data-lucide="building-2"></i> Minhas Contas & Bancos</h3>
-                    <span style="font-size: 12px; color: var(--text-muted);">Contas e saldos disponíveis</span>
-                </div>
-                <div class="bank-accounts-grid" id="bank-accounts-grid">
-                    <!-- Gerado via JS (BTG, Inter, Sicredi, Mercado Pago) -->
-                </div>
-            </div>
-
-            <!-- Seção 2: Carteira de Investimentos -->
-            <div class="fin-section-card">
-                <div class="fin-section-header">
-                    <div>
-                        <h3><i data-lucide="trending-up"></i> Carteira de Investimentos</h3>
-                        <span style="font-size: 12px; color: var(--text-muted);">Atualize o valor dos seus ativos a qualquer momento</span>
-                    </div>
-                </div>
-                <div class="investments-grid" id="investments-grid">
-                    <!-- Gerado via JS -->
-                </div>
-            </div>
-
-            <!-- Seção 3: Extrato de Lançamentos -->
-            <div class="fin-section-card">
-                <div class="fin-section-header" style="flex-wrap: wrap; gap: 12px;">
-                    <div>
-                        <h3><i data-lucide="receipt"></i> Extrato de Lançamentos</h3>
-                        <span style="font-size: 12px; color: var(--text-muted);">Entradas e saídas financeiras</span>
-                    </div>
-                    <div class="fin-filters-bar" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <select id="fin-filter-month" onchange="renderFinancialDashboard()" style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:var(--text-main); font-size:12px; padding:6px 10px; border-radius:6px; outline:none;">
-                            <!-- Preenchido via JS -->
-                        </select>
-                        <select id="fin-filter-type" onchange="renderFinancialDashboard()" style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:var(--text-main); font-size:12px; padding:6px 10px; border-radius:6px; outline:none;">
-                            <option value="all">Todos os Tipos</option>
-                            <option value="income">🟢 Apenas Entradas (Receitas)</option>
-                            <option value="expense">🔴 Apenas Saídas (Despesas)</option>
-                        </select>
-                        <select id="fin-filter-bank" onchange="renderFinancialDashboard()" style="background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:var(--text-main); font-size:12px; padding:6px 10px; border-radius:6px; outline:none;">
-                            <!-- Preenchido via JS -->
-                        </select>
-                    </div>
-                </div>
-                <div class="transactions-list-container" id="transactions-list-container">
-                    <!-- Gerado via JS -->
-                </div>
-            </div>
-        </section>
-
-        <!-- MÓDULO 6: CENTRAL DE COMPUTADORES & ALEXA -->
-        <section class="panel computers-module-panel" id="panel-pcs" style="display: none;">
-            <div class="panel-header">
-                <div class="panel-title-area">
-                    <div class="panel-icon pcs-icon" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">
-                        <i data-lucide="monitor"></i>
-                    </div>
-                    <div>
-                        <h2>Central de Computadores & Automação Alexa</h2>
-                        <span style="font-size: 12px; color: var(--text-muted);">Comandos de voz Alexa, acionamento Wake-on-LAN e controle dos seus computadores</span>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button class="btn btn-secondary-sm" onclick="openAlexaApp()" title="Abrir App ou Chat da Alexa no Celular">
-                        <i data-lucide="message-square"></i> <span>Abrir App Alexa</span>
-                    </button>
-                    <button class="btn btn-primary" id="btn-add-pc-trigger" onclick="openAddPcModal()">
-                        <i data-lucide="plus"></i> <span>Adicionar Equipamento</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Banner Informativo da Integração -->
-            <div class="alexa-banner-card">
-                <div class="alexa-banner-icon"><i data-lucide="zap"></i></div>
-                <div class="alexa-banner-text">
-                    <strong>Integração com Comandos de Voz Alexa & Wake-on-LAN (WoL)</strong>
-                    <p>Clique em qualquer botão abaixo para executar a rotina no aplicativo da Alexa, enviar o pacote de rede Wake-on-LAN ou copiar o comando de voz exato!</p>
-                </div>
-            </div>
-
-            <!-- Grid dos Computadores -->
-            <div class="computers-grid" id="computers-grid">
-                <!-- Gerado via JS (PC i7, PC Ryzen, Servidor) -->
-            </div>
-        </section>
-
-    </div>
-
-    <!-- MODAL DE CADASTRAR COMPUTADOR / SERVIDOR -->
-    <div class="modal-backdrop" id="modal-pc">
-        <div class="modal-card" style="max-width: 450px;">
-            <div class="modal-header">
-                <h3><i data-lucide="monitor"></i> Cadastrar Computador / Equipamento</h3>
-                <button class="btn-close-modal" onclick="closeAddPcModal()">&times;</button>
-            </div>
-            <form id="form-add-pc">
-                <div class="form-group">
-                    <label for="pc-name">Nome do Equipamento / PC</label>
-                    <input type="text" id="pc-name" required placeholder="Ex: PC i7, PC Ryzen, Servidor, Notebook..." autocomplete="off">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="pc-type">Tipo</label>
-                        <select id="pc-type">
-                            <option value="Desktop">🖥️ PC Desktop</option>
-                            <option value="Servidor">🗄️ Servidor</option>
-                            <option value="Notebook">💻 Notebook</option>
-                            <option value="Dispositivo">⚡ Dispositivo Smart</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="pc-ip">Endereço IP Local</label>
-                        <input type="text" id="pc-ip" placeholder="Ex: 192.168.1.10" autocomplete="off">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="pc-mac">Endereço MAC (Wake-on-LAN)</label>
-                    <input type="text" id="pc-mac" placeholder="Ex: AA:BB:CC:DD:EE:01" autocomplete="off">
-                </div>
-
-                <div class="form-group">
-                    <label for="pc-alexa">Comando de Voz da Alexa</label>
-                    <input type="text" id="pc-alexa" placeholder="Ex: Alexa, ligar o i7" autocomplete="off">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="pc-anydesk">🔴 AnyDesk ID</label>
-                        <input type="text" id="pc-anydesk" placeholder="Ex: 928 341 101" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label for="pc-rustdesk">🦀 RustDesk ID</label>
-                        <input type="text" id="pc-rustdesk" placeholder="Ex: 104 928 411" autocomplete="off">
-                    </div>
-                </div>
-
-                <div class="modal-actions" style="margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddPcModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Equipamento</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE EDITAR COMPUTADOR / SERVIDOR -->
-    <div class="modal-backdrop" id="modal-edit-pc">
-        <div class="modal-card" style="max-width: 480px;">
-            <div class="modal-header">
-                <h3><i data-lucide="edit"></i> Editar Equipamento / Acessos</h3>
-                <button class="btn-close-modal" onclick="closeEditPcModal()">&times;</button>
-            </div>
-            <form id="form-edit-pc">
-                <input type="hidden" id="edit-pc-id">
-                <div class="form-group">
-                    <label for="edit-pc-name">Nome do Equipamento / PC</label>
-                    <input type="text" id="edit-pc-name" required placeholder="Ex: PC i7, PC Ryzen, Servidor..." autocomplete="off">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit-pc-type">Tipo</label>
-                        <select id="edit-pc-type">
-                            <option value="Desktop">🖥️ PC Desktop</option>
-                            <option value="Servidor">🗄️ Servidor</option>
-                            <option value="Notebook">💻 Notebook</option>
-                            <option value="Dispositivo">⚡ Dispositivo Smart</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-pc-ip">Endereço IP Local</label>
-                        <input type="text" id="edit-pc-ip" placeholder="Ex: 192.168.1.10" autocomplete="off">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-pc-mac">Endereço MAC (Wake-on-LAN)</label>
-                    <input type="text" id="edit-pc-mac" placeholder="Ex: AA:BB:CC:DD:EE:01" autocomplete="off">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-pc-alexa">Comando de Voz da Alexa</label>
-                    <input type="text" id="edit-pc-alexa" placeholder="Ex: Alexa, ligar o i7" autocomplete="off">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="edit-pc-anydesk">🔴 AnyDesk ID</label>
-                        <input type="text" id="edit-pc-anydesk" placeholder="Ex: 928 341 101" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-pc-rustdesk">🦀 RustDesk ID</label>
-                        <input type="text" id="edit-pc-rustdesk" placeholder="Ex: 104 928 411" autocomplete="off">
-                    </div>
-                </div>
-
-                <div class="modal-actions" style="margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditPcModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-                </div>
-            </form>
-        </div>
     </div>
 
     <!-- MODAL DE NOVO COMPROMISSO NA AGENDA -->
@@ -1076,211 +798,6 @@
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" id="btn-cancel-event">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Salvar Compromisso</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE NOVO LANÇAMENTO FINANCEIRO -->
-    <div class="modal-backdrop" id="modal-transaction">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3><i data-lucide="plus-circle"></i> Novo Lançamento Financeiro</h3>
-                <button class="btn-close-modal" id="btn-close-transaction-modal" onclick="closeAddTransactionModal()">&times;</button>
-            </div>
-            <form id="form-add-transaction">
-                <div class="form-group">
-                    <label for="tx-title">Descrição do Lançamento</label>
-                    <input type="text" id="tx-title" required placeholder="Ex: Salário, Aluguel, Mercado, Supermercado..." autocomplete="off">
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tx-amount">Valor (R$)</label>
-                        <input type="number" step="0.01" id="tx-amount" required placeholder="0.00" min="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="tx-type">Tipo</label>
-                        <select id="tx-type" required>
-                            <option value="expense">🔴 Despesa (Saída)</option>
-                            <option value="income">🟢 Receita (Entrada)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tx-account">Banco / Conta</label>
-                        <select id="tx-account" required>
-                            <!-- Preenchido via JS -->
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="tx-category">Categoria</label>
-                        <select id="tx-category" required>
-                            <option value="Alimentação">🍔 Alimentação</option>
-                            <option value="Moradia">🏠 Moradia / Contas</option>
-                            <option value="Transporte">🚗 Transporte / Combustível</option>
-                            <option value="Salário">💼 Salário / Rendimento</option>
-                            <option value="Freelance">💻 Freelance / Serviços</option>
-                            <option value="Saúde">🏥 Saúde / Farmácia</option>
-                            <option value="Lazer">🎉 Lazer / Entretenimento</option>
-                            <option value="Educação">📚 Educação / Cursos</option>
-                            <option value="Investimentos">📈 Investimento / Aplicação</option>
-                            <option value="Outros">📦 Outros</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tx-date">Data</label>
-                        <input type="date" id="tx-date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="tx-status">Status</label>
-                        <select id="tx-status">
-                            <option value="paid">✅ Concluído / Pago</option>
-                            <option value="pending">⏳ Pendente</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddTransactionModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Registrar Lançamento</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE NOVO INVESTIMENTO -->
-    <div class="modal-backdrop" id="modal-investment">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3><i data-lucide="trending-up"></i> Cadastrar Investimento</h3>
-                <button class="btn-close-modal" id="btn-close-investment-modal" onclick="closeAddInvestmentModal()">&times;</button>
-            </div>
-            <form id="form-add-investment">
-                <div class="form-group">
-                    <label for="inv-name">Nome do Ativo / Aplicação</label>
-                    <input type="text" id="inv-name" required placeholder="Ex: CDI do Inter, Tesouro Selic 2029, Ações..." autocomplete="off">
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="inv-category">Categoria do Ativo</label>
-                        <select id="inv-category" required>
-                            <option value="Renda Fixa">💰 Renda Fixa (CDI / CDB / LCI)</option>
-                            <option value="Reserva">🛡️ Reserva de Emergência</option>
-                            <option value="Ações">📈 Ações</option>
-                            <option value="FIIs">🏢 FIIs (Fundos Imobiliários)</option>
-                            <option value="Tesouro">🏛️ Tesouro Direto</option>
-                            <option value="Cripto">🪙 Criptomoedas</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="inv-account">Banco / Corretora</label>
-                        <select id="inv-account" required>
-                            <!-- JS vai preencher com BTG, Inter, Sicredi, Mercado Pago -->
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="inv-initial">Valor Inicial Aplicado (R$)</label>
-                        <input type="number" step="0.01" id="inv-initial" required placeholder="Ex: 45000.00" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="inv-current">Valor Atualizado (R$)</label>
-                        <input type="number" step="0.01" id="inv-current" required placeholder="Ex: 45000.00" min="0">
-                    </div>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddInvestmentModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Investimento</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE ATUALIZAÇÃO RÁPIDA DE INVESTIMENTO -->
-    <div class="modal-backdrop" id="modal-update-investment">
-        <div class="modal-card" style="max-width: 420px;">
-            <div class="modal-header">
-                <h3><i data-lucide="refresh-cw"></i> Atualizar Valor do Investimento</h3>
-                <button class="btn-close-modal" onclick="closeUpdateInvestmentModal()">&times;</button>
-            </div>
-            <form id="form-update-investment">
-                <input type="hidden" id="update-inv-id">
-                <div class="form-group">
-                    <label id="update-inv-name-label" style="font-weight: 700; font-size: 15px; color: var(--color-primary);">Nome do Ativo</label>
-                    <span id="update-inv-sub-label" style="font-size: 12px; color: var(--text-muted);">Informe o novo saldo total atualizado</span>
-                </div>
-
-                <div class="form-group" style="margin-top: 12px;">
-                    <label for="update-inv-new-val">Novo Valor Atual (R$)</label>
-                    <input type="number" step="0.01" id="update-inv-new-val" required min="0" placeholder="0.00" style="font-size: 1.2rem; font-weight: 700;">
-                </div>
-
-                <div class="modal-actions" style="margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeUpdateInvestmentModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Novo Saldo</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE NOVA CONTA BANCÁRIA -->
-    <div class="modal-backdrop" id="modal-account">
-        <div class="modal-card" style="max-width: 420px;">
-            <div class="modal-header">
-                <h3><i data-lucide="building-2"></i> Cadastrar Nova Conta / Banco</h3>
-                <button class="btn-close-modal" onclick="closeAddAccountModal()">&times;</button>
-            </div>
-            <form id="form-add-account">
-                <div class="form-group">
-                    <label for="acc-name">Nome do Banco / Instituição</label>
-                    <input type="text" id="acc-name" required placeholder="Ex: Nubank, C6 Bank, XP Investimentos..." autocomplete="off">
-                </div>
-
-                <div class="form-group">
-                    <label for="acc-initial-balance">Saldo Inicial (R$)</label>
-                    <input type="number" step="0.01" id="acc-initial-balance" required placeholder="0.00">
-                </div>
-
-                <div class="modal-actions" style="margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddAccountModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Cadastrar Banco</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE EDITAR CONTA / BANCO -->
-    <div class="modal-backdrop" id="modal-edit-account">
-        <div class="modal-card" style="max-width: 420px;">
-            <div class="modal-header">
-                <h3><i data-lucide="building-2"></i> Editar Banco / Saldo</h3>
-                <button class="btn-close-modal" onclick="closeEditAccountModal()">&times;</button>
-            </div>
-            <form id="form-edit-account">
-                <input type="hidden" id="edit-acc-id">
-                <div class="form-group">
-                    <label for="edit-acc-name">Nome do Banco / Instituição</label>
-                    <input type="text" id="edit-acc-name" required placeholder="Ex: Banco Inter, BTG..." autocomplete="off">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-acc-balance">Saldo Atual em Conta (R$)</label>
-                    <input type="number" step="0.01" id="edit-acc-balance" required placeholder="0.00" style="font-size: 1.1rem; font-weight: 700;">
-                </div>
-
-                <div class="modal-actions" style="margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditAccountModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                 </div>
             </form>
         </div>

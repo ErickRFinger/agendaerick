@@ -1,10 +1,15 @@
-const CACHE_NAME = 'focofacil-cache-v8';
+const CACHE_NAME = 'focofacil-cache-v9';
 const ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
+  '/favicon.ico',
   '/favicon.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+  '/logo.svg',
   '/manifest.json'
 ];
 
@@ -13,7 +18,6 @@ self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        // Usa a opção de addAll com tratamento de erros individuais se necessário
         return cache.addAll(ASSETS);
       })
       .then(() => self.skipWaiting())
