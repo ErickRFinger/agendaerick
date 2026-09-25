@@ -1,4 +1,4 @@
-const CACHE_NAME = 'focofacil-cache-v9';
+const CACHE_NAME = 'focofacil-cache-v11';
 const ASSETS = [
   '/',
   '/index.html',

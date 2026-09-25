@@ -3,36 +3,38 @@
    ========================================================================== */
 
 :root {
-    /* Cores Base */
-    --bg-app: hsl(250, 24%, 7%);
-    --bg-panel: hsla(250, 24%, 12%, 0.85);
-    --bg-panel-hover: hsla(250, 24%, 15%, 0.9);
+    /* Cores Base - Obsidian Glass Dark */
+    --bg-app: #0c1017;
+    --bg-panel: rgba(17, 22, 33, 0.82);
+    --bg-panel-hover: rgba(24, 31, 46, 0.9);
     --border-color: rgba(255, 255, 255, 0.08);
-    --border-color-focus: hsla(38, 92%, 50%, 0.4);
+    --border-color-focus: hsla(38, 95%, 52%, 0.45);
     
-    /* Cores de Destaque (Accents) */
-    --color-primary: hsl(38, 92%, 50%);
-    --color-primary-hover: hsl(38, 92%, 43%);
-    --color-primary-glow: hsla(38, 92%, 50%, 0.35);
+    /* Cores de Destaque (Accents) - Ouro Quente e Tecnologia */
+    --color-primary: #f59e0b;
+    --color-primary-hover: #d97706;
+    --color-primary-light: #fbbf24;
+    --color-primary-glow: rgba(245, 158, 11, 0.35);
     
-    --color-success: hsl(150, 75%, 45%);
-    --color-success-glow: hsla(150, 75%, 45%, 0.2);
+    --color-success: #10b981;
+    --color-success-hover: #059669;
+    --color-success-glow: rgba(16, 185, 129, 0.25);
     
-    --color-water: hsl(198, 90%, 52%);
-    --color-water-glow: hsla(198, 90%, 52%, 0.35);
-    --color-water-bg: hsl(198, 90%, 15%);
+    --color-water: #0ea5e9;
+    --color-water-glow: rgba(14, 165, 233, 0.35);
+    --color-water-bg: #082f49;
     
-    --color-danger: hsl(355, 85%, 60%);
-    --color-danger-glow: hsla(355, 85%, 60%, 0.2);
+    --color-danger: #ef4444;
+    --color-danger-glow: rgba(239, 68, 68, 0.25);
     
-    --color-warning: hsl(42, 95%, 55%);
-    --color-warning-glow: hsla(42, 95%, 55%, 0.2);
+    --color-warning: #f59e0b;
+    --color-warning-glow: rgba(245, 158, 11, 0.25);
     
     /* Fontes de Texto */
-    --text-main: hsl(250, 20%, 95%);
-    --text-muted: hsl(250, 10%, 65%);
-    --text-dimmed: hsl(250, 8%, 45%);
-    --text-on-primary: hsl(0, 0%, 100%);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dimmed: #64748b;
+    --text-on-primary: #0b0d14;
     
     /* Tipografia */
     --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -42,13 +44,13 @@
     --radius-lg: 20px;
     --radius-md: 14px;
     --radius-sm: 8px;
-    --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 20px var(--color-primary-glow);
-    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-soft: 0 16px 40px -10px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --shadow-glow: 0 0 24px var(--color-primary-glow);
+    --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
     /* Altura da hora atual */
-    --current-time-glow: 0 0 15px rgba(255, 255, 255, 0.1);
+    --current-time-glow: 0 0 18px rgba(245, 158, 11, 0.2);
 }
 
 /* Reset Geral */
@@ -67,9 +69,13 @@ body {
     overflow-x: hidden;
     line-height: 1.5;
     background-image: 
-        radial-gradient(circle at 10% 20%, hsla(38, 92%, 50%, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, hsla(198, 90%, 52%, 0.06) 0%, transparent 40%);
+        radial-gradient(ellipse at 15% 0%, rgba(245, 158, 11, 0.07) 0%, transparent 45%),
+        radial-gradient(ellipse at 85% 100%, rgba(14, 165, 233, 0.05) 0%, transparent 45%),
+        radial-gradient(circle at 50% 40%, rgba(16, 185, 129, 0.02) 0%, transparent 55%);
     background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 /* Canvas de Confete */
@@ -145,20 +151,19 @@ body {
 }
 
 .logo-icon {
-    width: 42px;
-    height: 42px;
-    background: linear-gradient(135deg, var(--color-primary), hsl(280, 85%, 60%));
+    width: 44px;
+    height: 44px;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-on-primary);
-    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+    background: transparent;
+    transition: transform var(--transition-smooth);
 }
 
 .logo-icon i {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
 }
 
 .logo-area h1 {
@@ -171,7 +176,7 @@ body {
 
 .logo-area h1 span {
     color: var(--color-primary);
-    background: linear-gradient(90deg, var(--color-primary), hsl(290, 85%, 65%));
+    background: linear-gradient(135deg, #fef08a 0%, #fbbf24 50%, #f59e0b 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -209,23 +214,26 @@ body {
 }
 
 .progress-percentage {
-    color: var(--color-success);
+    color: var(--color-primary-light);
+    font-weight: 700;
 }
 
 .progress-bar-wrapper {
     width: 100%;
     height: 8px;
     background: rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
+    border-radius: 6px;
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .progress-bar-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-success));
-    border-radius: 4px;
+    background: linear-gradient(90deg, #f59e0b, #10b981);
+    border-radius: 6px;
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
 }
 
 /* ==========================================================================
@@ -247,15 +255,17 @@ body {
 }
 
 .btn-primary {
-    background: var(--color-primary);
-    color: var(--text-on-primary);
-    box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #0b0d14;
+    font-weight: 700;
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35);
+    border: 1px solid rgba(251, 191, 36, 0.5);
 }
 
 .btn-primary:hover {
-    background: var(--color-primary-hover);
+    background: linear-gradient(135deg, #fef08a 0%, #f59e0b 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+    box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5);
 }
 
 .btn-primary:active {
@@ -385,7 +395,7 @@ body {
 }
 
 .timeline-icon {
-    background: rgba(168, 85, 247, 0.12);
+    background: rgba(245, 158, 11, 0.15);
     color: var(--color-primary);
 }
 
@@ -599,7 +609,8 @@ body {
 
 .tab-btn.active {
     color: var(--color-primary);
-    background: rgba(168, 85, 247, 0.1);
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(245, 158, 11, 0.3);
 }
 
 .timeline-container {
@@ -630,9 +641,9 @@ body {
 
 /* Destaque para a HORA ATUAL (Foco Visual ADHD) */
 .hour-slot.current-hour {
-    background: hsla(38, 92%, 50%, 0.05);
+    background: hsla(38, 92%, 50%, 0.06);
     border: 1px solid var(--border-color-focus);
-    box-shadow: 0 0 16px hsla(38, 92%, 50%, 0.1);
+    box-shadow: 0 0 20px hsla(38, 92%, 50%, 0.15);
 }
 
 .hour-slot.current-hour::after {
@@ -641,11 +652,12 @@ body {
     right: 12px;
     top: 10px;
     font-size: 9px;
-    font-weight: 700;
-    color: var(--color-primary);
-    background: rgba(168, 85, 247, 0.18);
-    padding: 2px 6px;
-    border-radius: 4px;
+    font-weight: 800;
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    padding: 2px 7px;
+    border-radius: 6px;
     letter-spacing: 0.5px;
     animation: pulseGlow 2s infinite ease-in-out;
 }
@@ -709,7 +721,7 @@ body {
 
 .btn-quick-add:hover {
     color: var(--color-primary);
-    background: rgba(168, 85, 247, 0.12);
+    background: rgba(245, 158, 11, 0.15);
 }
 
 /* Card de Tarefa Individual */
@@ -888,7 +900,7 @@ body {
 
 .btn-edit-task:hover {
     color: var(--color-primary);
-    background: rgba(168, 85, 247, 0.12);
+    background: rgba(245, 158, 11, 0.15);
 }
 
 /* ==========================================================================
@@ -910,15 +922,69 @@ body {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
 }
 
 .med-card:hover {
     background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* Card Especial para Medicamentos Fixos (Minoxidil / Multivitamínico) */
+.med-card.med-card-fixed {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-color: rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.08);
+}
+
+.med-card.med-card-fixed::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #fbbf24, #f59e0b);
+    border-radius: 4px 0 0 4px;
+}
+
+.med-card.med-card-fixed .med-icon-box {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
+.med-tag-fixed {
+    font-size: 10px;
+    font-weight: 700;
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.15);
+    padding: 2px 7px;
+    border-radius: 8px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    letter-spacing: 0.3px;
 }
 
 .med-card.taken {
     border-color: var(--color-success);
     background: hsla(150, 75%, 45%, 0.04);
+}
+
+.med-card.med-card-fixed.taken {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: hsla(150, 75%, 45%, 0.04);
+}
+
+.med-card.med-card-fixed.taken::before {
+    background: var(--color-success);
+}
+
+.med-card.med-card-fixed.taken .med-icon-box {
+    background: var(--color-success);
+    color: #fff;
 }
 
 .med-info-area {
@@ -1041,7 +1107,7 @@ body {
 
 .btn-edit-med:hover {
     color: var(--color-primary);
-    background: rgba(168, 85, 247, 0.1);
+    background: rgba(245, 158, 11, 0.15);
 }
 
 /* ==========================================================================
@@ -1462,7 +1528,7 @@ textarea {
 }
 
 .btn-quick-drink:hover {
-    background: rgba(168, 85, 247, 0.08);
+    background: rgba(245, 158, 11, 0.12);
     border-color: var(--border-color-focus);
     transform: translateY(-2px);
 }
@@ -1511,7 +1577,7 @@ textarea {
     width: 28px;
     height: 28px;
     border-radius: 6px;
-    background: rgba(168, 85, 247, 0.1);
+    background: rgba(245, 158, 11, 0.12);
     color: var(--color-primary);
     display: flex;
     align-items: center;
@@ -1562,13 +1628,13 @@ textarea {
     font-size: 14px;
     font-weight: 700;
     color: var(--color-primary);
-    background: rgba(168, 85, 247, 0.1);
+    background: rgba(245, 158, 11, 0.12);
     padding: 4px 10px;
     border-radius: 6px;
 }
 
 .other-liquids-icon {
-    background: rgba(168, 85, 247, 0.12);
+    background: rgba(245, 158, 11, 0.15);
     color: var(--color-primary);
 }
 
@@ -1701,7 +1767,7 @@ textarea {
    SINCRONIZAÇÃO EM NUVEM E PWA
    ========================================================================== */
 .sync-icon {
-    background: rgba(168, 85, 247, 0.12);
+    background: rgba(245, 158, 11, 0.15);
     color: var(--color-primary);
 }
 
@@ -1732,7 +1798,7 @@ textarea {
 
 .sync-code-area input:focus {
     border-color: var(--color-primary-glow);
-    box-shadow: 0 0 10px rgba(168, 85, 247, 0.15);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
 }
 
 .btn-show-code {
@@ -1801,25 +1867,26 @@ textarea {
 
 /* Efeito Premium de Pulso no Botão de Instalar PWA */
 .btn-install-pwa {
-    background: linear-gradient(135deg, var(--color-primary), hsl(200, 90%, 55%)) !important;
-    color: var(--text-on-primary) !important;
-    border: none !important;
-    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4) !important;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+    color: #0b0d14 !important;
+    font-weight: 700 !important;
+    border: 1px solid rgba(251, 191, 36, 0.5) !important;
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.4) !important;
     animation: installGlow 3s infinite ease-in-out;
 }
 
 .btn-install-pwa:hover {
-    background: linear-gradient(135deg, var(--color-primary-hover), hsl(200, 90%, 60%)) !important;
+    background: linear-gradient(135deg, #fef08a 0%, #f59e0b 100%) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 0 22px rgba(168, 85, 247, 0.6) !important;
+    box-shadow: 0 0 24px rgba(245, 158, 11, 0.6) !important;
 }
 
 @keyframes installGlow {
     0%, 100% {
-        box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+        box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
     }
     50% {
-        box-shadow: 0 0 20px rgba(168, 85, 247, 0.5), 0 0 10px rgba(14, 165, 233, 0.3);
+        box-shadow: 0 0 24px rgba(245, 158, 11, 0.55), 0 0 12px rgba(14, 165, 233, 0.3);
     }
 }
 
@@ -2303,435 +2370,63 @@ textarea {
 }
 
 /* ==========================================================================
-   NAVEGAÇÃO PRINCIPAL POR ABAS (DIÁRIO / SERVIDORES / ARQUIVOS)
+   ATALHOS DE TECLADO & ELEMENTOS GLOBAIS DE PRODUTIVIDADE
    ========================================================================== */
-.main-nav-tabs {
+.shortcuts-hint-bar {
     display: flex;
     justify-content: center;
-    gap: 12px;
-    margin: 16px 24px;
-    padding: 6px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    padding: 16px 20px 28px;
+    margin-top: 12px;
+    user-select: none;
 }
 
-.main-tab-btn {
-    display: flex;
+.shortcuts-container {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-family: var(--font-heading);
-    font-size: 14px;
-    font-weight: 700;
-    padding: 8px 16px;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: var(--transition-smooth);
-    outline: none;
-}
-
-.main-tab-btn:hover {
-    color: var(--text-main);
-    background: rgba(255, 255, 255, 0.04);
-}
-
-.main-tab-btn.active {
-    color: var(--text-on-primary);
-    background: var(--color-primary);
-    box-shadow: 0 0 14px var(--color-primary-glow);
-}
-
-.main-tab-btn i {
-    width: 16px;
-    height: 16px;
-}
-
-/* ==========================================================================
-   MONITORAMENTO DE SERVIDORES (VIGI)
-   ========================================================================== */
-.servers-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    padding: 16px 0;
-}
-
-.vigi-server-card {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 16px;
-    transition: var(--transition-smooth);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.vigi-server-card:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-}
-
-.vigi-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-}
-
-.vigi-card-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.vigi-status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--color-danger);
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
-    transition: var(--transition-smooth);
-}
-
-.vigi-server-card.status-online .vigi-status-dot {
-    background: var(--color-success);
-    box-shadow: 0 0 8px var(--color-success-glow);
-}
-
-.vigi-card-title h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-main);
-    margin: 0;
-}
-
-.vigi-status-badge {
-    font-size: 9px;
-    font-weight: 800;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
-}
-
-.vigi-server-card.status-online .vigi-status-badge {
-    background: hsla(150, 75%, 45%, 0.15);
-    color: var(--color-success);
-}
-
-.vigi-card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.vigi-spec-text {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-main);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.vigi-metric-row {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.vigi-metric-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-muted);
-}
-
-.vigi-progress {
-    height: 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.vigi-progress-fill {
-    height: 100%;
-    background: var(--color-primary);
-    box-shadow: 0 0 8px var(--color-primary-glow);
-    border-radius: 3px;
-    transition: width 0.8s ease-in-out;
-}
-
-.vigi-sensor-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 4px;
-}
-
-.vigi-sensor-box {
-    background: rgba(0,0,0,0.15);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-}
-
-.vigi-sensor-lbl {
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--text-dimmed);
-}
-
-.vigi-sensor-val {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-.vigi-section-title {
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 4px;
-    margin-top: 6px;
-}
-
-.vigi-disks-container {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.vigi-disk-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(0,0,0,0.1);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 6px 10px;
-    cursor: pointer;
-    transition: var(--transition-fast);
-}
-
-.vigi-disk-item:hover {
-    background: rgba(255,255,255,0.03);
-    border-color: var(--color-primary);
-}
-
-.vigi-disk-letter {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-main);
-}
-
-.vigi-disk-bar-container {
-    flex-grow: 1;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.vigi-disk-bar-fill {
-    height: 100%;
-    background: var(--color-water);
-    border-radius: 2px;
-}
-
-.vigi-disk-text {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text-muted);
-}
-
-.vigi-procs-container {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.vigi-proc-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.01);
-    padding: 3px 6px;
-    border-radius: 4px;
-}
-
-/* ==========================================================================
-   EXPLORADOR DE ARQUIVOS (DRIVE STYLE)
-   ========================================================================== */
-.vigi-file-card {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 12px 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: var(--transition-smooth);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.vigi-file-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--color-primary);
-    transform: translateY(-2px);
-}
-
-.vigi-file-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--color-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition-fast);
-}
-
-.vigi-file-card:hover .vigi-file-icon {
-    background: var(--color-primary);
-    color: var(--text-on-primary);
-    box-shadow: 0 0 10px var(--color-primary-glow);
-}
-
-.vigi-file-icon i {
-    width: 22px;
-    height: 22px;
-}
-
-.vigi-file-name {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-main);
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.vigi-file-size {
-    font-size: 9px;
-    color: var(--text-muted);
-}
-
-/* Estilos adicionais para as métricas ricas dos Servidores Vigi */
-.vigi-section-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-top: 8px;
-    margin-bottom: 2px;
-}
-
-.vigi-sec-icon {
-    width: 14px;
-    height: 14px;
-    color: var(--color-primary);
-}
-
-.vigi-sec-val {
-    margin-left: auto;
-    font-family: monospace;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-.vigi-badges-row {
-    display: flex;
-    gap: 6px;
     flex-wrap: wrap;
-    margin-top: 4px;
-    margin-bottom: 4px;
+    justify-content: center;
+    gap: 18px;
+    padding: 8px 22px;
+    background: rgba(17, 22, 33, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    font-size: 12px;
+    color: var(--text-dimmed);
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: var(--transition-fast);
 }
 
-.vigi-badge {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-color);
-    padding: 3px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 600;
+.shortcuts-container:hover {
+    border-color: rgba(255, 255, 255, 0.14);
     color: var(--text-muted);
 }
 
-.vigi-badge-val {
-    font-family: monospace;
+.shortcut-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.shortcut-pill kbd {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.28);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 11px;
     font-weight: 700;
+    color: var(--color-primary-light);
+    line-height: 1.2;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-/* Estilos para controle de servidores Vigi */
-.vigi-tools-row, .vigi-power-row {
-    margin-top: 6px;
-    margin-bottom: 12px;
-}
-
-.vigi-tools-row .btn, .vigi-power-row .btn {
-    border-radius: 4px;
-    font-weight: 600;
-    transition: all 0.2s ease-in-out;
-}
-
-.vigi-tools-row .btn:hover, .vigi-power-row .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-}
-
-/* Estilos para o Resumo Global (Overview) dos Servidores */
-#vigi-overview-dashboard {
-    margin-bottom: 24px !important;
-}
-
-.vigi-overview-card {
-    backdrop-filter: blur(8px);
-    transition: all 0.25s ease-in-out;
-}
-
-.vigi-overview-card:hover {
-    background: rgba(255,255,255,0.04) !important;
-    border-color: rgba(255,255,255,0.12) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-}
-
-#vigi-overview-alerts {
-    border-left: 3px solid #ef4444 !important;
-}
-
-#vigi-alerts-list li {
-    list-style-type: none;
+@media (max-width: 768px) {
+    .shortcuts-hint-bar {
+        display: none;
+    }
 }
 
 /* ==========================================================================
@@ -3727,16 +3422,18 @@ textarea {
 .main-nav-tabs {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    max-width: 860px;
+    max-width: 880px;
     margin: 18px auto;
     padding: 6px;
-    background: rgba(18, 20, 30, 0.75);
+    background: rgba(15, 20, 31, 0.82);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    border-radius: 18px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
     gap: 8px;
+    position: relative;
+    z-index: 40;
 }
 
 .main-tab-btn {
@@ -3750,28 +3447,71 @@ textarea {
     font-family: var(--font-heading);
     font-size: 14px;
     font-weight: 700;
-    padding: 10px 18px;
-    border-radius: 12px;
+    padding: 11px 18px;
+    border-radius: 13px;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
 }
 
 .main-tab-btn:hover {
     color: var(--text-main);
     background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.07);
+    transform: translateY(-1px);
 }
 
 .main-tab-btn.active {
     color: #0b0d14;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    border-color: rgba(251, 191, 36, 0.5);
-    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.45);
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    border-color: rgba(251, 191, 36, 0.6);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    font-weight: 800;
+    transform: translateY(-1px);
 }
 
 .main-tab-btn.active i {
     color: #0b0d14;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.tab-kbd {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-dimmed);
+    line-height: 1.2;
+    transition: all 0.2s ease;
+}
+
+.main-tab-btn:hover .tab-kbd {
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.main-tab-btn.active .tab-kbd {
+    background: rgba(11, 13, 20, 0.22);
+    border-color: rgba(11, 13, 20, 0.35);
+    color: #0b0d14;
+}
+
+/* Animação do Pomodoro Ativo */
+.pomodoro-display-circle.running {
+    animation: pomodoroPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes pomodoroPulse {
+    0%, 100% {
+        box-shadow: 0 0 30px var(--color-primary-glow), inset 0 0 20px rgba(245, 158, 11, 0.05);
+        border-color: #f59e0b;
+    }
+    50% {
+        box-shadow: 0 0 50px rgba(245, 158, 11, 0.55), inset 0 0 35px rgba(245, 158, 11, 0.12);
+        border-color: #fbbf24;
+    }
 }
 
 @media (max-width: 768px) {
@@ -3787,6 +3527,10 @@ textarea {
         padding: 9px 12px;
         font-size: 13px;
         justify-content: center;
+    }
+
+    .tab-kbd {
+        display: none;
     }
 }
 

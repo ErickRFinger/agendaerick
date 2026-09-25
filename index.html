@@ -162,18 +162,22 @@
             <button class="main-tab-btn active" id="btn-tab-agenda" onclick="switchMainTab('agenda')" title="Pressione [1] no teclado">
                 <i data-lucide="calendar"></i>
                 <span>Agenda</span>
+                <span class="tab-kbd">1</span>
             </button>
             <button class="main-tab-btn" id="btn-tab-diario" onclick="switchMainTab('diario')" title="Pressione [2] no teclado">
                 <i data-lucide="book-open"></i>
                 <span>Diário &amp; Rotina</span>
+                <span class="tab-kbd">2</span>
             </button>
             <button class="main-tab-btn" id="btn-tab-foco" onclick="switchMainTab('foco')" title="Pressione [3] no teclado">
                 <i data-lucide="timer"></i>
                 <span>Foco &amp; Produtividade</span>
+                <span class="tab-kbd">3</span>
             </button>
             <button class="main-tab-btn" id="btn-tab-kanban" onclick="switchMainTab('kanban')" title="Pressione [4] no teclado">
                 <i data-lucide="kanban-square"></i>
                 <span>Quadro Kanban</span>
+                <span class="tab-kbd">4</span>
             </button>
         </nav>
 
@@ -736,6 +740,16 @@
                 </div>
             </div>
         </section>
+
+        <!-- BARRA DISCRETA DE ATALHOS DE TECLADO -->
+        <footer class="shortcuts-hint-bar">
+            <div class="shortcuts-container">
+                <span class="shortcut-pill"><kbd>1</kbd>-<kbd>4</kbd> Alternar Módulos</span>
+                <span class="shortcut-pill"><kbd>Espaço</kbd> Iniciar/Pausar Foco</span>
+                <span class="shortcut-pill"><kbd>N</kbd> Nova Demanda / Evento</span>
+                <span class="shortcut-pill"><kbd>Esc</kbd> Fechar Telas</span>
+            </div>
+        </footer>
 
     </div>
 

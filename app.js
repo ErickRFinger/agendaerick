@@ -55,8 +55,8 @@ const defaultState = {
         { id: "t3", title: "Caminhada de 15 minutos", desc: "Alongar e respirar ar puro.", hour: "16", category: "health", completed: false, date: "" }
     ],
     meds: [
-        { id: "m1", name: "Medicamento da Manhã", dosage: "1 cápsula", hour: "08:00", notes: "Tomar logo após o café da manhã", takenHistory: {} },
-        { id: "m2", name: "Vitamina / Suplemento", dosage: "1 comp.", hour: "13:00", notes: "Junto com o almoço", takenHistory: {} }
+        { id: "med_minoxidil", name: "Minoxidil", dosage: "1 dose", hour: "07:25", notes: "Uso diário fixo", takenHistory: {} },
+        { id: "med_multivitaminico", name: "Multivitamínico", dosage: "1 cápsula", hour: "07:25", notes: "Tomar no café da manhã", takenHistory: {} }
     ],
     waterHistory: {},
     waterGoal: 2000,
@@ -67,19 +67,6 @@ const defaultState = {
     events: [
         { id: "e1", title: "Reunião de Alinhamento de Projeto", date: "", time: "10:30", category: "work", warningMinutes: 15, location: "Google Meet", notes: "Apresentar novidades do FocoFácil", completed: false },
         { id: "e2", title: "Consulta Odontológica", date: "", time: "15:00", category: "health", warningMinutes: 30, location: "Clínica Odonto", notes: "Levar exames", completed: false }
-    ],
-    accounts: [
-        { id: "acc_btg", name: "BTG Pactual", color: "#3b82f6", balance: 5000 },
-        { id: "acc_inter", name: "Banco Inter", color: "#f97316", balance: 3200 },
-        { id: "acc_sicredi", name: "Sicredi", color: "#10b981", balance: 1800 },
-        { id: "acc_mp", name: "Mercado Pago", color: "#06b6d4", balance: 1200 }
-    ],
-    investments: [
-        { id: "inv_1", name: "CDI do Inter", category: "Renda Fixa", accountId: "acc_inter", initialAmount: 45000, currentAmount: 45000, lastUpdated: "" }
-    ],
-    transactions: [
-        { id: "tx_1", title: "Rendimento / Projeto Freelance", amount: 2500, type: "income", date: "", category: "Freelance", accountId: "acc_inter", status: "paid" },
-        { id: "tx_2", title: "Supermercado Semanal", amount: 480.50, type: "expense", date: "", category: "Alimentação", accountId: "acc_btg", status: "paid" }
     ],
     notificationsLog: [],
     focusSessions: [],
@@ -93,18 +80,14 @@ const defaultState = {
     lastWaterTimestamp: 0,
     notifiedTasks: [],
     notifiedEvents: [],
+    notifiedMeds: [],
     lastUpdatedDate: "",
     lastSavedTimestamp: 0,
     kanbanNotes: [
         { id: "k1", text: "Organizar as anotações do dia por prioridade.", column: "dia" },
         { id: "k2", text: "Fazer o planejamento das metas semanais.", column: "semana" },
-        { id: "k3", text: "Revisar assinaturas mensais e finanças.", column: "mes" },
-        { id: "k4", text: "Lembrar de comprar presente de aniversário.", column: "lembretes" }
-    ],
-    computers: [
-        { id: "pc_i7", name: "PC i7", type: "Desktop", ip: "192.168.1.10", mac: "AA:BB:CC:DD:EE:01", alexaCommand: "Alexa, ligar o i7", anydesk: "928 341 101", rustdesk: "104 928 411", status: "online" },
-        { id: "pc_ryzen", name: "PC Ryzen", type: "Desktop", ip: "192.168.1.11", mac: "AA:BB:CC:DD:EE:02", alexaCommand: "Alexa, ligar o Ryzen", anydesk: "928 341 102", rustdesk: "104 928 412", status: "online" },
-        { id: "pc_server", name: "Servidor", type: "Servidor", ip: "192.168.1.12", mac: "AA:BB:CC:DD:EE:03", alexaCommand: "Alexa, ligar o Servidor", anydesk: "928 341 103", rustdesk: "104 928 413", status: "online" }
+        { id: "k3", text: "Revisar assinaturas mensais e metas.", column: "semana" },
+        { id: "k4", text: "Lembrar de comprar presente de aniversário.", column: "dia" }
     ],
     dailyMood: {},
     pomodoroScratchpad: ""
@@ -212,6 +195,41 @@ function initializeDefaultState() {
 function fillMissingStateFields() {
     if (!state.tasks) state.tasks = [];
     if (!state.meds) state.meds = [];
+
+    // Limpa placeholders antigos genéricos caso existam
+    state.meds = state.meds.filter(m => m.name !== "Medicamento da Manhã" && m.name !== "Vitamina / Suplemento");
+
+    // Garante presença do Minoxidil diariamente às 07:25
+    let minoxidil = state.meds.find(m => m.name.toLowerCase().includes("minoxidil"));
+    if (!minoxidil) {
+        state.meds.push({
+            id: "med_minoxidil",
+            name: "Minoxidil",
+            dosage: "1 dose",
+            hour: "07:25",
+            notes: "Uso diário fixo",
+            takenHistory: {}
+        });
+    } else {
+        minoxidil.hour = "07:25";
+    }
+
+    // Garante presença do Multivitamínico diariamente às 07:25
+    let multivitaminico = state.meds.find(m => m.name.toLowerCase().includes("multivitam") || m.name.toLowerCase().includes("vitamina"));
+    if (!multivitaminico) {
+        state.meds.push({
+            id: "med_multivitaminico",
+            name: "Multivitamínico",
+            dosage: "1 cápsula",
+            hour: "07:25",
+            notes: "Tomar no café da manhã",
+            takenHistory: {}
+        });
+    } else {
+        multivitaminico.name = "Multivitamínico";
+        multivitaminico.hour = "07:25";
+    }
+
     if (!state.waterHistory) state.waterHistory = {};
     if (!state.waterGoal) state.waterGoal = 2000;
     if (!state.notes) state.notes = [];
@@ -224,6 +242,7 @@ function fillMissingStateFields() {
     if (!state.lastWaterTimestamp) state.lastWaterTimestamp = 0;
     if (!state.notifiedTasks) state.notifiedTasks = [];
     if (!state.notifiedEvents) state.notifiedEvents = [];
+    if (!state.notifiedMeds) state.notifiedMeds = [];
     if (!state.lastSavedTimestamp) state.lastSavedTimestamp = 0;
     if (!state.kanbanNotes) state.kanbanNotes = [];
 }
@@ -961,8 +980,9 @@ function renderMeds() {
     
     sortedMeds.forEach(med => {
         const isTaken = med.takenHistory && med.takenHistory[selectedDate];
+        const isFixed = med.name && (med.name.toLowerCase().includes('minoxidil') || med.name.toLowerCase().includes('multivitam'));
         const medCard = document.createElement("div");
-        medCard.className = `med-card ${isTaken ? 'taken' : ''}`;
+        medCard.className = `med-card ${isTaken ? 'taken' : ''} ${isFixed ? 'med-card-fixed' : ''}`;
         medCard.dataset.id = med.id;
         
         medCard.innerHTML = `
@@ -971,7 +991,10 @@ function renderMeds() {
                     <i data-lucide="${isTaken ? 'check' : 'pill'}"></i>
                 </div>
                 <div class="med-text">
-                    <span class="med-name">${escapeHtml(med.name)}</span>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="med-name">${escapeHtml(med.name)}</span>
+                        ${isFixed ? '<span class="med-tag-fixed"><i data-lucide="sparkles" style="width: 10px; height: 10px; display: inline; vertical-align: middle;"></i> Fixo Diário</span>' : ''}
+                    </div>
                     <div class="med-details">
                         <span>${escapeHtml(med.dosage)}</span>
                         <span class="med-time"><i data-lucide="clock" style="width: 10px; height: 10px; display: inline; vertical-align: middle;"></i> ${med.hour}</span>
@@ -2114,6 +2137,34 @@ window.checkNotifications = function() {
             }
         }
     });
+
+    // 4. Verifica Medicamentos do Dia (Avisos de Remédio)
+    if (!state.notifiedMeds) state.notifiedMeds = [];
+    const medsToday = (state.meds || []).filter(m => !(m.takenHistory && m.takenHistory[todayStr]));
+    
+    medsToday.forEach(med => {
+        if (!med.hour) return;
+        const [h, m] = med.hour.split(':').map(Number);
+        if (isNaN(h) || isNaN(m)) return;
+
+        const medMinutes = h * 60 + m;
+        const diffMinutes = medMinutes - currentHourMin;
+
+        // Avisa quando estiver no horário (0 a 5 minutos antes ou na hora exata)
+        if (diffMinutes >= 0 && diffMinutes <= 5) {
+            const medKey = `${med.id}_${todayStr}`;
+            if (!state.notifiedMeds.includes(medKey)) {
+                sendPushNotification(`Hora do Remédio: ${med.name} 💊`, {
+                    body: `Horário: ${med.hour} - ${med.dosage || ''} ${med.notes ? '(' + med.notes + ')' : ''}`,
+                    icon: '/favicon.png',
+                    tag: `med-${med.id}`,
+                    vibrate: [200, 100, 200]
+                });
+                state.notifiedMeds.push(medKey);
+                saveState();
+            }
+        }
+    });
 };
 
 function sendPushNotification(title, options = {}) {
@@ -2733,6 +2784,11 @@ function updatePomodoroDisplay() {
     const seconds = (pomodoroTimeLeft % 60).toString().padStart(2, '0');
     const timeEl = document.getElementById("pomodoro-time");
     if (timeEl) timeEl.textContent = `${minutes}:${seconds}`;
+
+    const circle = document.querySelector(".pomodoro-display-circle");
+    if (circle) {
+        circle.classList.toggle("running", pomodoroIsRunning);
+    }
 
     if (pomodoroIsRunning) {
         document.title = `(${minutes}:${seconds}) 🎯 Foco | FocoFácil`;
